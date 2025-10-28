@@ -1,0 +1,108 @@
+@extends('admin.layouts.app')
+
+@section('title', '新規イベント作成')
+
+@section('content')
+<h2 class="text-2xl font-bold mb-6">新規イベント作成</h2>
+
+<form action="{{ route('admin.events.store') }}" method="POST" class="bg-white p-6 rounded-lg shadow w-full max-w-lg">
+    @csrf
+
+    <div class="mb-4">
+        <label class="block font-medium mb-1">イベント名</label>
+        <input type="text" name="title" class="w-full border p-2 rounded" required>
+    </div>
+
+    <div class="mb-4">
+        <label class="block font-medium mb-1">開催日時</label>
+        <input type="datetime-local" name="event_date" id="event_date" class="w-full border p-2 rounded" required>
+    </div>
+
+    <div class="mb-4">
+        <label class="block font-medium mb-1">エントリー締め切り日時</label>
+        <input type="datetime-local" name="entry_deadline" id="entry_deadline" class="w-full border p-2 rounded" required>
+    </div>
+
+    <div class="mb-4">
+        <label class="block font-medium mb-1">公開日時</label>
+        <input type="datetime-local" name="published_at" id="published_at" class="border w-full p-2 rounded">
+        <small class="text-gray-500">設定した日時に公開されます</small>
+    </div>
+
+    <div class="mb-4">
+        <label class="block font-medium mb-1">イベント内容</label>
+        <textarea name="description" rows="4" class="w-full border p-2 rounded"></textarea>
+    </div>
+
+    <div class="mb-4">
+        <label class="block font-medium mb-1">最大人数</label>
+        <input type="number" name="max_participants" class="w-full border p-2 rounded" min="1" required>
+    </div>
+
+    <div class="mb-4">
+        <label class="block font-medium mb-1">キャンセル待ち</label>
+        <div class="flex gap-6">
+            <label><input type="radio" name="allow_waitlist" value="1" checked> 有</label>
+            <label><input type="radio" name="allow_waitlist" value="0"> 無</label>
+        </div>
+    </div>
+
+    <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+        登録する
+    </button>
+    <a href="{{ route('admin.events.index') }}" class="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500">
+        キャンセル
+    </a>
+</form>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const eventInput = document.getElementById('event_date');
+    const deadlineInput = document.getElementById('entry_deadline');
+    const publishedInput = document.getElementById('published_at');
+
+    const pad = num => num.toString().padStart(2, '0');
+    const toDatetimeLocal = date => {
+        return date.getFullYear() + '-' +
+               pad(date.getMonth()+1) + '-' +
+               pad(date.getDate()) + 'T' +
+               pad(date.getHours()) + ':' +
+               pad(date.getMinutes());
+    };
+
+    // 公開日時に現在日時を初期値
+    const now = new Date();
+    publishedInput.value = toDatetimeLocal(now);
+
+    // 開催日時入力時に締め切り日時を自動設定（1日前）
+    eventInput.addEventListener('change', function() {
+        const eventDate = new Date(this.value);
+        if(!isNaN(eventDate)) {
+            let deadline = new Date(eventDate.getTime() - 24*60*60*1000); // 1日前
+
+            // 締め切りが過去なら現在日時に調整
+            if(deadline < now) deadline = now;
+
+            deadlineInput.value = toDatetimeLocal(deadline);
+        }
+    });
+
+    // フォーム送信前にバリデーション
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const eventDate = new Date(eventInput.value);
+        const deadline = new Date(deadlineInput.value);
+
+        if(deadline > eventDate) {
+            alert('エントリー締め切りは開催日時より前にしてください');
+            e.preventDefault();
+        }
+        if(deadline < now) {
+            alert('エントリー締め切りは過去に設定できません');
+            e.preventDefault();
+        }
+    });
+});
+</script>
+
+@endsection
