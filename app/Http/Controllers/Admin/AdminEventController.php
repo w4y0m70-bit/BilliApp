@@ -107,6 +107,7 @@ public function update(Request $request, Event $event)
     return redirect()->route('admin.events.index')->with('success', 'イベントを更新しました');
 }
 
+//イベント削除
 public function destroy(Event $event)
 {
     $event->delete();
@@ -114,6 +115,27 @@ public function destroy(Event $event)
     return redirect()
         ->route('admin.events.index')
         ->with('success', 'イベントを削除しました。');
+}
+
+//イベントコピー
+public function replicate(Event $event)
+{
+    // 元のイベントを複製（すべてコピーする）
+    $newEvent = $event->replicate(); 
+
+    // 新規作成向けに調整
+    $newEvent->title = $event->title; // タイトルもコピー
+    $newEvent->description = $event->description;
+    $newEvent->max_participants = $event->max_participants;
+
+    $newEvent->published_at = null; // 未公開
+    $newEvent->event_date = now()->addDays(1); // 仮設定
+    $newEvent->entry_deadline = now()->addDays(1);
+
+    $newEvent->save();
+
+    return redirect()->route('admin.events.edit', $newEvent->id)
+                     ->with('success', 'イベントを複製しました。必要に応じて編集してください。');
 }
 
 }

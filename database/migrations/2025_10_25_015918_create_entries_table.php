@@ -5,25 +5,18 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
-    {
-        Schema::create('entries', function (Blueprint $table) {
+    public function up(): void {
+        Schema::create('user_entries', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('event_id')->constrained('events')->onDelete('cascade');
-            $table->string('status')->default('active'); // active, canceled
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('event_id')->constrained()->onDelete('cascade');
+            $table->enum('status', ['entry','waitlist','expired'])->default('entry');
+            $table->dateTime('waitlist_until')->nullable();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('entries');
+    public function down(): void {
+        Schema::dropIfExists('user_entries');
     }
 };

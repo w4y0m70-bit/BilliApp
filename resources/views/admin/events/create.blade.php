@@ -10,7 +10,7 @@
 
     <div class="mb-4">
         <label class="block font-medium mb-1">イベント名</label>
-        <input type="text" name="title" class="w-full border p-2 rounded" required>
+        <input type="text" name="title" value="{{ old('title', $data['title'] ?? '') }}" class="w-full border p-2 rounded" required>
     </div>
 
     <div class="mb-4">
@@ -31,12 +31,12 @@
 
     <div class="mb-4">
         <label class="block font-medium mb-1">イベント内容</label>
-        <textarea name="description" rows="4" class="w-full border p-2 rounded"></textarea>
+        <textarea name="description" rows="4" class="w-full border p-2 rounded">{{ old('description', $data['description'] ?? '') }}</textarea>
     </div>
 
     <div class="mb-4">
         <label class="block font-medium mb-1">最大人数</label>
-        <input type="number" name="max_participants" class="w-full border p-2 rounded" min="1" required>
+        <input type="number" name="max_participants" value="{{ old('max_participants', $data['max_participants'] ?? '') }}" class="w-full border p-2 rounded" min="1" required>
     </div>
 
     <div class="mb-4">

@@ -17,8 +17,6 @@ class Event extends Model
         'published_at',
         'max_participants',
         'allow_waitlist',
-        'entry_count',
-        'waitlist_count',
     ];
 
     protected $casts = [
@@ -35,5 +33,22 @@ class Event extends Model
 {
     return $query->whereNotNull('published_at')
                  ->where('published_at', '<=', now());
+}
+
+public function userEntries()
+{
+    return $this->hasMany(UserEntry::class);
+}
+
+// ✅ 現在の参加人数を動的に算出
+public function getEntryCountAttribute()
+{
+    return $this->userEntries()->where('status', 'entry')->count();
+}
+
+// ✅ キャンセル待ち人数を算出（任意）
+public function getWaitlistCountAttribute()
+{
+    return $this->userEntries()->where('status', 'waitlist')->count();
 }
 }

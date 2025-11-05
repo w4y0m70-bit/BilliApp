@@ -16,8 +16,6 @@ return new class extends Migration {
             $table->dateTime('published_at')->nullable(); // ← 公開日時追加
             $table->integer('max_participants')->unsigned();
             $table->boolean('allow_waitlist')->default(true);
-            $table->integer('entry_count')->default(0);
-            $table->integer('waitlist_count')->default(0);
             $table->timestamps();
         });
     }

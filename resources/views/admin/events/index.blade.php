@@ -20,7 +20,10 @@
         <span x-text="open ? '▲' : '▼'"></span>
     </button>
     <div x-show="open" class="mt-4" x-transition>
-        @include('admin.events.partials.event-table', ['events' => $pastEvents])
+        @include('admin.events.partials.event-table', [
+            'events' => $pastEvents,
+            'hideActions' => true   {{-- 過去イベントなので編集ボタン非表示 --}}
+        ])
     </div>
 </div>
 @endsection

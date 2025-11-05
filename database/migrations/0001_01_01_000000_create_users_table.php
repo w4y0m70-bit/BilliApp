@@ -5,9 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
@@ -18,6 +15,17 @@ return new class extends Migration {
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
+            $table->string('role')->default('player');
+
+            // 追加プロフィールカラム
+            $table->string('gender', 10)->nullable();
+            $table->date('birthday')->nullable();
+            $table->string('address')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('username')->nullable();
+            $table->string('class')->nullable();
+            $table->string('notification_method')->nullable();
+            $table->dateTime('last_login_at')->nullable();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -36,13 +44,10 @@ return new class extends Migration {
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('users');
     }
 };
