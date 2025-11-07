@@ -5,10 +5,6 @@
 @section('content')
 <h2 class="text-2xl font-bold mb-6">{{ $event->title }} - ゲスト登録</h2>
 
-<a href="{{ route('admin.events.participants.index', $event->id) }}" class="text-gray-500 hover:underline mb-4 inline-block">
-    ← 参加者一覧へ戻る
-</a>
-
 <form action="{{ route('admin.participants.store', $event->id) }}" method="POST" class="bg-white p-6 rounded-lg shadow w-full max-w-md">
     @csrf
     <div class="mb-4">
@@ -24,8 +20,13 @@
         </select>
     </div>
 
-    <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+    <button type="submit" class="bg-admin text-white px-6 py-2 rounded hover:bg-admin-dark">
         登録
     </button>
 </form>
+
+<a href="{{ route('admin.events.participants.index', $event->id) }}" class="text-gray-500 hover:underline mb-4 inline-block">
+    ← 参加者一覧へ戻る
+</a>
+
 @endsection

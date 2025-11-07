@@ -3,7 +3,7 @@
 @section('title', '参加者一覧')
 
 @section('content')
-<h2 class="text-2xl font-bold mb-6">{{ $event->title }} の参加者一覧</h2>
+<h2 class="text-2xl font-bold mb-6">{{ $event->title }} の参加者一覧participants</h2>
 
 <a href="{{ route('admin.events.index') }}" class="inline-block mb-4 text-gray-500 hover:underline">← イベント一覧へ戻る</a>
 

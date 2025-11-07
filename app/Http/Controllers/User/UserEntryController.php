@@ -111,33 +111,33 @@ if (UserEntry::where('user_id', $userId)
         ->with('message', 'イベントにエントリーしました！');
 }
 
-public function cancel($id)
+public function cancel(Event $event, $entryId)
 {
-    $userId = Auth::id() ?? 1;
-    $entry = UserEntry::where('id', $id)->where('user_id', $userId)->firstOrFail();
+    // event_id が一致するエントリーを取得
+    $entry = $event->userEntries()->findOrFail($entryId);
+
     $entry->update(['status' => 'cancelled']);
 
-    return redirect()->route('user.events.show', $entry->event_id)
-        ->with('message', 'エントリーをキャンセルしました。');
+    // キャンセル待ち繰り上がり処理
+    $next = $event->userEntries()
+                  ->where('status', 'waitlist')
+                  ->orderBy('created_at')
+                  ->first();
+
+    if ($next) {
+        $next->update(['status' => 'entry']);
+    }
+
+    // カウント再計算
+    $event->loadCount([
+        'userEntries as entry_count' => fn($q) => $q->where('status', 'entry'),
+        'userEntries as waitlist_count' => fn($q) => $q->where('status', 'waitlist'),
+    ]);
+    $event->save();
+
+    return request()->ajax()
+        ? response()->json(['message' => 'キャンセルしました'])
+        : back()->with('success', 'キャンセルしました');
 }
 
-
-
-    /**
-     * 🟠 エントリーキャンセル（即時繰り上げ）
-     */
-    // public function cancel(Request $request, $id)
-    // {
-    //     $entry = UserEntry::where('id', $id)
-    //         ->where('user_id', Auth::id() ?? 1)
-    //         ->firstOrFail();
-
-    //     $entry->update(['status' => 'cancelled']);
-
-    //     // 即時繰り上げ処理
-    //     $this->waitlistService->promoteNext($entry->event_id);
-
-    //     return redirect()->route('user.entries.index')
-    //         ->with('success', 'キャンセルしました。');
-    // }
 }

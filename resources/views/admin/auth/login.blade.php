@@ -16,10 +16,14 @@
                     <input type="password" name="password" class="border w-full p-2 rounded" placeholder="********">
                 </div>
 
-                <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
+                <button type="submit" class="w-full bg-admin text-white py-2 rounded hover:bg-admin-dark">
                     ログイン
                 </button>
             </form>
+
+            <div class="mt-6 text-center">
+                <a href="#" class="text-sm text-blue-600 hover:underline">パスワードをお忘れの方はこちら</a>
+            </div>
 
             <div class="mt-6 text-center">
                 <a href="{{ route('top') }}" class="text-gray-500 hover:underline">← トップページへ戻る</a>

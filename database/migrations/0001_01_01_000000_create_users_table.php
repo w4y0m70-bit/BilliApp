@@ -26,6 +26,8 @@ return new class extends Migration {
             $table->string('class')->nullable();
             $table->string('notification_method')->nullable();
             $table->dateTime('last_login_at')->nullable();
+            // 👇 ゲスト識別用カラム（ここが今回の追加）
+            $table->boolean('is_guest')->default(false);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

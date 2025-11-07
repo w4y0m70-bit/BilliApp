@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Event;
-use App\Models\Entry;
+use App\Models\UserEntry;
 
 class AdminEventController extends Controller
 {
@@ -69,12 +69,23 @@ class AdminEventController extends Controller
 }
 
     public function participants(Event $event)
-    {
-        // Eventモデルにentries()リレーションを用意しておく
-        $participants = $event->entries()->with('user')->get();
+{
+    // エントリー済またはキャンセル待ちユーザー
+    $participants = $event->userEntries()
+        ->whereIn('status', ['entry', 'waitlist'])
+        ->with('user')
+        ->get()
+        ->unique('user_id');
 
-        return view('admin.participants.index', compact('event', 'participants'));
-    }
+    // 集計を更新（キャンセルは含めない）
+    $event->loadCount([
+        'entries as entry_count' => fn($q) => $q->where('status', 'entry'),
+        'entries as waitlist_count' => fn($q) => $q->where('status', 'waitlist'),
+    ]);
+
+    return view('admin.events.partials.index', compact('event', 'participants'));
+}
+
 
     // 編集画面表示
 public function edit(Event $event)

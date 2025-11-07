@@ -10,7 +10,7 @@
 
 <body class="bg-gray-100 min-h-screen font-sans text-gray-900">
 
-    <header class="bg-green-700 text-white p-4 flex flex-col md:flex-row justify-between items-center">
+    <header class="bg-user text-white p-4 flex flex-col md:flex-row justify-between items-center">
         <div class="flex items-center w-full md:w-auto mb-2 md:mb-0">
             <!-- 🏠 トップページへ戻るボタン -->
             <a href="{{ url('/') }}" 

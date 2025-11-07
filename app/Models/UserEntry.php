@@ -9,6 +9,7 @@ class UserEntry extends Model
     protected $fillable = [
         'user_id',
         'event_id',
+        'name',
         'status',
         'waitlist_until',
     ];

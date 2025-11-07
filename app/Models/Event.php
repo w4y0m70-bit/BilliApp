@@ -20,35 +20,32 @@ class Event extends Model
     ];
 
     protected $casts = [
-    'event_date' => 'datetime',
-    'entry_deadline' => 'datetime',
-    'published_at' => 'datetime',
-];
-    public function entries()
+        'event_date' => 'datetime',
+        'entry_deadline' => 'datetime',
+        'published_at' => 'datetime',
+    ];
+
+    // UserEntry モデルを参照
+    public function userEntries()
     {
-        return $this->hasMany(Entry::class);
+        return $this->hasMany(UserEntry::class);
     }
 
     public function scopePublished($query)
-{
-    return $query->whereNotNull('published_at')
-                 ->where('published_at', '<=', now());
-}
+    {
+        return $query->whereNotNull('published_at')
+                     ->where('published_at', '<=', now());
+    }
 
-public function userEntries()
-{
-    return $this->hasMany(UserEntry::class);
-}
+    // 現在の参加人数を動的に算出
+    public function getEntryCountAttribute()
+    {
+        return $this->userEntries()->where('status', 'entry')->count();
+    }
 
-// ✅ 現在の参加人数を動的に算出
-public function getEntryCountAttribute()
-{
-    return $this->userEntries()->where('status', 'entry')->count();
-}
-
-// ✅ キャンセル待ち人数を算出（任意）
-public function getWaitlistCountAttribute()
-{
-    return $this->userEntries()->where('status', 'waitlist')->count();
-}
+    // キャンセル待ち人数を算出
+    public function getWaitlistCountAttribute()
+    {
+        return $this->userEntries()->where('status', 'waitlist')->count();
+    }
 }

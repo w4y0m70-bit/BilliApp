@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Entry;
+use App\Models\UserEntry;
 use Illuminate\Http\Request;
 
 class EntryController extends Controller

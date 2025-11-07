@@ -70,7 +70,7 @@
             @csrf
             <button 
                 type="submit"
-                class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+                class="bg-admin text-white px-4 py-2 rounded hover:bg-admin-dark transition"
             >
                 このイベントにエントリーする
             </button>

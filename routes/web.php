@@ -26,9 +26,14 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')->name('admin.')->group(function () {
-    // 仮ログイン（認証未実装）
-    Route::view('/login', 'admin.login')->name('login');
-    Route::post('/login', function () {
+    // 管理者ログイン画面（表示だけ）
+    Route::get('login', function () {
+        return view('admin.auth.login');
+    })->name('login');
+
+    // 仮ログイン処理（認証なしでイベント一覧へ）
+    Route::post('login', function () {
+        // 本来は認証処理をここに書く
         return redirect()->route('admin.events.index');
     })->name('login.post');
 
@@ -39,12 +44,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('events', AdminEventController::class);
 
     // イベント参加者管理
-    Route::get('events/{event}/participants', [AdminParticipantController::class, 'index'])
-        ->name('events.participants.index');
-    Route::get('events/{event}/participants/create', [AdminParticipantController::class, 'create'])
-        ->name('participants.create');
-    Route::post('events/{event}/participants', [AdminParticipantController::class, 'store'])
-        ->name('participants.store');
+    Route::prefix('events/{event}/participants')->name('events.participants.')->group(function () {
+        Route::get('/', [AdminParticipantController::class, 'index'])->name('index');
+        Route::get('/create', [AdminParticipantController::class, 'create'])->name('create');
+        Route::post('/', [AdminParticipantController::class, 'store'])->name('store');
+        Route::get('/json', [AdminParticipantController::class, 'json'])->name('json');
+        Route::patch('/{entry}/cancel', [AdminParticipantController::class, 'cancel'])->name('cancel');
+    });
 
     // チケット管理（将来用）
     Route::resource('tickets', AdminTicketController::class);
@@ -75,7 +81,6 @@ Route::prefix('user')->name('user.')->group(function () {
 
     // ✅ エントリー処理関連
     Route::post('events/{event}/entry', [UserEntryController::class, 'entry'])->name('entries.entry');
-    Route::post('entries/{id}/cancel', [UserEntryController::class, 'cancel'])->name('entries.cancel');
     Route::post('events/{event}/waitlist', [UserEntryController::class, 'waitlist'])->name('entries.waitlist');
 
     // エントリー一覧（マイページ）
@@ -83,6 +88,10 @@ Route::prefix('user')->name('user.')->group(function () {
 
     // プロフィール
     Route::get('profile', [UserProfileController::class, 'show'])->name('profile.show');
+
+    // キャンセル処理
+    Route::patch('/events/{event}/cancel/{entryId}', [UserEntryController::class, 'cancel'])
+    ->name('entries.cancel');
 });
 
 /*

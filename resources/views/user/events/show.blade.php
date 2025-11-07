@@ -42,25 +42,29 @@
 @endphp
 
 <div class="text-center mt-6 space-y-3">
-    @if ($status === 'entry')
+    @if (in_array($status, ['entry', 'waitlist']))
+        {{-- エントリー中 or キャンセル待ち中 → キャンセルボタン --}}
         <form 
-            action="{{ route('user.entries.cancel', ['id' => $userEntry->id]) }}" 
+            action="{{ route('user.entries.cancel', ['event' => $event->id, 'entryId' => $userEntry->id]) }}" 
             method="POST"
             onsubmit="return confirmCancel();"
         >
             @csrf
+            @method('PATCH')
             <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
                 エントリーをキャンセルする
             </button>
         </form>
+
     @else
+        {{-- 未エントリー → エントリーボタン --}}
         <form 
             action="{{ route('user.entries.entry', ['event' => $event->id]) }}" 
             method="POST"
             onsubmit="return confirmEntry();"
         >
             @csrf
-            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+            <button type="submit" class="bg-user text-white px-4 py-2 rounded hover:bg-user-dark transition">
                 このイベントにエントリーする
             </button>
         </form>
@@ -70,6 +74,7 @@
         一覧に戻る
     </a>
 </div>
+
 
 <script>
 function confirmCancel() {

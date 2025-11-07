@@ -37,7 +37,7 @@
 
             {{-- 状態表示 --}}
             @if ($status === 'entry')
-                <span class="inline-block bg-green-600 text-white text-sm px-2 py-1 rounded">エントリー中</span>
+                <span class="inline-block bg-user text-white text-sm px-2 py-1 rounded">エントリー中</span>
             @elseif ($status === 'waitlist')
                 <span class="inline-block bg-yellow-500 text-white text-sm px-2 py-1 rounded">キャンセル待ち中</span>
             @endif

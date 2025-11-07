@@ -5,12 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理者ページ | @yield('title')</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     @vite('resources/css/app.css')
 </head>
 
 <body class="bg-gray-100 min-h-screen font-sans text-gray-900">
 
-    <header class="bg-blue-800 text-white p-4 flex flex-col md:flex-row justify-between items-center">
+    <header class="bg-admin text-white p-4 flex flex-col md:flex-row justify-between items-center">
         <div class="flex items-center w-full md:w-auto mb-2 md:mb-0">
             <!-- 🏠 トップページへ戻るボタン -->
             <a href="{{ url('/') }}" 
