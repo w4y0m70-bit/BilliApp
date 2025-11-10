@@ -12,11 +12,14 @@
         <h2 class="text-2xl font-bold">{{ $event->title }} の参加者一覧</h2>
 
         <div class="flex items-center gap-4">
-            <p class="text-gray-700">参加者：<span x-text="participants.filter(e => e.status==='entry').length"></span>名</p>
+            <p class="text-gray-700">
+                参加者：<span x-text="participants.filter(e => e.status==='entry').length"></span>名
+            </p>
 
             <a href="{{ route('admin.events.index') }}" class="text-gray-500 hover:underline">
                 ← イベント一覧へ戻る
             </a>
+
             <!-- ゲスト追加ボタン -->
             <button 
                 @click="openModal = true"
@@ -24,39 +27,33 @@
             >
                 ＋ ゲストを追加
             </button>
-
         </div>
     </div>
 
     <!-- 参加者カード -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <template x-for="(entry, index) in sortedParticipants" :key="entry.id">
-           <div 
-    class="relative shadow rounded-lg p-4 flex items-center gap-2"
-    :class="entry.status === 'waitlist' ? 'bg-yellow-100' : 'bg-white'"
->
-    <!-- 左に番号 or WL -->
-    <div 
-        class="font-medium w-8 text-center rounded bg-gray-500 text-white py-1"
-    >
-        <span 
-            x-text="entry.status === 'entry' ? (entry.order + 1) : 'WL'"
-        ></span>
-    </div>
+        <template x-for="entry in sortedParticipants" :key="entry.id">
+            <div 
+                class="relative shadow rounded-lg p-4 flex items-center gap-2"
+                :class="entry.status === 'waitlist' ? 'bg-yellow-100' : 'bg-white'"
+            >
+                <!-- 左に番号 or WL -->
+                <div class="font-medium w-12 text-center rounded bg-gray-500 text-white py-1">
+                    <span x-text="entry.status === 'entry' ? entry.order : ('WL-' + entry.order)"></span>
+                </div>
 
-    <!-- 名前 -->
-    <div class="flex-1 font-bold" x-text="entry.name ?? (entry.user?.name ?? 'ゲスト')"></div>
+                <!-- 名前 -->
+                <div class="flex-1 font-bold" x-text="entry.name ?? (entry.user?.name ?? 'ゲスト')"></div>
 
-    <!-- キャンセルボタン -->
-    <button 
-        @click="cancelEntry(entry.id)"
-        class="text-red-500 hover:text-red-700 text-sm"
-        title="キャンセル"
-    >
-        ✕
-    </button>
-</div>
-
+                <!-- キャンセルボタン -->
+                <button 
+                    @click="cancelEntry(entry.id)"
+                    class="text-red-500 hover:text-red-700 text-sm"
+                    title="キャンセル"
+                >
+                    ✕
+                </button>
+            </div>
         </template>
 
         <template x-if="participants.length === 0">
@@ -116,20 +113,23 @@ function participantManager(eventId, maxParticipants) {
         participants: [],
         guest: { name: '' },
 
+        // 参加者一覧取得
         async loadParticipants() {
             const res = await fetch(`/admin/events/${eventId}/participants/json`);
             const list = await res.json();
 
-            // 通常エントリーを先頭、キャンセル待ちは後ろに並べ替え
+            // 通常エントリー先頭、キャンセル待ちは後ろに
             const sorted = list.sort((a, b) => {
                 if(a.status === b.status) return 0;
                 return a.status === 'entry' ? -1 : 1;
             });
 
-            // 通常エントリーに順番(order)を付与
-            let counter = 0;
+            // 順番付与
+            let counterEntry = 1;
+            let counterWait = 1;
             sorted.forEach(e => {
-                e.order = e.status === 'entry' ? counter++ : null;
+                if(e.status === 'entry') e.order = counterEntry++;
+                else if(e.status === 'waitlist') e.order = counterWait++;
             });
 
             this.participants = sorted;
@@ -139,10 +139,10 @@ function participantManager(eventId, maxParticipants) {
             return this.participants;
         },
 
+        // ゲスト追加
         async addGuest() {
             if (!this.guest.name) return;
 
-            // 現在の通常エントリー数をカウント
             const currentEntryCount = this.participants.filter(e => e.status === 'entry').length;
             const status = currentEntryCount < maxParticipants ? 'entry' : 'waitlist';
 
@@ -164,16 +164,26 @@ function participantManager(eventId, maxParticipants) {
             }
         },
 
+        // キャンセル処理
         async cancelEntry(entryId) {
-            if (!confirm('この参加者をキャンセルしますか？')) return;
-            await fetch(`/admin/events/${eventId}/participants/${entryId}/cancel`, {
-                method: 'PATCH',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            });
-            await this.loadParticipants();
+    if (!confirm('この参加者をキャンセルしますか？\n【注意】　この操作は取り消せません')) return;
+
+    const res = await fetch(`/admin/events/${eventId}/participants/${entryId}/cancel`, {
+        method: 'PATCH',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
         }
+    });
+
+    if (res.ok) {
+        const data = await res.json(); // サーバーからのメッセージを取得
+        alert(data.message); // メッセージを表示
+        await this.loadParticipants();
+    } else {
+        alert('キャンセルに失敗しました');
+    }
+}
+
     }
 }
 </script>

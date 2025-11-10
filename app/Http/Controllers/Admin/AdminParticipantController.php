@@ -17,9 +17,22 @@ class AdminParticipantController extends Controller
     public function index(Event $event)
 {
     $participants = $event->userEntries()
-        ->whereIn('status', ['entry','waitlist'])
+        ->whereIn('status', ['entry', 'waitlist'])
         ->with('user:id,name')
+        ->orderByRaw("FIELD(status, 'entry', 'waitlist')")
+        ->orderBy('created_at')
         ->get();
+
+    // 通常・待機の順番をそれぞれ付与
+    $entryOrder = 0;
+    $waitlistOrder = 0;
+    foreach ($participants as $p) {
+        if ($p->status === 'entry') {
+            $p->order = ++$entryOrder;
+        } elseif ($p->status === 'waitlist') {
+            $p->order = ++$waitlistOrder;
+        }
+    }
 
     $event->loadCount([
         'userEntries as entry_count' => fn($q) => $q->where('status', 'entry'),
@@ -28,6 +41,7 @@ class AdminParticipantController extends Controller
 
     return view('admin.participants.index', compact('event', 'participants'));
 }
+
 
     /**
      * ゲスト登録（名前入力のみ）
@@ -69,16 +83,14 @@ class AdminParticipantController extends Controller
      */
     public function cancel(Event $event, UserEntry $entry)
 {
+    $name = $entry->name ?? ($entry->user?->name ?? 'ゲスト');
+
     // キャンセル
     $entry->update(['status' => 'cancelled']);
 
-    // 空き枠の数
-    $max = $event->max_participants;
-    $current = $event->userEntries()->where('status', 'entry')->count();
-    $available = $max - $current;
-
+    // 空き枠があればキャンセル待ちを繰り上げ
+    $available = $event->max_participants - $event->userEntries()->where('status', 'entry')->count();
     if ($available > 0) {
-        // キャンセル待ちの先頭から空き枠分繰り上げ
         $waitlist = $event->userEntries()
             ->where('status', 'waitlist')
             ->orderBy('created_at')
@@ -90,27 +102,49 @@ class AdminParticipantController extends Controller
         }
     }
 
-    // カウント再計算
-    $event->loadCount([
-        'userEntries as entry_count' => fn($q) => $q->where('status', 'entry'),
-        'userEntries as waitlist_count' => fn($q) => $q->where('status', 'waitlist'),
+    return response()->json([
+        'message' => "{$name} のエントリーをキャンセルしました",
     ]);
-    $event->save();
-
-    return request()->ajax()
-        ? response()->json(['message' => 'キャンセルしました'])
-        : back()->with('success', 'キャンセルしました');
 }
+
 
     /**
      * JSON出力（APIなどで使う用）
      */
     public function json(Event $event)
 {
-    return $event->userEntries()
-        ->where('status', '!=', 'cancelled')
+    $entries = $event->userEntries()
+        ->whereIn('status', ['entry', 'waitlist'])
         ->with('user:id,name')
-        ->get(['id','user_id','name','status'])
-        ->toJson();
+        ->orderByRaw("FIELD(status, 'entry', 'waitlist')")
+        ->orderBy('created_at')
+        ->get(['id', 'user_id', 'name', 'status']);
+
+    // 順番を1からスタートする
+    $entryOrder = 0;
+    $waitlistOrder = 0;
+
+    $result = $entries->map(function ($entry) use (&$entryOrder, &$waitlistOrder) {
+        if ($entry->status === 'entry') {
+            $entryOrder++;
+            $order = $entryOrder;
+        } elseif ($entry->status === 'waitlist') {
+            $waitlistOrder++;
+            $order = $waitlistOrder;
+        } else {
+            $order = null;
+        }
+
+        return [
+            'id' => $entry->id,
+            'user_id' => $entry->user_id,
+            'name' => $entry->name ?? ($entry->user->name ?? 'ゲスト'),
+            'status' => $entry->status,
+            'order' => $order, // ← JSONに確実に含まれる
+        ];
+    })->values(); // 念のためキーを振り直す
+
+    return response()->json($result);
 }
+
 }
