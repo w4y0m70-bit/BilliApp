@@ -48,4 +48,9 @@ class Event extends Model
     {
         return $this->userEntries()->where('status', 'waitlist')->count();
     }
+
+    public function organizer()
+{
+    return $this->belongsTo(User::class, 'user_id');
+}
 }

@@ -10,6 +10,8 @@ return new class extends Migration {
         Schema::create('user_entries', function (Blueprint $table) {
             $table->id();
 
+            $table->unique(['event_id', 'user_id']);
+
             // 🧍‍♂️ ユーザーとイベントの紐づけ
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('event_id')->constrained('events')->onDelete('cascade');

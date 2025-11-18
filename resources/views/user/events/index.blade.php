@@ -22,9 +22,12 @@
 
 
         <a href="{{ route('user.events.show', $event->id) }}" class="block p-4 border mb-2 rounded hover:bg-gray-50 transition">
-            <h3 class="text-lg font-bold">{{ $event->title }}</h3>
+        <p class="text-sm text-gray-600">
+            ［{{ $event->organizer->name ?? '主催者不明' }}］
+        </p>    
+        <h3 class="text-lg font-bold">{{ $event->title }}</h3>
             <p class="text-sm text-gray-700">
-                <strong>開催日時：</strong>{{ $event->event_date->format('Y/m/d H:i') }}
+                <strong>開催日時：</strong>{{ format_event_date($event->event_date) }} {{ $event->event_date->format('H:i') }}
             </p>
             <p class="text-sm text-gray-700">
                 <strong>エントリー締切：</strong>{{ $event->entry_deadline->format('Y/m/d H:i') }}
@@ -36,11 +39,24 @@
             </p>
 
             {{-- 状態表示 --}}
-            @if ($status === 'entry')
-                <span class="inline-block bg-user text-white text-sm px-2 py-1 rounded">エントリー中</span>
-            @elseif ($status === 'waitlist')
-                <span class="inline-block bg-yellow-500 text-white text-sm px-2 py-1 rounded">キャンセル待ち中</span>
-            @endif
+            @php
+    $userEntry = $event->userEntries->first();
+@endphp
+
+@if ($userEntry && $userEntry->status === 'entry')
+    <span class="inline-block bg-user text-white text-sm px-3 py-1 rounded">
+        エントリー中
+    </span>
+@elseif ($userEntry && $userEntry->status === 'waitlist')
+    <span class="inline-block bg-orange-500 text-white text-sm px-3 py-1 rounded">
+        キャンセル待ち（{{ $userEntry->waitlist_position ?? '' }}番目）
+    </span>
+@else
+    <span class="inline-block bg-gray-400 text-white text-sm px-3 py-1 rounded">
+        未エントリー
+    </span>
+@endif
+
         </a>
     @empty
         <p>公開中のイベントはありません。</p>

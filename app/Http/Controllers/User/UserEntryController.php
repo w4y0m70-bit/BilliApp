@@ -26,118 +26,65 @@ class UserEntryController extends Controller
         $entries = UserEntry::with('event')
             ->where('user_id', Auth::id() ?? 1) // 仮ログイン中のため
             ->orderByDesc('created_at')
+            ->latest()
             ->get();
 
         return view('user.entries.index', compact('entries'));
     }
 
-    /**
-     * 🟢 イベントにエントリー
-     */
-//     public function entry(Event $event)
-// {
-//     // 仮ログイン対応
-//     $userId = Auth::id() ?? 1; // 認証がない場合はユーザーID=1で処理
-
-//     // すでにエントリーしていないかチェック
-//     if (UserEntry::where('user_id', $userId)->where('event_id', $event->id)->exists()) {
-//         return back()->with('error', 'すでにこのイベントにエントリーしています。');
-//     }
-
-//     // 現在のエントリー数確認
-//     $entryCount = UserEntry::where('event_id', $event->id)
-//         ->where('status', 'entry')
-//         ->count();
-
-//     if ($entryCount >= $event->max_participants) {
-//         // 定員オーバー → キャンセル待ち登録
-//         $waitlistUntil = now()->addDays(2); // 仮設定：2日後まで有効
-//         UserEntry::create([
-//             'user_id' => $userId,
-//             'event_id' => $event->id,
-//             'status' => 'waitlist',
-//             'waitlist_until' => $waitlistUntil,
-//         ]);
-//         return back()->with('info', '定員に達しているため、キャンセル待ちに登録されました。');
-//     }
-
-//     // 通常エントリー
-//     UserEntry::create([
-//         'user_id' => $userId,
-//         'event_id' => $event->id,
-//         'status' => 'entry',
-//     ]);
-
-//     return back()->with('success', 'イベントにエントリーしました！');
-// }
-
-public function entry(Event $event)
+public function entry(Request $request, Event $event)
 {
     $userId = Auth::id() ?? 1;
 
-    // すでにエントリーしていないかチェック（キャンセル済は除外）
-if (UserEntry::where('user_id', $userId)
-    ->where('event_id', $event->id)
-    ->where('status', '!=', 'cancelled')
-    ->exists()) {
-    return back()->with('error', 'すでにこのイベントにエントリーしています。');
-}
+    // すでにエントリー済み（キャンセル済除外）をチェック
+    if (UserEntry::where('user_id', $userId)
+        ->where('event_id', $event->id)
+        ->where('status', '!=', 'cancelled')
+        ->exists()) {
+        return back()->with('error', 'すでにこのイベントにエントリーしています。');
+    }
 
     $entryCount = $event->userEntries()->where('status', 'entry')->count();
+    $isFull = $entryCount >= $event->max_participants;
 
-    if ($entryCount >= $event->max_participants) {
-        if ($event->allow_waitlist) {
-            UserEntry::create([
-                'user_id' => $userId,
-                'event_id' => $event->id,
-                'status' => 'waitlist',
-                'waitlist_until' => now()->addDays(2),
-            ]);
-            return redirect()->route('user.events.show', $event->id)
-                ->with('message', '定員に達しているため、キャンセル待ちに登録されました。');
-        } else {
-            return redirect()->route('user.events.show', $event->id)
-                ->with('message', '満員のためエントリーできません。');
-        }
-    }
+    // キャンセル待ちの期限入力がある場合バリデーション
+    $waitlistUntil = null;
+if ($isFull && $event->allow_waitlist && $request->filled('waitlist_until')) {
+    $request->validate([
+        'waitlist_until' => 'date|after:now',
+    ]);
+    $waitlistUntil = $request->input('waitlist_until');
+}
+
+    $status = $isFull ? 'waitlist' : 'entry';
 
     UserEntry::create([
         'user_id' => $userId,
         'event_id' => $event->id,
-        'status' => 'entry',
+        'status' => $status,
+        'waitlist_until' => $waitlistUntil,
     ]);
+
+    $message = $status === 'entry'
+        ? 'イベントにエントリーしました！'
+        : '定員に達しているため、キャンセル待ちに登録されました。';
 
     return redirect()->route('user.events.show', $event->id)
-        ->with('message', 'イベントにエントリーしました！');
+        ->with('message', $message);
 }
+
 
 public function cancel(Event $event, $entryId)
-{
-    // event_id が一致するエントリーを取得
-    $entry = $event->userEntries()->findOrFail($entryId);
+    {
+        $entry = UserEntry::where('id', $entryId)
+            ->where('event_id', $event->id)
+            ->firstOrFail();
 
-    $entry->update(['status' => 'cancelled']);
+        $name = $entry->cancelAndPromoteWaitlist();
 
-    // キャンセル待ち繰り上がり処理
-    $next = $event->userEntries()
-                  ->where('status', 'waitlist')
-                  ->orderBy('created_at')
-                  ->first();
-
-    if ($next) {
-        $next->update(['status' => 'entry']);
+        return redirect()
+            ->route('user.events.show', $event->id)
+            ->with('success', "{$name} のエントリーをキャンセルしました。");
     }
-
-    // カウント再計算
-    $event->loadCount([
-        'userEntries as entry_count' => fn($q) => $q->where('status', 'entry'),
-        'userEntries as waitlist_count' => fn($q) => $q->where('status', 'waitlist'),
-    ]);
-    $event->save();
-
-    return request()->ajax()
-        ? response()->json(['message' => 'キャンセルしました'])
-        : back()->with('success', 'キャンセルしました');
-}
 
 }

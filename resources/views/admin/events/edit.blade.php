@@ -36,6 +36,7 @@
     <div class="mb-4">
         <label class="block font-medium mb-1">イベント内容</label>
         <textarea name="description" rows="4" class="w-full border p-2 rounded">{{ old('description', $event->description) }}</textarea>
+        <small class="text-gray-500">イベントの詳細や、ルールなど参加者への説明</small>
     </div>
 
     <div class="mb-4">

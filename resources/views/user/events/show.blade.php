@@ -5,18 +5,21 @@
 @section('content')
 <div class="bg-white shadow rounded-lg p-6">
     <h2 class="text-2xl font-bold mb-4">{{ $event->title }}</h2>
+    <p class="text-sm text-gray-600">
+            ［{{ $event->organizer->name ?? '主催者不明' }}］
+        </p>
 
     {{-- イベント概要 --}}
     @if (!empty($event->description))
         <div class="mb-4">
-            <h3 class="text-md font-semibold mb-1 text-gray-700">イベント内容</h3>
+            <!-- <h3 class="text-md font-semibold mb-1 text-gray-700">イベント内容</h3> -->
             <p class="text-gray-700 whitespace-pre-line">{{ $event->description }}</p>
-        </div>
+    </div>
     @endif
 
     {{-- 開催情報 --}}
     <div class="text-sm text-gray-700 mb-4 space-y-1">
-        <p><strong>開催日時：</strong>{{ $event->event_date->format('Y/m/d H:i') }}</p>
+        <p><strong>開催日時：</strong>{{ format_event_date($event->event_date) }} {{ $event->event_date->format('H:i') }}</p>
         <p><strong>エントリー締切：</strong>{{ $event->entry_deadline->format('Y/m/d H:i') }}</p>
         <p><strong>参加人数：</strong>
             {{ $event->entry_count }}／{{ $event->max_participants }}人
@@ -26,8 +29,6 @@
 
     @php
     $currentUser = Auth::user() ?? \App\Models\User::first();
-
-    // 最新のエントリーを取得（キャンセル済みは除外）
     $userEntry = $event->userEntries()
         ->where('user_id', $currentUser->id)
         ->where('status', '!=', 'cancelled')
@@ -36,9 +37,8 @@
 
     $status = $userEntry ? $userEntry->status : null;
 
-    // キャンセル待ち人数
-    $waitlistCount = $event->userEntries()->where('status', 'waitlist')->count();
     $isFull = $event->entry_count >= $event->max_participants;
+    $waitlistCount = $event->userEntries()->where('status', 'waitlist')->count();
 @endphp
 
 <div class="text-center mt-6 space-y-3">
@@ -55,26 +55,50 @@
                 エントリーをキャンセルする
             </button>
         </form>
-
     @else
-        {{-- 未エントリー → エントリーボタン --}}
-        <form 
-            action="{{ route('user.entries.entry', ['event' => $event->id]) }}" 
-            method="POST"
-            onsubmit="return confirmEntry();"
+    {{-- 未エントリー → エントリーフォーム --}}
+    <form 
+    action="{{ route('user.entries.entry', ['event' => $event->id]) }}" 
+    method="POST"
+    onsubmit="return confirmEntry();"
+    x-data="{
+        useDeadline: false,
+        deadline: @json($event->entry_deadline->format('Y-m-d\TH:i'))
+    }"
+>
+    @csrf
+
+   @if($isFull && $event->allow_waitlist)
+<div class="mb-4">
+    <div class="flex items-center gap-3">
+        <!-- チェックボックス -->
+        <label class="inline-flex items-center gap-2 whitespace-nowrap">
+            <input type="checkbox" id="useDeadlineCheckbox">
+            キャンセル待ち期限を設定する
+        </label>
+
+        <!-- 日付入力 -->
+        <input 
+            type="datetime-local" 
+            name="waitlist_until" 
+            id="waitlistUntil"
+            value="{{ $event->entry_deadline->format('Y-m-d\TH:i') }}"
+            class="border rounded px-3 py-2 bg-gray-200 text-gray-500 cursor-not-allowed"
+            disabled
         >
-            @csrf
-            <button type="submit" class="bg-user text-white px-4 py-2 rounded hover:bg-user-dark transition">
-                このイベントにエントリーする
-            </button>
-        </form>
-    @endif
+    </div>
+</div>
+@endif
+    <button type="submit" class="bg-user text-white px-4 py-2 rounded hover:bg-user-dark transition">
+        このイベントにエントリーする
+    </button>
+</form>
+@endif
 
     <a href="{{ route('user.events.index') }}" class="inline-block bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition">
         一覧に戻る
     </a>
 </div>
-
 
 <script>
 function confirmCancel() {
@@ -96,6 +120,23 @@ function confirmEntry() {
     @endif
     return confirm(message);
 }
+
+document.addEventListener("DOMContentLoaded", function() {
+    const checkbox = document.getElementById('useDeadlineCheckbox');
+    const input = document.getElementById('waitlistUntil');
+
+    if (!checkbox || !input) return;
+
+    checkbox.addEventListener('change', function() {
+        if (checkbox.checked) {
+            input.disabled = false;
+            input.classList.remove("bg-gray-200", "text-gray-500", "cursor-not-allowed");
+        } else {
+            input.disabled = true;
+            input.classList.add("bg-gray-200", "text-gray-500", "cursor-not-allowed");
+        }
+    });
+});
 </script>
 
 </div>

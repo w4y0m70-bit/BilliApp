@@ -16,8 +16,17 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        // 本来は認証処理が入るが、仮ログインとして最初のユーザーをログイン
-        $user = User::first();
+        // 最初のユーザーを取得
+    $user = User::first();
+
+    // ユーザーが存在しなければ仮ユーザーを作成
+    if (!$user) {
+        $user = User::create([
+            'name' => 'テストユーザー',
+            'email' => 'test@example.com',
+            'password' => bcrypt('password'),
+        ]);
+    }
 
         // Laravel の Auth にログイン
         Auth::login($user);

@@ -19,28 +19,27 @@ class UserEventController extends Controller
         // 仮ログイン対応
         $user = Auth::user() ?? User::first();
 
-        $events = Event::with(['userEntries'])
-            ->with('userEntries')
-            ->where('published_at', '<=', $now)
-            ->where('event_date', '>=', $now)
-            ->orderBy('event_date')
-            ->get();
+        // 公開中イベント一覧（未来のもの）
+        $events = Event::with(['userEntries' => function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+          ->where('status', '!=', 'cancelled')
+          ->latest();
+        }])
+        ->where('published_at', '<=', $now)
+        ->where('event_date', '>=', $now)
+        ->orderBy('event_date')
+        ->get();
 
-        // 過去にエントリーしたイベント
+        // 過去のエントリー
         $pastEntries = UserEntry::with('event')
             ->where('user_id', $user->id)
             ->whereHas('event', fn($q) => $q->where('event_date', '<', $now))
+            ->latest()
             ->get();
 
-        return view('user.events.index', compact('events', 'pastEntries'));
+        return view('user.events.index', compact('events', 'pastEntries', 'user'));
     }
 
-    // イベント詳細
-//     public function show(Event $event)
-// {
-//     $event->load('userEntries');
-//     return view('user.events.show', compact('event'));
-// }
 public function show(Event $event)
 {
     $currentUser = Auth::user() ?? \App\Models\User::first();
@@ -49,8 +48,6 @@ public function show(Event $event)
 
     return view('user.events.show', compact('event', 'userEntry', 'status'));
 }
-
-
 
     // エントリー処理
     public function entry(Event $event)

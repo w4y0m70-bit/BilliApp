@@ -83,30 +83,13 @@ class AdminParticipantController extends Controller
      */
     public function cancel(Event $event, UserEntry $entry)
 {
-    $name = $entry->name ?? ($entry->user?->name ?? 'ゲスト');
-
-    // キャンセル
-    $entry->update(['status' => 'cancelled']);
-
-    // 空き枠があればキャンセル待ちを繰り上げ
-    $available = $event->max_participants - $event->userEntries()->where('status', 'entry')->count();
-    if ($available > 0) {
-        $waitlist = $event->userEntries()
-            ->where('status', 'waitlist')
-            ->orderBy('created_at')
-            ->take($available)
-            ->get();
-
-        foreach ($waitlist as $w) {
-            $w->update(['status' => 'entry']);
-        }
-    }
+    // モデル側の共通メソッドを呼び出し
+    $name = $entry->cancelAndPromoteWaitlist();
 
     return response()->json([
         'message' => "{$name} のエントリーをキャンセルしました",
     ]);
 }
-
 
     /**
      * JSON出力（APIなどで使う用）
