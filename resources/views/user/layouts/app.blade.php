@@ -30,7 +30,7 @@
 
         <nav class="bg-gray-800 text-white p-3 flex justify-between w-full md:w-auto rounded">
             <a href="{{ route('user.events.index') }}" class="font-semibold hover:underline mr-4">イベント一覧</a>
-            <a href="{{ route('user.profile.show') }}" class="hover:underline">アカウント情報</a>
+            <a href="{{ route('user.account.show') }}" class="hover:underline">アカウント情報</a>
         </nav>
     </header>
 

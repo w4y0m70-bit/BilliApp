@@ -8,6 +8,7 @@ use App\Http\Controllers\User\UserEventController;
 use App\Http\Controllers\User\UserEntryController;
 use App\Http\Controllers\User\UserProfileController;
 use App\Http\Controllers\User\Auth\LoginController;
+use App\Http\Controllers\Admin\AdminAccountController;
 
 require __DIR__.'/auth.php';
 
@@ -55,12 +56,21 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // チケット管理（将来用）
     Route::resource('tickets', AdminTicketController::class);
 
-    // アカウント情報（※後で実装予定）
-    Route::view('/account', 'admin.account')->name('account');
+    // アカウント情報
+    Route::get('/account', [AdminAccountController::class, 'show'])->name('account');
 
     // イベントをコピーして新規作成画面に遷移
     Route::get('events/{event}/replicate', [AdminEventController::class, 'replicate'])
     ->name('events.replicate');
+
+    // アカウント情報閲覧
+Route::get('/account', [AdminAccountController::class, 'show'])->name('account');
+
+// 編集ページ
+Route::get('/account/edit', [AdminAccountController::class, 'edit'])->name('account.edit');
+
+// 更新処理
+Route::patch('/account/update', [AdminAccountController::class, 'update'])->name('account.update');
 
 
 });
@@ -86,8 +96,11 @@ Route::prefix('user')->name('user.')->group(function () {
     // エントリー一覧（マイページ）
     Route::get('entries', [UserEntryController::class, 'index'])->name('entries.index');
 
-    // プロフィール
-    Route::get('profile', [UserProfileController::class, 'show'])->name('profile.show');
+    // ユーザーアカウント
+    Route::get('account/show', [UserProfileController::class, 'show'])->name('account.show');
+    Route::get('account/edit', [UserProfileController::class, 'edit'])->name('account.edit');
+    Route::patch('account/update', [UserProfileController::class, 'update'])->name('account.update');
+
 
     // キャンセル処理
     Route::patch('/events/{event}/cancel/{entryId}', [UserEntryController::class, 'cancel'])
