@@ -29,6 +29,12 @@
             <div class="mt-4 text-center">
                 <a href="{{ route('top') }}" class="text-gray-500 hover:underline">← トップページへ戻る</a>
             </div>
+
+            <div class="mt-4 text-center">
+    <a href="{{ route('user.register') }}" class="text-blue-600 hover:underline">
+        新規登録
+    </a>
+</div>
         </div>
     </div>
 </x-guest-layout>

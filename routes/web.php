@@ -9,6 +9,8 @@ use App\Http\Controllers\User\UserEntryController;
 use App\Http\Controllers\User\UserProfileController;
 use App\Http\Controllers\User\Auth\LoginController;
 use App\Http\Controllers\Admin\AdminAccountController;
+use App\Http\Controllers\User\Auth\UserRegisterController;
+use App\Http\Controllers\Admin\Auth\AdminRegisterController;
 
 require __DIR__.'/auth.php';
 
@@ -37,6 +39,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // 本来は認証処理をここに書く
         return redirect()->route('admin.events.index');
     })->name('login.post');
+
+    // 新規登録フォーム表示
+    Route::get('register', [AdminRegisterController::class, 'showRegistrationForm'])->name('register');
+    // 新規登録処理
+    Route::post('register', [AdminRegisterController::class, 'register'])->name('register.post');
 
     // ホーム（＝イベント一覧）
     Route::redirect('/', '/admin/events')->name('home');
@@ -84,6 +91,11 @@ Route::prefix('user')->name('user.')->group(function () {
     // 仮ログイン
     Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('login', [LoginController::class, 'login'])->name('login.post');
+
+    // 新規登録フォーム表示
+    Route::get('register', [UserRegisterController::class, 'showRegistrationForm'])->name('register');
+    // 新規登録処理
+    Route::post('register', [UserRegisterController::class, 'register'])->name('register.post');
 
     // イベント一覧・詳細
     Route::get('events', [UserEventController::class, 'index'])->name('events.index');

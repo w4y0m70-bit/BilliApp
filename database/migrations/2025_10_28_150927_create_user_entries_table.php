@@ -10,22 +10,25 @@ return new class extends Migration {
         Schema::create('user_entries', function (Blueprint $table) {
             $table->id();
 
-            $table->unique(['event_id', 'user_id']);
-
-            // 🧍‍♂️ ユーザーとイベントの紐づけ
+            // ユーザーとイベントの紐づけ（ゲストは user_id null）
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('event_id')->constrained('events')->onDelete('cascade');
 
-            // ゲストユーザー名（通常ユーザーは user_id 経由）
+            // ゲスト用の名前・性別・クラス
             $table->string('name')->nullable();
+            $table->string('gender', 10)->nullable();
+            $table->string('class', 20)->nullable();
 
-            // 🏷️ エントリーステータス
+            // エントリーステータス
             $table->enum('status', ['entry', 'waitlist', 'cancelled'])->default('entry');
 
-            // ⏳ キャンセル待ち有効期限
+            // キャンセル待ち有効期限
             $table->dateTime('waitlist_until')->nullable();
 
             $table->timestamps();
+
+            // 同じイベントに同じユーザーは重複させない
+            $table->unique(['event_id', 'user_id']);
         });
     }
 

@@ -1,23 +1,23 @@
 <x-guest-layout>
     <div class="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-gray-800">
         <div class="max-w-2xl text-center">
-            <h1 class="text-4xl font-bold mb-6">🎱 イベントエントリー</h1>
+            <h1 class="text-4xl font-bold mb-6">🎱 Events 🎱</h1>
             <p class="mb-10 text-gray-600">
-                イベントのエントリーからスコアボード管理まで、これひとつで。
+                イベントのエントリーと管理を便利に
             </p>
 
             <div class="flex flex-col gap-4">
                 <a href="{{ route('user.login') }}" 
                    class="bg-user text-white px-6 py-3 rounded-lg hover:bg-user-dark">
-                   ユーザーログイン
+                   ユーザー
                 </a>
-                <a href="{{ route('register') }}" 
+                <!-- <a href="{{ route('register') }}" 
                    class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600">
                    新規登録
-                </a>
+                </a> -->
                 <a href="{{ url('/admin/login') }}" 
                    class="bg-admin text-white px-6 py-3 rounded-lg hover:bg-admin-dark">
-                   管理者ログイン
+                   イベント管理者
                 </a>
 
                 <!-- スコアボード（準備中） -->
@@ -26,6 +26,9 @@
                    スコアボード（準備中）
                 </a> -->
             </div>
+            <p class="mb-10 text-gray-600">
+            ©Billiard App 2025  ver.0.1
+            </p>
         </div>
     </div>
 </x-guest-layout>

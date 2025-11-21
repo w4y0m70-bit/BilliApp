@@ -13,7 +13,14 @@
 
         <div class="flex items-center gap-4">
             <p class="text-gray-700">
-                参加者：<span x-text="participants.filter(e => e.status==='entry').length"></span>名
+                エントリー：
+    <span x-text="participants.filter(e => e.status === 'entry').length"></span>
+    /
+    {{ $event->max_participants }}
+
+    （キャンセル待ち：
+        <span x-text="participants.filter(e => e.status === 'waitlist').length"></span>
+    ）
             </p>
 
             <a href="{{ route('admin.events.index') }}" class="text-gray-500 hover:underline">
@@ -42,8 +49,20 @@
                     <span x-text="entry.status === 'entry' ? entry.order : ('WL-' + entry.order)"></span>
                 </div>
 
-                <!-- 名前 -->
-                <div class="flex-1 font-bold" x-text="entry.name ?? (entry.user?.name ?? 'ゲスト')"></div>
+                <!-- 名前 + 性別 + クラス -->
+                <div class="flex-1 font-bold">
+    <span 
+        x-text="entry.name"
+        :class="entry.gender === '女性' ? 'text-red-700' : ''"
+    ></span>
+    <template x-if="entry.gender || entry.class">
+        <span class="ml-1 text-gray-600">
+            (
+            <span x-text="entry.class === 'Bigginer' ? 'Bg' : entry.class === 'Pro' ? 'P' : entry.class"></span>
+            )
+        </span>
+    </template>
+</div>
 
                 <!-- キャンセルボタン -->
                 <button 
@@ -85,6 +104,37 @@
                     >
                 </div>
 
+                <!-- 性別選択 -->
+                <div class="mb-4">
+                    <label for="guestGender" class="block mb-1 font-medium">性別</label>
+                    <select 
+                        x-model="guest.gender"
+                        id="guestGender"
+                        class="border rounded w-full px-3 py-2 focus:outline-none focus:ring focus:ring-admin"
+                    >
+                        <option value="">選択してください</option>
+                        <option value="男性">男性</option>
+                        <option value="女性">女性</option>
+                    </select>
+                </div>
+
+                <!-- クラス選択 -->
+                <div class="mb-4">
+                    <label for="guestClass" class="block mb-1 font-medium">クラス</label>
+                    <select 
+                        x-model="guest.class"
+                        id="guestClass"
+                        class="border rounded w-full px-3 py-2 focus:outline-none focus:ring focus:ring-admin"
+                    >
+                        <option value="">選択してください</option>
+                        <option value="Bigginer">Bigginer</option>
+                        <option value="C">C</option>
+                        <option value="B">B</option>
+                        <option value="A">A</option>
+                        <option value="Pro">Pro</option>
+                    </select>
+                </div>
+
                 <div class="flex justify-end gap-3">
                     <button 
                         type="button" 
@@ -105,26 +155,22 @@
     </div>
 </div>
 
-<!-- Alpine.js + Ajax管理スクリプト -->
 <script>
 function participantManager(eventId, maxParticipants) {
     return {
         openModal: false,
         participants: [],
-        guest: { name: '' },
+        guest: { name: '', gender: '', class: '' },
 
-        // 参加者一覧取得
         async loadParticipants() {
             const res = await fetch(`/admin/events/${eventId}/participants/json`);
             const list = await res.json();
 
-            // 通常エントリー先頭、キャンセル待ちは後ろに
             const sorted = list.sort((a, b) => {
                 if(a.status === b.status) return 0;
                 return a.status === 'entry' ? -1 : 1;
             });
 
-            // 順番付与
             let counterEntry = 1;
             let counterWait = 1;
             sorted.forEach(e => {
@@ -139,51 +185,54 @@ function participantManager(eventId, maxParticipants) {
             return this.participants;
         },
 
-        // ゲスト追加
         async addGuest() {
             if (!this.guest.name) return;
 
             const currentEntryCount = this.participants.filter(e => e.status === 'entry').length;
             const status = currentEntryCount < maxParticipants ? 'entry' : 'waitlist';
 
-            const payload = { name: this.guest.name, status };
+            const payload = { 
+                name: this.guest.name, 
+                gender: this.guest.gender,
+                class: this.guest.class,
+                status
+            };
 
             const res = await fetch(`/admin/events/${eventId}/participants`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify(payload)
-            });
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify(payload)
+});
 
             if (res.ok) {
-                this.guest = { name: '' };
+                this.guest = { name: '', gender: '', class: '' };
                 this.openModal = false;
                 await this.loadParticipants();
             }
         },
 
-        // キャンセル処理
         async cancelEntry(entryId) {
-    if (!confirm('この参加者をキャンセルしますか？\n【注意】　この操作は取り消せません')) return;
+            if (!confirm('この参加者をキャンセルしますか？\n【注意】　この操作は取り消せません')) return;
 
-    const res = await fetch(`/admin/events/${eventId}/participants/${entryId}/cancel`, {
-        method: 'PATCH',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            const res = await fetch(`/admin/events/${eventId}/participants/${entryId}/cancel`, {
+                method: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                alert(data.message);
+                await this.loadParticipants();
+            } else {
+                alert('キャンセルに失敗しました');
+            }
         }
-    });
-
-    if (res.ok) {
-        const data = await res.json(); // サーバーからのメッセージを取得
-        alert(data.message); // メッセージを表示
-        await this.loadParticipants();
-    } else {
-        alert('キャンセルに失敗しました');
-    }
-}
-
     }
 }
 </script>

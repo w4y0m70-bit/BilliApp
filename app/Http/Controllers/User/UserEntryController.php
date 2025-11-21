@@ -61,6 +61,8 @@ if ($isFull && $event->allow_waitlist && $request->filled('waitlist_until')) {
     UserEntry::create([
         'user_id' => $userId,
         'event_id' => $event->id,
+        'gender' => $request->gender,   // ← 追加
+        'class' => $request->class,     // ← 追加
         'status' => $status,
         'waitlist_until' => $waitlistUntil,
     ]);

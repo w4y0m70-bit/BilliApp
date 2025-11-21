@@ -17,16 +17,14 @@ return new class extends Migration {
             $table->timestamps();
             $table->string('role')->default('player');
 
-            // 追加プロフィールカラム
             $table->string('gender', 10)->nullable();
             $table->date('birthday')->nullable();
             $table->string('address')->nullable();
             $table->string('phone')->nullable();
-            $table->string('username')->nullable();
+            $table->string('account_name')->nullable();
             $table->string('class')->nullable();
-            $table->string('notification_method')->nullable();
+            $table->string('notification_type')->nullable();
             $table->dateTime('last_login_at')->nullable();
-            // 👇 ゲスト識別用カラム（ここが今回の追加）
             $table->boolean('is_guest')->default(false);
         });
 

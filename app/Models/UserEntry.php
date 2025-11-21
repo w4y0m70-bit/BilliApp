@@ -10,6 +10,8 @@ class UserEntry extends Model
         'user_id',
         'event_id',
         'name',
+        'gender',
+        'class',
         'status',
         'waitlist_until',
     ];

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserEntry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 class AdminParticipantController extends Controller
 {
@@ -44,24 +45,26 @@ class AdminParticipantController extends Controller
 
 
     /**
-     * ゲスト登録（名前入力のみ）
+     * ゲスト登録
      */
     public function store(Request $request, Event $event)
 {
-    $data = $request->validate([
+    $data = $request->json()->all();
+
+    Validator::make($data, [
         'name' => 'required|string|max:100',
-    ]);
+        'gender' => 'nullable|string|max:10',
+        'class' => 'nullable|string|max:20',
+    ])->validate();
 
-    // 現在の通常エントリー数
     $currentEntryCount = $event->userEntries()->where('status', 'entry')->count();
-
-    // 定員と比較して status を自動判定
     $status = $currentEntryCount < $event->max_participants ? 'entry' : 'waitlist';
 
-    // 🎱 エントリー作成（ここで自動判定した $status を使う）
     $event->userEntries()->create([
         'user_id' => null,
         'name' => $data['name'],
+        'gender' => $data['gender'] ?? null,
+        'class' => $data['class'] ?? null,
         'status' => $status,
     ]);
 
@@ -72,10 +75,11 @@ class AdminParticipantController extends Controller
     ]);
     $event->save();
 
-    return redirect()
-        ->route('admin.events.participants.index', $event->id)
-        ->with('success', "ゲスト「{$data['name']}」を登録しました");
+    return response()->json([
+        'message' => "ゲスト「{$data['name']}」を登録しました"
+    ]);
 }
+
 
 
     /**
@@ -98,10 +102,10 @@ class AdminParticipantController extends Controller
 {
     $entries = $event->userEntries()
         ->whereIn('status', ['entry', 'waitlist'])
-        ->with('user:id,name')
+        ->with('user:id,name,gender,class')
         ->orderByRaw("FIELD(status, 'entry', 'waitlist')")
         ->orderBy('created_at')
-        ->get(['id', 'user_id', 'name', 'status']);
+        ->get();
 
     // 順番を1からスタートする
     $entryOrder = 0;
@@ -122,12 +126,15 @@ class AdminParticipantController extends Controller
             'id' => $entry->id,
             'user_id' => $entry->user_id,
             'name' => $entry->name ?? ($entry->user->name ?? 'ゲスト'),
+            'gender' => $entry->gender ?? $entry->user?->gender,
+            'class' => $entry->class ?? $entry->user?->class,
             'status' => $entry->status,
-            'order' => $order, // ← JSONに確実に含まれる
+            'order' => $order,
         ];
-    })->values(); // 念のためキーを振り直す
+    })->values();
 
     return response()->json($result);
 }
+
 
 }
