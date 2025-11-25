@@ -4,13 +4,14 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminEventController;
 use App\Http\Controllers\Admin\AdminTicketController;
 use App\Http\Controllers\Admin\AdminParticipantController;
+use App\Http\Controllers\Admin\AdminAccountController;
+use App\Http\Controllers\Admin\AdminLoginController;
+use App\Http\Controllers\Admin\Auth\AdminRegisterController;
 use App\Http\Controllers\User\UserEventController;
 use App\Http\Controllers\User\UserEntryController;
 use App\Http\Controllers\User\UserProfileController;
-use App\Http\Controllers\User\Auth\LoginController;
-use App\Http\Controllers\Admin\AdminAccountController;
+use App\Http\Controllers\User\UserLoginController;
 use App\Http\Controllers\User\Auth\UserRegisterController;
-use App\Http\Controllers\Admin\Auth\AdminRegisterController;
 
 require __DIR__.'/auth.php';
 
@@ -29,56 +30,48 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')->name('admin.')->group(function () {
-    // 管理者ログイン画面（表示だけ）
-    Route::get('login', function () {
-        return view('admin.auth.login');
-    })->name('login');
+    // ===== 未ログイン時のみアクセス可能 =====
+    Route::get('/login', [AdminLoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AdminLoginController::class, 'login'])->name('login.post');
+    Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');
 
-    // 仮ログイン処理（認証なしでイベント一覧へ）
-    Route::post('login', function () {
-        // 本来は認証処理をここに書く
-        return redirect()->route('admin.events.index');
-    })->name('login.post');
+    // 新規登録
+    Route::get('/register', [AdminRegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [AdminRegisterController::class, 'register'])->name('register.post');
 
-    // 新規登録フォーム表示
-    Route::get('register', [AdminRegisterController::class, 'showRegistrationForm'])->name('register');
-    // 新規登録処理
-    Route::post('register', [AdminRegisterController::class, 'register'])->name('register.post');
+    // ===== ログイン必須エリア =====
+    Route::middleware('auth:admin')->group(function () {
 
-    // ホーム（＝イベント一覧）
-    Route::redirect('/', '/admin/events')->name('home');
+        // ログアウト
+        Route::post('logout', [AdminLoginController::class, 'logout'])->name('logout');
 
-    // イベント管理（CRUD）
-    Route::resource('events', AdminEventController::class);
+        // ホーム
+        Route::redirect('/', '/admin/events')->name('home');
 
-    // イベント参加者管理
-    Route::prefix('events/{event}/participants')->name('events.participants.')->group(function () {
-        Route::get('/', [AdminParticipantController::class, 'index'])->name('index');
-        Route::get('/create', [AdminParticipantController::class, 'create'])->name('create');
-        Route::post('/', [AdminParticipantController::class, 'store'])->name('store');
-        Route::get('/json', [AdminParticipantController::class, 'json'])->name('json');
-        Route::patch('/{entry}/cancel', [AdminParticipantController::class, 'cancel'])->name('cancel');
+        // イベント管理
+        Route::resource('events', AdminEventController::class);
+
+        // 参加者管理
+        Route::prefix('events/{event}/participants')->name('events.participants.')->group(function () {
+            Route::get('/', [AdminParticipantController::class, 'index'])->name('index');
+            Route::get('/create', [AdminParticipantController::class, 'create'])->name('create');
+            Route::post('/', [AdminParticipantController::class, 'store'])->name('store');
+            Route::get('/json', [AdminParticipantController::class, 'json'])->name('json');
+            Route::patch('/{entry}/cancel', [AdminParticipantController::class, 'cancel'])->name('cancel');
+        });
+
+        //イベントコピー
+        Route::get('events/{event}/replicate', [AdminEventController::class, 'replicate'])
+         ->name('events.replicate');
+
+        // チケット管理
+        Route::resource('tickets', AdminTicketController::class);
+
+        // アカウント情報
+        Route::get('/account', [AdminAccountController::class, 'show'])->name('account');
+        Route::get('/account/edit', [AdminAccountController::class, 'edit'])->name('account.edit');
+        Route::patch('/account/update', [AdminAccountController::class, 'update'])->name('account.update');
     });
-
-    // チケット管理（将来用）
-    Route::resource('tickets', AdminTicketController::class);
-
-    // アカウント情報
-    Route::get('/account', [AdminAccountController::class, 'show'])->name('account');
-
-    // イベントをコピーして新規作成画面に遷移
-    Route::get('events/{event}/replicate', [AdminEventController::class, 'replicate'])
-    ->name('events.replicate');
-
-    // アカウント情報閲覧
-Route::get('/account', [AdminAccountController::class, 'show'])->name('account');
-
-// 編集ページ
-Route::get('/account/edit', [AdminAccountController::class, 'edit'])->name('account.edit');
-
-// 更新処理
-Route::patch('/account/update', [AdminAccountController::class, 'update'])->name('account.update');
-
 
 });
 
@@ -88,9 +81,10 @@ Route::patch('/account/update', [AdminAccountController::class, 'update'])->name
 |--------------------------------------------------------------------------
 */
 Route::prefix('user')->name('user.')->group(function () {
-    // 仮ログイン
-    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [LoginController::class, 'login'])->name('login.post');
+    // ユーザー認証
+Route::get('/login', [UserLoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [UserLoginController::class, 'login'])->name('login.post');
+Route::post('/logout', [UserLoginController::class, 'logout'])->name('logout');
 
     // 新規登録フォーム表示
     Route::get('register', [UserRegisterController::class, 'showRegistrationForm'])->name('register');

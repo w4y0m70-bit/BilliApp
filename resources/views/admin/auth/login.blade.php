@@ -3,12 +3,23 @@
         <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
             <h2 class="text-2xl font-bold mb-6 text-center">🔑 管理者ログイン</h2>
 
+            {{-- エラーメッセージ --}}
+            @if ($errors->any())
+                <div class="mb-4 text-red-600 text-sm">
+                    <ul class="list-disc list-inside">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <form action="{{ route('admin.login.post') }}" method="POST">
                 @csrf
 
                 <div class="mb-4">
-                    <label class="block mb-1 font-medium">メールアドレス</label>
-                    <input type="email" name="email" class="border w-full p-2 rounded" placeholder="admin@example.com">
+                    <label class="block mb-1 font-medium">管理者ID</label>
+                    <input type="text" name="admin_id" class="border w-full p-2 rounded" placeholder="admin001">
                 </div>
 
                 <div class="mb-4">
@@ -30,10 +41,10 @@
             </div>
 
             <div class="mt-4 text-center">
-    <a href="{{ route('admin.register') }}" class="text-blue-600 hover:underline">
-        新規登録
-    </a>
-</div>
+                <a href="{{ route('admin.register') }}" class="text-blue-600 hover:underline">
+                    新規登録
+                </a>
+            </div>
         </div>
     </div>
 </x-guest-layout>

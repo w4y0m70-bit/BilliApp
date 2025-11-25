@@ -18,6 +18,10 @@
 
         {{-- 基本情報 --}}
         <div class="mb-3">
+            <label class="block mb-1">ログインID（任意、空欄の場合自動生成）</label>
+            <input type="text" name="admin_id" value="{{ old('admin_id') }}" class="w-full border rounded px-3 py-2">
+        </div>
+        <div class="mb-3">
             <label class="block mb-1">店舗名</label>
             <input type="text" name="name" value="{{ old('name') }}" class="w-full border rounded px-3 py-2" required>
         </div>

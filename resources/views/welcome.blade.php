@@ -1,23 +1,24 @@
 <x-guest-layout>
     <div class="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-gray-800">
         <div class="max-w-2xl text-center">
-            <h1 class="text-4xl font-bold mb-6">🎱 Events 🎱</h1>
+            <h1 class="text-4xl font-bold mb-6">🎱 Billents 🎱</h1>
             <p class="mb-10 text-gray-600">
-                イベントのエントリーと管理を便利に
+                イベントの管理・エントリーを24時間おまかせ
             </p>
 
             <div class="flex flex-col gap-4">
                 <a href="{{ route('user.login') }}" 
                    class="bg-user text-white px-6 py-3 rounded-lg hover:bg-user-dark">
-                   ユーザー
+                   プレイヤーログイン
                 </a>
+                
                 <!-- <a href="{{ route('register') }}" 
                    class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600">
                    新規登録
                 </a> -->
-                <a href="{{ url('/admin/login') }}" 
+                <a href="{{ route('admin.login') }}" 
                    class="bg-admin text-white px-6 py-3 rounded-lg hover:bg-admin-dark">
-                   イベント管理者
+                   管理者ログイン
                 </a>
 
                 <!-- スコアボード（準備中） -->
@@ -27,7 +28,7 @@
                 </a> -->
             </div>
             <p class="mb-10 text-gray-600">
-            ©Billiard App 2025  ver.0.1
+            ©2025 Billents / Beta v.0.5
             </p>
         </div>
     </div>

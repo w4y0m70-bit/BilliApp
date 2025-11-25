@@ -9,6 +9,12 @@
         @method('PATCH')
 
         <div class="mb-4">
+            <label class="block font-semibold">管理者ID</label>
+            <input type="text" name="name" class="border rounded w-full p-2"
+                   value="{{ old('admin_id', $admin->admin_id) }}">
+        </div>
+
+        <div class="mb-4">
             <label class="block font-semibold">店舗名（管理者名）</label>
             <input type="text" name="name" class="border rounded w-full p-2"
                    value="{{ old('name', $admin->name) }}">

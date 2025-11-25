@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理者ページ | @yield('title')</title>
+    <title>イベント管理 | @yield('title')</title>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     @vite('resources/css/app.css')
 </head>
@@ -25,7 +25,9 @@
                 </svg>
             </a>
 
-            <h1 class="text-xl font-bold">🛠 管理者ページ</h1>
+            <h1 class="text-xl font-bold">
+                {{ Auth::guard('admin')->user()->name ?? '管理者' }} のイベント管理
+            </h1>
         </div>
 
         <nav class="bg-gray-800 text-white p-3 flex justify-between w-full md:w-auto rounded">

@@ -65,7 +65,7 @@
         {{-- 通知先（編集可） --}}
         <div class="flex justify-between">
             <span class="font-semibold">通知先</span>
-            <span>{{ $user->notification_method ?? '－' }}</span>
+            <span>{{ $user->notification_type ?? '－' }}</span>
         </div>
     </div>
 

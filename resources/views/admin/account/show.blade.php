@@ -1,9 +1,12 @@
 @extends('admin.layouts.app')
 
+@section('title', 'アカウント情報')
+
 @section('content')
 <div class="bg-white shadow p-6 rounded">
     <h2 class="text-xl font-bold mb-4">アカウント情報</h2>
 
+    <p><strong>管理者ID：</strong>{{ $admin->admin_id }}</p>
     <p><strong>店舗名：</strong>{{ $admin->name }}</p>
     <p><strong>住所：</strong>{{ $admin->address }}</p>
     <p><strong>電話番号：</strong>{{ $admin->phone }}</p>
