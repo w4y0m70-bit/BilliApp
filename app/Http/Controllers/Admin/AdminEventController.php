@@ -12,11 +12,12 @@ class AdminEventController extends Controller
     // 新規作成画面
     public function create()
     {
-        return view('admin.events.edit', [
+        return view('admin.events.create', [
             'event' => new Event(),
             'isReplicate' => true,
             'formAction' => route('admin.events.store'),
             'formMethod' => 'POST',
+            'admin_id' => auth('admin')->id(),
         ]);
     }
 
@@ -27,7 +28,7 @@ class AdminEventController extends Controller
         $data = $request->validate([
             'title' => 'required|string|max:100',
             'description' => 'nullable|string',
-            'event_date' => 'required|date',
+            'event_date' => 'required|date|after_or_equal:now',
             'entry_deadline' => 'required|date|before_or_equal:event_date',
             'published_at' => 'nullable|date', // ← 追加
             'max_participants' => 'required|integer|min:1',
@@ -37,6 +38,7 @@ class AdminEventController extends Controller
         // 初期値をセット
         $data['entry_count'] = 0;
         $data['waitlist_count'] = 0;
+        $data['admin_id'] = auth('admin')->id();
 
         // DBに保存
         Event::create($data);
@@ -75,7 +77,7 @@ class AdminEventController extends Controller
 
     public function participants(Event $event)
     {
-        // エントリー済またはキャンセル待ちユーザー
+        // エントリー済またはキャンセル待ちプレイヤー
         $participants = $event->userEntries()
             ->whereIn('status', ['entry', 'waitlist'])
             ->with('user')
@@ -109,7 +111,7 @@ class AdminEventController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:100',
-            'event_date' => 'required|date',
+            'event_date' => 'required|date|after_or_equal:now',
             'entry_deadline' => 'required|date|before:event_date',
             'published_at' => 'nullable|date',
             'max_participants' => 'required|integer|min:1',

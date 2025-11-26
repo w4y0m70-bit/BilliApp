@@ -77,40 +77,40 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| 🧍‍♂️ 一般ユーザー側ルート
+| 🧍‍♂️ 一般プレイヤー側ルート
 |--------------------------------------------------------------------------
 */
-Route::prefix('user')->name('user.')->group(function () {
-    // ユーザー認証
-Route::get('/login', [UserLoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [UserLoginController::class, 'login'])->name('login.post');
-Route::post('/logout', [UserLoginController::class, 'logout'])->name('logout');
+    Route::prefix('user')->name('user.')->group(function () {
+        // プレイヤー認証
+        Route::get('/login', [UserLoginController::class, 'showLoginForm'])->name('login');
+        Route::post('/login', [UserLoginController::class, 'login'])->name('login.post');
+        Route::post('/logout', [UserLoginController::class, 'logout'])->name('logout');
 
-    // 新規登録フォーム表示
-    Route::get('register', [UserRegisterController::class, 'showRegistrationForm'])->name('register');
-    // 新規登録処理
-    Route::post('register', [UserRegisterController::class, 'register'])->name('register.post');
+        // 新規登録フォーム表示
+        Route::get('register', [UserRegisterController::class, 'showRegistrationForm'])->name('register');
+        // 新規登録処理
+        Route::post('register', [UserRegisterController::class, 'register'])->name('register.post');
 
-    // イベント一覧・詳細
-    Route::get('events', [UserEventController::class, 'index'])->name('events.index');
-    Route::get('events/{event}', [UserEventController::class, 'show'])->name('events.show');
+        // イベント一覧・詳細
+        Route::get('events', [UserEventController::class, 'index'])->name('events.index');
+        Route::get('events/{event}', [UserEventController::class, 'show'])->name('events.show');
 
-    // ✅ エントリー処理関連
-    Route::post('events/{event}/entry', [UserEntryController::class, 'entry'])->name('entries.entry');
-    Route::post('events/{event}/waitlist', [UserEntryController::class, 'waitlist'])->name('entries.waitlist');
+        // ✅ エントリー処理関連
+        Route::post('events/{event}/entry', [UserEntryController::class, 'entry'])->name('entries.entry');
+        Route::post('events/{event}/waitlist', [UserEntryController::class, 'waitlist'])->name('entries.waitlist');
 
-    // エントリー一覧（マイページ）
-    Route::get('entries', [UserEntryController::class, 'index'])->name('entries.index');
+        // エントリー一覧（マイページ）
+        Route::get('entries', [UserEntryController::class, 'index'])->name('entries.index');
 
-    // ユーザーアカウント
-    Route::get('account/show', [UserProfileController::class, 'show'])->name('account.show');
-    Route::get('account/edit', [UserProfileController::class, 'edit'])->name('account.edit');
-    Route::patch('account/update', [UserProfileController::class, 'update'])->name('account.update');
+        // プレイヤーアカウント
+        Route::get('account/show', [UserProfileController::class, 'show'])->name('account.show');
+        Route::get('account/edit', [UserProfileController::class, 'edit'])->name('account.edit');
+        Route::patch('account/update', [UserProfileController::class, 'update'])->name('account.update');
 
 
-    // キャンセル処理
-    Route::patch('/events/{event}/cancel/{entryId}', [UserEntryController::class, 'cancel'])
-    ->name('entries.cancel');
+        // キャンセル処理
+        Route::patch('/events/{event}/cancel/{entryId}', [UserEntryController::class, 'cancel'])
+        ->name('entries.cancel');
 });
 
 /*

@@ -9,7 +9,7 @@ use Carbon\Carbon;
 class DeleteInactiveUsers extends Command
 {
     protected $signature = 'users:delete-inactive';
-    protected $description = '1年以上ログインのないユーザーを削除する';
+    protected $description = '1年以上ログインのないプレイヤーを削除する';
 
     public function handle()
     {

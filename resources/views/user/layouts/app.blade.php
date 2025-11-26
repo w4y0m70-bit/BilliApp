@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ユーザーページ | @yield('title')</title>
+    <title>プレイヤーページ | @yield('title')</title>
     @vite('resources/css/app.css')
 </head>
 
@@ -25,7 +25,7 @@
                 </svg>
             </a>
 
-            <h1 class="text-xl font-bold">🎱 ユーザーページ</h1>
+            <h1 class="text-xl font-bold">🎱 プレイヤーページ</h1>
         </div>
 
         <nav class="bg-gray-800 text-white p-3 flex justify-between w-full md:w-auto rounded">

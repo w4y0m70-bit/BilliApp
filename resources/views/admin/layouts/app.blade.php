@@ -34,6 +34,13 @@
             <a href="{{ route('admin.events.index') }}" class="font-semibold hover:underline mr-4">イベント一覧</a>
             <a href="{{ route('admin.events.create') }}" class="hover:underline">イベント作成</a>
             <a href="{{ route('admin.account') }}" class="hover:underline">アカウント情報</a>
+                        <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="text-gray-800 hover:text-red-600">
+                    ログアウト
+                </button>
+            </form>
+
         </nav>
     </header>
 

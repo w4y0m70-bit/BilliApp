@@ -10,7 +10,7 @@ return new class extends Migration {
         Schema::create('user_entries', function (Blueprint $table) {
             $table->id();
 
-            // ユーザーとイベントの紐づけ（ゲストは user_id null）
+            // プレイヤーとイベントの紐づけ（ゲストは user_id null）
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('event_id')->constrained('events')->onDelete('cascade');
 
@@ -27,7 +27,7 @@ return new class extends Migration {
 
             $table->timestamps();
 
-            // 同じイベントに同じユーザーは重複させない
+            // 同じイベントに同じプレイヤーは重複させない
             $table->unique(['event_id', 'user_id']);
         });
     }

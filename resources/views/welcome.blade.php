@@ -28,7 +28,7 @@
                 </a> -->
             </div>
             <p class="mb-10 text-gray-600">
-            ©2025 Billents / Beta v.0.5
+            ©2025 Billents / ver 0.5-beta
             </p>
         </div>
     </div>

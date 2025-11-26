@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="min-h-screen flex flex-col items-center justify-center bg-gray-100">
         <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
-            <h2 class="text-2xl font-bold mb-6 text-center">ユーザーログイン</h2>
+            <h2 class="text-2xl font-bold mb-6 text-center">プレイヤーログイン</h2>
 
             {{-- 仮ログインフォーム --}}
             <form method="POST" action="{{ route('user.login.post') }}">
@@ -9,7 +9,7 @@
 
                 <div class="mb-4">
                     <label class="block mb-1 font-medium">メールアドレス</label>
-                    <input type="text" name="email" class="border w-full p-2 rounded" placeholder="ユーザーは自動ログインされます">
+                    <input type="text" name="email" class="border w-full p-2 rounded" placeholder="mail@xxx.com">
                 </div>
 
                 <div class="mb-4">

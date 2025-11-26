@@ -17,6 +17,7 @@ class Event extends Model
         'published_at',
         'max_participants',
         'allow_waitlist',
+        'admin_id',
     ];
 
     protected $casts = [
@@ -51,6 +52,6 @@ class Event extends Model
 
     public function organizer()
 {
-    return $this->belongsTo(User::class, 'user_id');
+    return $this->belongsTo(Admin::class, 'admin_id');
 }
 }

@@ -24,8 +24,10 @@
     {{-- 開催日時 --}}
     <div class="mb-4">
         <label class="block font-medium mb-1">開催日時</label>
-        <input type="datetime-local" name="event_date" id="event_date" class="w-full border p-2 rounded"
-               value="{{ old('event_date', $event->event_date->format('Y-m-d\TH:i')) }}" required>
+        <input type="datetime-local" name="start_at" id="start_at" class="border w-full p-2 rounded"
+            value="{{ old('start_at', $event->start_at?->format('Y-m-d\TH:i') ?? now()->format('Y-m-d\TH:i')) }}"
+            min="{{ now()->format('Y-m-d\TH:i') }}">
+        <!-- <small class="text-gray-500">過去の日付は設定できません</small> -->
     </div>
 
     {{-- エントリー締め切り --}}
@@ -39,7 +41,11 @@
     <div class="mb-4">
         <label class="block font-medium mb-1">公開日時</label>
         <input type="datetime-local" name="published_at" id="published_at" class="border w-full p-2 rounded"
-               value="{{ old('published_at', $event->published_at?->format('Y-m-d\TH:i') ?? now()->format('Y-m-d\TH:i')) }}">
+            value="{{ old('published_at',
+                $event->published_at
+                    ? $event->published_at->format('Y-m-d\TH:i')
+                    : ($event->id ? '' : now()->format('Y-m-d\TH:i'))
+            ) }}">
         <small class="text-gray-500">設定した日時に公開されます</small>
     </div>
 
