@@ -32,7 +32,7 @@
 
         <nav class="bg-gray-800 text-white p-3 flex justify-between w-full md:w-auto rounded">
             <a href="{{ route('admin.events.index') }}" class="font-semibold hover:underline mr-4">イベント一覧</a>
-            <a href="{{ route('admin.events.create') }}" class="hover:underline">イベント作成</a>
+            <!-- <a href="{{ route('admin.events.create') }}" class="hover:underline">イベント作成</a> -->
             <a href="{{ route('admin.account') }}" class="hover:underline">アカウント情報</a>
                         <form method="POST" action="{{ route('logout') }}">
                 @csrf
@@ -49,7 +49,7 @@
     </main>
 
     <footer class="bg-gray-800 text-white text-center p-3 mt-10">
-        <p>© {{ date('Y') }} Billiard Entry System</p>
+        <p>© {{ date('Y') }} Billents</p>
     </footer>
 </body>
 </html>

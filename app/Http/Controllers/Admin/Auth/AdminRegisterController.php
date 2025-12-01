@@ -24,8 +24,8 @@ class AdminRegisterController extends Controller
             'manager_name' => 'nullable|string|max:255',  // 担当者名
             'phone' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
-            'notification_type' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'notification_type' => 'required|string|max:255',
+            'email' => 'required|email|unique:admins,email',
             'password' => 'required|string|min:6|confirmed',
         ]);
 

@@ -24,6 +24,7 @@ class Admin extends Authenticatable
         'subscription_until',
         'tickets',
         'last_login_at',
+        'role',
     ];
 
     protected static function boot()

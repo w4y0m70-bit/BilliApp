@@ -7,13 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class UserEntry extends Model
 {
     protected $fillable = [
-        'user_id',
-        'event_id',
+        'user_id',       // ユーザーのID
+        'event_id',      // イベントのID
         'name',
         'gender',
-        'class',
-        'status',
+        'status',        // 'entry', 'waitlist', 'cancelled' など
         'waitlist_until',
+        'class',         // ユーザーのクラス（コピーで保持する場合）
     ];
 
     protected $casts = [

@@ -27,9 +27,9 @@
             <label class="block mb-1">性別</label>
             <select name="gender" class="w-full border rounded px-3 py-2">
                 <option value="">選択してください</option>
-                <option value="male" {{ old('gender')=='male'?'selected':'' }}>男性</option>
-                <option value="female" {{ old('gender')=='female'?'selected':'' }}>女性</option>
-                <option value="other" {{ old('gender')=='other'?'selected':'' }}>その他</option>
+                <option value="男性" @selected(old('gender') == '男性')>男性</option>
+                <option value="女性" @selected(old('gender') == '女性')>女性</option>
+                <!-- <option value="その他" {{ old('gender')=='その他'?'selected':'' }}>その他</option> -->
             </select>
         </div>
 
@@ -52,7 +52,7 @@
         <div class="mb-3">
     <label class="block font-mb-1">アカウント名（任意。後で変更できます）</label>
     <input type="text" name="account_name"
-        value="{{ old('account_name', $user->account_name ?? '') }}"
+        value="{{ old('account_name') }}"
         class="w-full border p-2 rounded">
 </div>
 

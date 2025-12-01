@@ -5,14 +5,10 @@
 @section('content')
 <h2 class="text-2xl font-bold mb-6">{{ $isReplicate ? 'イベント作成（複製）' : 'イベント編集' }}</h2>
 
-<form action="{{ $isReplicate ? route('admin.events.store') : route('admin.events.update', $event->id) }}" method="POST"
+<form action="{{ $isReplicate ? route('admin.events.store') : ($formAction ?? '#') }}" method="POST"
       class="bg-white p-6 rounded-lg shadow w-full max-w-lg">
     @csrf
-    @if(isset($formMethod) && $formMethod !== 'POST')
-        @method($formMethod)
-    @elseif(!$isReplicate)
-        @method('PUT')
-    @endif
+    @method($formMethod)
 
     {{-- イベント名 --}}
     <div class="mb-4">
@@ -24,28 +20,23 @@
     {{-- 開催日時 --}}
     <div class="mb-4">
         <label class="block font-medium mb-1">開催日時</label>
-        <input type="datetime-local" name="start_at" id="start_at" class="border w-full p-2 rounded"
-            value="{{ old('start_at', $event->start_at?->format('Y-m-d\TH:i') ?? now()->format('Y-m-d\TH:i')) }}"
+        <input type="datetime-local" name="event_date" id="event_date" class="border w-full p-2 rounded"
+            value="{{ old('event_date', $event->event_date?->format('Y-m-d\TH:i') ?? now()->format('Y-m-d\TH:i')) }}"
             min="{{ now()->format('Y-m-d\TH:i') }}">
-        <!-- <small class="text-gray-500">過去の日付は設定できません</small> -->
     </div>
 
     {{-- エントリー締め切り --}}
     <div class="mb-4">
         <label class="block font-medium mb-1">エントリー締め切り日時</label>
         <input type="datetime-local" name="entry_deadline" id="entry_deadline" class="w-full border p-2 rounded"
-               value="{{ old('entry_deadline', $event->entry_deadline->format('Y-m-d\TH:i')) }}" required>
+               value="{{ old('entry_deadline', $event->entry_deadline?->format('Y-m-d\TH:i')) }}" required>
     </div>
 
     {{-- 公開日時 --}}
     <div class="mb-4">
         <label class="block font-medium mb-1">公開日時</label>
         <input type="datetime-local" name="published_at" id="published_at" class="border w-full p-2 rounded"
-            value="{{ old('published_at',
-                $event->published_at
-                    ? $event->published_at->format('Y-m-d\TH:i')
-                    : ($event->id ? '' : now()->format('Y-m-d\TH:i'))
-            ) }}">
+            value="{{ old('published_at', $event->published_at?->format('Y-m-d\TH:i') ?? ($isReplicate ? now()->format('Y-m-d\TH:i') : '')) }}">
         <small class="text-gray-500">設定した日時に公開されます</small>
     </div>
 

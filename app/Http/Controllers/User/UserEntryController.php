@@ -1,5 +1,5 @@
 <?php
-
+//エントリー処理
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
@@ -36,7 +36,7 @@ public function entry(Request $request, Event $event)
 {
     $userId = Auth::id() ?? 1;
 
-    // すでにエントリー済み（キャンセル済除外）をチェック
+    // すでにキャンセル以外でエントリー済みかチェック
     if (UserEntry::where('user_id', $userId)
         ->where('event_id', $event->id)
         ->where('status', '!=', 'cancelled')
@@ -44,28 +44,44 @@ public function entry(Request $request, Event $event)
         return back()->with('error', 'すでにこのイベントにエントリーしています。');
     }
 
+    // もしキャンセル済みのレコードがあれば再利用
+    $entry = UserEntry::where('user_id', $userId)
+        ->where('event_id', $event->id)
+        ->where('status', 'cancelled')
+        ->first();
+
     $entryCount = $event->userEntries()->where('status', 'entry')->count();
     $isFull = $entryCount >= $event->max_participants;
 
-    // キャンセル待ちの期限入力がある場合バリデーション
     $waitlistUntil = null;
-if ($isFull && $event->allow_waitlist && $request->filled('waitlist_until')) {
-    $request->validate([
-        'waitlist_until' => 'date|after:now',
-    ]);
-    $waitlistUntil = $request->input('waitlist_until');
-}
+    if ($isFull && $event->allow_waitlist && $request->filled('waitlist_until')) {
+        $request->validate([
+            'waitlist_until' => 'date|after:now',
+        ]);
+        $waitlistUntil = $request->input('waitlist_until');
+    }
 
     $status = $isFull ? 'waitlist' : 'entry';
 
-    UserEntry::create([
-        'user_id' => $userId,
-        'event_id' => $event->id,
-        'gender' => $request->gender,   // ← 追加
-        'class' => $request->class,     // ← 追加
-        'status' => $status,
-        'waitlist_until' => $waitlistUntil,
-    ]);
+    if ($entry) {
+        // キャンセル済みエントリーを復活
+        $entry->update([
+            'class' => $request->class,
+            'gender' => $request->gender,
+            'status' => $status,
+            'waitlist_until' => $waitlistUntil,
+        ]);
+    } else {
+        // 新規作成
+        UserEntry::create([
+            'user_id' => $userId,
+            'event_id' => $event->id,
+            'class' => $request->class,
+            'gender' => $request->gender,
+            'status' => $status,
+            'waitlist_until' => $waitlistUntil,
+        ]);
+    }
 
     $message = $status === 'entry'
         ? 'イベントにエントリーしました！'
@@ -78,15 +94,12 @@ if ($isFull && $event->allow_waitlist && $request->filled('waitlist_until')) {
 
 public function cancel(Event $event, $entryId)
     {
-        $entry = UserEntry::where('id', $entryId)
-            ->where('event_id', $event->id)
-            ->firstOrFail();
+        // エントリー取得（必ずそのイベント内）
+        $entry = $event->userEntries()->findOrFail($entryId);
 
+        // モデル側のキャンセルメソッドを呼び出す
         $name = $entry->cancelAndPromoteWaitlist();
 
-        return redirect()
-            ->route('user.events.show', $event->id)
-            ->with('success', "{$name} のエントリーをキャンセルしました。");
+        return redirect()->back()->with('success', "$name さんのエントリーをキャンセルしました");
     }
-
 }

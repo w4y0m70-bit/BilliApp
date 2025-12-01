@@ -58,7 +58,7 @@
     <template x-if="entry.gender || entry.class">
         <span class="ml-1 text-gray-600">
             (
-            <span x-text="entry.class === 'Bigginer' ? 'Bg' : entry.class === 'Pro' ? 'P' : entry.class"></span>
+            <span x-text="entry.class === 'Beginner' ? 'Bg' : entry.class === 'Pro' ? 'P' : entry.class"></span>
             )
         </span>
     </template>
@@ -69,9 +69,7 @@
                     @click="cancelEntry(entry.id)"
                     class="text-red-500 hover:text-red-700 text-sm"
                     title="キャンセル"
-                >
-                    ✕
-                </button>
+                >✕</button>
             </div>
         </template>
 
@@ -127,7 +125,7 @@
                         class="border rounded w-full px-3 py-2 focus:outline-none focus:ring focus:ring-admin"
                     >
                         <option value="">選択してください</option>
-                        <option value="Bigginer">Bigginer</option>
+                        <option value="Beginner">Beginner</option>
                         <option value="C">C</option>
                         <option value="B">B</option>
                         <option value="A">A</option>
@@ -140,14 +138,12 @@
                         type="button" 
                         @click="openModal = false"
                         class="px-4 py-2 rounded border text-gray-600 hover:bg-gray-100"
-                    >
-                        閉じる
+                    >閉じる
                     </button>
                     <button 
                         type="submit" 
                         class="bg-admin text-white px-4 py-2 rounded hover:bg-admin-dark"
-                    >
-                        登録
+                    >登録
                     </button>
                 </div>
             </form>

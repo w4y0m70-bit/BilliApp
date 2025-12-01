@@ -39,7 +39,7 @@
     </main>
 
     <footer class="bg-gray-800 text-white text-center p-3 mt-10">
-        <p>© {{ date('Y') }} Billiard Entry System</p>
+        <p>© {{ date('Y') }} Billents</p>
     </footer>
 
 </body>

@@ -1,5 +1,5 @@
 <?php
-
+//イベント一覧
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
@@ -50,61 +50,63 @@ public function show(Event $event)
 }
 
     // エントリー処理
-    public function entry(Event $event)
-    {
-        // 仮ログイン対応
-        $user = Auth::user() ?? User::first();
+//     public function entry(Event $event)
+//     {
+//         // 仮ログイン対応
+//         $user = Auth::user() ?? User::first();
+// \Log::info('UserEventController::entry called');
+//         // すでにエントリー済みならスキップ
+//         if (UserEntry::where('user_id', $user->id)->where('event_id', $event->id)->exists()) {
+//             return back()->with('info', 'すでにこのイベントにエントリーしています。');
+//         }
 
-        // すでにエントリー済みならスキップ
-        if (UserEntry::where('user_id', $user->id)->where('event_id', $event->id)->exists()) {
-            return back()->with('info', 'すでにこのイベントにエントリーしています。');
-        }
+//         // 現在の参加数
+//         $currentEntries = $event->userEntries()->where('status', 'entry')->count();
 
-        // 現在の参加数
-        $currentEntries = $event->userEntries()->where('status', 'entry')->count();
+//         if ($currentEntries < $event->max_participants) {
+//             $status = 'entry';
+//             $waitlistUntil = null;
+//         } elseif ($event->allow_waitlist) {
+//             $status = 'waitlist';
+//             $waitlistUntil = $event->entry_deadline;
+//         } else {
+//             return back()->with('error', '満員のためエントリーできません。');
+//         }
 
-        if ($currentEntries < $event->max_participants) {
-            $status = 'entry';
-            $waitlistUntil = null;
-        } elseif ($event->allow_waitlist) {
-            $status = 'waitlist';
-            $waitlistUntil = $event->entry_deadline;
-        } else {
-            return back()->with('error', '満員のためエントリーできません。');
-        }
+//         // エントリー登録
+//         UserEntry::create([
+//             'user_id' => $user->id,
+//             'event_id' => $event->id,
+//             'status' => $status,
+//             'waitlist_until' => $waitlistUntil,
+//             'class' => $user->class,
+//             'name' => $user->name, 
+//         ]);
 
-        // エントリー登録
-        UserEntry::create([
-            'user_id' => $user->id,
-            'event_id' => $event->id,
-            'status' => $status,
-            'waitlist_until' => $waitlistUntil,
-        ]);
+//         // ✅ イベントの参加人数を即時更新（リロード時に反映される）
+//         $event->refresh();
 
-        // ✅ イベントの参加人数を即時更新（リロード時に反映される）
-        $event->refresh();
+//         return back()->with('success', $status === 'entry' ? 'エントリーしました！' : 'キャンセル待ちに登録されました。');
+//     }
 
-        return back()->with('success', $status === 'entry' ? 'エントリーしました！' : 'キャンセル待ちに登録されました。');
-    }
+//     public function cancel(Event $event)
+// {
+//     $user = \App\Models\User::first(); // 仮ログイン
 
-    public function cancel(Event $event)
-{
-    $user = \App\Models\User::first(); // 仮ログイン
+//     $entry = UserEntry::where('user_id', $user->id)
+//         ->where('event_id', $event->id)
+//         ->whereIn('status', ['entry', 'waitlist'])
+//         ->first();
 
-    $entry = UserEntry::where('user_id', $user->id)
-        ->where('event_id', $event->id)
-        ->whereIn('status', ['entry', 'waitlist'])
-        ->first();
+//     if (!$entry) {
+//         return back()->with('error', 'エントリーが見つかりません。');
+//     }
 
-    if (!$entry) {
-        return back()->with('error', 'エントリーが見つかりません。');
-    }
+//     $entry->delete();
+//     $entry->update(['status' => 'cancelled']);
+//     $event->refresh();
 
-    $entry->delete();
-    $entry->update(['status' => 'cancelled']);
-    $event->refresh();
-
-    return back()->with('success', 'キャンセルしました。');
-}
+//     return back()->with('success', 'キャンセルしました。');
+// }
 
 }
