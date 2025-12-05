@@ -105,29 +105,31 @@ class UserEntryController extends Controller
     }
 
     public function update(Request $request, Event $event, UserEntry $entry)
-    {
-        $this->authorize('update', $entry);
-
-        if ($entry->event_id !== $event->id) {
-            abort(403, 'Invalid entry.');
-        }
-
-        $validated = $request->validate([
-            'use_deadline' => ['nullable', 'in:on,1,true'],
-            'waitlist_until' => ['nullable', 'date_format:Y-m-d\TH:i'],
-        ]);
-
-        // use_deadline がオンなら値を保存、オフなら null
-        if ($request->has('use_deadline') && $request->input('use_deadline')) {
-            $deadline = $request->input('waitlist_until') ?: $event->entry_deadline->format('Y-m-d H:i');
-            $entry->waitlist_until = Carbon::createFromFormat('Y-m-d H:i', date('Y-m-d H:i', strtotime($deadline)));
-        } else {
-            $entry->waitlist_until = null;
-        }
-
-        $entry->save();
-
-        return redirect()->back()->with('success', 'エントリー情報を更新しました。');
+{
+    $currentUser = Auth::user();
+    if ($entry->user_id !== $currentUser->id) {
+        abort(403);
     }
+
+    $validated = $request->validate([
+        'useDeadline' => ['nullable', 'in:on,1,true'],
+        'waitlist_until' => ['nullable', 'date_format:Y-m-d\TH:i'],
+    ]);
+
+    // チェックボックスがある場合だけ値を更新
+    $useDeadline = $request->input('useDeadline') === 'on';
+    if ($useDeadline && $request->filled('waitlist_until')) {
+        $deadlineInput = $request->input('waitlist_until');
+        $entry->waitlist_until = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $deadlineInput);
+    } else {
+        $entry->waitlist_until = null;
+    }
+
+    $entry->save();
+
+    return redirect()->back()->with('success', 'エントリー情報を更新しました。');
+}
+
+
 
 }

@@ -102,6 +102,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // エントリー一覧（マイページ）
         Route::get('entries', [UserEntryController::class, 'index'])->name('entries.index');
 
+        // ユーザーのエントリー更新
+        Route::patch('events/{event}/entries/{entry}', [UserEntryController::class, 'update'])
+        ->name('entries.update');
+
         // プレイヤーアカウント
         Route::get('account/show', [UserProfileController::class, 'show'])->name('account.show');
         Route::get('account/edit', [UserProfileController::class, 'edit'])->name('account.edit');

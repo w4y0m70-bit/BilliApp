@@ -6,15 +6,14 @@
 <div class="bg-white shadow rounded-lg p-6">
     <h2 class="text-2xl font-bold mb-4">{{ $event->title }}</h2>
     <p class="text-sm text-gray-600">
-            ［{{ $event->organizer->name ?? '主催者不明' }}］
-        </p>
+        ［{{ $event->organizer->name ?? '主催者不明' }}］
+    </p>
 
     {{-- イベント概要 --}}
     @if (!empty($event->description))
         <div class="mb-4">
-            <!-- <h3 class="text-md font-semibold mb-1 text-gray-700">イベント内容</h3> -->
             <p class="text-gray-700 whitespace-pre-line">{{ $event->description }}</p>
-    </div>
+        </div>
     @endif
 
     {{-- 開催情報 --}}
@@ -28,76 +27,81 @@
     </div>
 
     @php
-    $currentUser = Auth::user() ?? \App\Models\User::first();
-    $userEntry = $event->userEntries()
-        ->where('user_id', $currentUser->id)
-        ->where('status', '!=', 'cancelled')
-        ->latest('created_at')
-        ->first();
+        $currentUser = Auth::user() ?? \App\Models\User::first();
+        $userEntry = $event->userEntries()
+            ->where('user_id', $currentUser->id)
+            ->where('status', '!=', 'cancelled')
+            ->latest('created_at')
+            ->first();
 
-    $status = $userEntry ? $userEntry->status : null;
+        $status = $userEntry ? $userEntry->status : null;
+        $isFull = $event->entry_count >= $event->max_participants;
+        $waitlistCount = $event->userEntries()->where('status', 'waitlist')->count();
+        $userWaitlistUntil = $userEntry?->waitlist_until?->format('Y-m-d\TH:i') ?? $event->entry_deadline->format('Y-m-d\TH:i');
+        $entryRoute = $userEntry
+            ? route('user.entries.update', ['event' => $event->id, 'entry' => $userEntry->id])
+            : route('user.entries.entry', ['event' => $event->id]);
+        $method = $userEntry ? 'PATCH' : 'POST';
+        $deadlineValue = old(
+        'waitlist_until',
+        $userEntry?->waitlist_until?->format('Y-m-d\TH:i') ?? $event->entry_deadline->format('Y-m-d\TH:i')
+    );
+    @endphp
 
-    $isFull = $event->entry_count >= $event->max_participants;
-    $waitlistCount = $event->userEntries()->where('status', 'waitlist')->count();
-@endphp
-
-<div class="text-center mt-6 space-y-3">
-    @if (in_array($status, ['entry', 'waitlist']))
-        {{-- エントリー中 or キャンセル待ち中 → キャンセルボタン --}}
-        <form 
-            action="{{ route('user.entries.cancel', ['event' => $event->id, 'entryId' => $userEntry->id]) }}" 
-            method="POST"
-            onsubmit="return confirmCancel();"
-        >
+    <div class="text-center mt-6 space-y-3">
+        {{-- エントリーフォーム --}}
+        <form action="{{ $entryRoute }}" method="POST" onsubmit="return confirmEntryUpdate();">
             @csrf
-            @method('PATCH')
-            <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
-                エントリーをキャンセルする
+            @if($userEntry)
+                @method('PATCH')
+            @endif
+
+            @if($isFull && $event->allow_waitlist)
+                <div class="mb-4">
+                    <div class="flex items-center gap-3 justify-center">
+                        <label class="inline-flex items-center gap-2 whitespace-nowrap">
+                            <input type="checkbox" name="useDeadline" id="useDeadlineCheckbox"
+                                {{ optional($userEntry)->waitlist_until ? 'checked' : '' }}>
+                            キャンセル待ち期限を設定する
+                        </label>
+
+                        <input 
+                            type="datetime-local" 
+                            name="waitlist_until" 
+                            id="waitlistUntil"
+                            x-bind:disabled="!useDeadline"
+                            value="{{ old('waitlist_until', optional($userEntry)->waitlist_until?->format('Y-m-d\TH:i') ?? $event->entry_deadline->format('Y-m-d\TH:i')) }}"
+                            class="border rounded px-3 py-2"
+                            {{ optional($userEntry)->waitlist_until ? '' : 'disabled' }}
+                        >
+                    </div>
+                </div>
+            @endif
+
+            <button type="submit" class="bg-user text-white px-4 py-2 rounded hover:bg-user-dark transition">
+                {{ $userEntry ? '更新する' : 'このイベントにエントリーする' }}
             </button>
         </form>
-    @else
-    {{-- 未エントリー → エントリーフォーム --}}
-    <form 
-    action="{{ route('user.entries.entry', ['event' => $event->id]) }}" 
-    method="POST"
-    onsubmit="return confirmEntry();"
-    x-data="{
-        useDeadline: false,
-        deadline: @json($event->entry_deadline->format('Y-m-d\TH:i'))
-    }"
->
-    @csrf
 
-   @if($isFull && $event->allow_waitlist)
-<div class="mb-4">
-    <div class="flex items-center gap-3">
-        <!-- チェックボックス -->
-        <label class="inline-flex items-center gap-2 whitespace-nowrap">
-            <input type="checkbox" id="useDeadlineCheckbox">
-            キャンセル待ち期限を設定する
-        </label>
+        {{-- キャンセルボタン（エントリー済みのみ表示） --}}
+        @if($userEntry)
+            <form 
+                action="{{ route('user.entries.cancel', ['event' => $event->id, 'entryId' => $userEntry->id]) }}" 
+                method="POST"
+                onsubmit="return confirmCancel();"
+            >
+                @csrf
+                @method('PATCH')
+                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition mt-2">
+                    エントリーをキャンセルする
+                </button>
+            </form>
+        @endif
 
-        <!-- 日付入力 -->
-        <input 
-            type="datetime-local" 
-            name="waitlist_until" 
-            id="waitlistUntil"
-            value="{{ $event->entry_deadline->format('Y-m-d\TH:i') }}"
-            class="border rounded px-3 py-2 bg-gray-200 text-gray-500 cursor-not-allowed"
-            disabled
-        >
+        <a href="{{ route('user.events.index') }}" class="inline-block bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition">
+            一覧に戻る
+        </a>
     </div>
-</div>
-@endif
-    <button type="submit" class="bg-user text-white px-4 py-2 rounded hover:bg-user-dark transition">
-        このイベントにエントリーする
-    </button>
-</form>
-@endif
-
-    <a href="{{ route('user.events.index') }}" class="inline-block bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition">
-        一覧に戻る
-    </a>
 </div>
 
 <script>
@@ -109,14 +113,12 @@ function confirmCancel() {
     return confirm(message);
 }
 
-function confirmEntry() {
-    let message = 'このイベントにエントリーしますか？';
-    @if($isFull && $waitlistCount > 0)
-        message += '\n満員のため、キャンセル待ちに登録されます。';
-    @elseif($isFull)
-        message += '\n満員のため、キャンセル待ちに登録されます。';
+function confirmEntryUpdate() {
+    let message = '';
+    @if($isFull)
+        message = '満員のため、キャンセル待ちに登録されます。';
     @else
-        message += '\n定員に余裕があるため、通常エントリーされます。';
+        message = '{{ $userEntry ? "キャンセル待ち期限を更新します。" : "このイベントにエントリーします。" }}';
     @endif
     return confirm(message);
 }
@@ -138,6 +140,4 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 </script>
-
-</div>
 @endsection
