@@ -27,9 +27,8 @@
                 $status = $userEntry->status ?? null;
             @endphp
 
-            <a href="{{ route('user.events.show', $event->id) }}"
-                class="block bg-white shadow rounded-xl p-4 border hover:shadow-lg transition"
-            >
+            <div class="bg-white shadow rounded-xl p-4 border hover:shadow-lg transition">
+
                 <p class="text-sm text-gray-600 mb-1">
                     ［{{ $event->organizer->name ?? '主催者不明' }}］
                 </p>
@@ -64,23 +63,28 @@
                     （{{ $event->allow_waitlist ? $event->waitlist_count : '－' }}）
                 </p>
 
-                {{-- 状態バッジ --}}
+                {{-- 状態バッジ（クリックで詳細ページへ） --}}
                 <div class="mt-3">
-                    @if ($status === 'entry')
-                        <span class="inline-block bg-user text-white text-sm px-3 py-1 rounded">
-                            エントリー中
-                        </span>
-                    @elseif ($status === 'waitlist')
-                        <span class="inline-block bg-orange-500 text-white text-sm px-3 py-1 rounded">
-                            キャンセル待ち（{{ $userEntry->waitlist_position ?? '' }}番目）
-                        </span>
-                    @else
-                        <span class="inline-block bg-gray-400 text-white text-sm px-3 py-1 rounded">
-                            未エントリー
-                        </span>
-                    @endif
+                    <a href="{{ route('user.events.show', $event->id) }}" class="inline-block">
+                        @if ($status === 'entry')
+                            <span class="inline-block bg-user text-white text-sm px-3 py-1 rounded hover:opacity-80 transition">
+                                エントリー中
+                            </span>
+
+                        @elseif ($status === 'waitlist')
+                            <span class="inline-block bg-orange-500 text-white text-sm px-3 py-1 rounded hover:opacity-80 transition">
+                                キャンセル待ち（{{ $userEntry->waitlist_position ?? '' }}番目）
+                            </span>
+
+                        @else
+                            <span class="inline-block bg-gray-400 text-white text-sm px-3 py-1 rounded hover:opacity-80 transition">
+                                未エントリー
+                            </span>
+                        @endif
+                    </a>
                 </div>
-            </a>
+
+            </div>
         @endforeach
     </div>
     @endif
