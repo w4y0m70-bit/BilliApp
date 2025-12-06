@@ -60,11 +60,12 @@
                 }"
                 class="mt-4 border p-4 rounded-lg bg-gray-50"
             >
-                <p class="text-sm text-gray-700 mb-1">
+                <p class="text-sm text-gray-700">
                     キャンセル待ち期限：
                     @if($userEntry->waitlist_until)
                         {{ format_event_date($userEntry->waitlist_until) }}
                         {{ $userEntry->waitlist_until->format('H:i') }}
+                        <br><span class="text-red-600">（上記の日時に自動的にエントリーがキャンセルされます）</span>
                     @else
                         —
                     @endif
@@ -73,7 +74,7 @@
                 <button 
                     type="button"
                     @click="openModal = true"
-                    class="mt-4 text-center w-full text-gray-600 underline"
+                    class="mt-1 text-center w-full text-gray-600 underline"
                 >
                     設定
                 </button>
@@ -135,31 +136,33 @@
         @endif
 
 
-
         {{-- ■ イベント概要 --}}
         @if(!empty($event->description))
             <div class="mt-4">
-                <p class="text-gray-700 whitespace-pre-line border-t pt-4">{{ $event->description }}</p>
+                <p class="text-gray-700 break-words border-t pt-4">
+                    <strong class="text-sm">【イベント内容】</strong><br>
+                    {{ $event->description }}
+                </p>
             </div>
         @endif
 
-
-
         {{-- ■ エントリーボタン --}}
         <div class="flex justify-end items-center gap-3 pt-4 border-t">
-            <button type="submit"
-                class="px-4 py-2 rounded text-white transition
-                    {{ $canEntry ? 'bg-user hover:bg-user-dark' : 'bg-gray-400 cursor-not-allowed' }}"
-                {{ $canEntry ? '' : 'disabled' }}>
-                
-                @if(!$canEntry)
-                    満員のためエントリー不可
-                @elseif($userEntry)
-                    エントリー内容を更新
-                @else
-                    このイベントにエントリー
-                @endif
-            </button>
+            @if(!$userEntry)
+                <button 
+                    type="submit"
+                    class="px-4 py-2 rounded text-white transition
+                        {{ $canEntry ? 'bg-user hover:bg-user-dark' : 'bg-gray-400 cursor-not-allowed' }}"
+                    {{ $canEntry ? '' : 'disabled' }}
+                >
+                    @if(!$canEntry)
+                        満員のためエントリー不可
+                    @else
+                        このイベントにエントリー
+                    @endif
+                </button>
+            @endif
+
 
             <a href="{{ route('user.events.index') }}"
                 class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition">

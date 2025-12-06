@@ -39,16 +39,35 @@
         {{-- クラス --}}
         <div class="mb-4">
             <label class="block font-semibold mb-1">クラス</label>
-            <input type="text" name="class" class="w-full border p-2 rounded"
-                value="{{ old('class', $user->class) }}">
+            <select name="class" class="w-full border p-2 rounded">
+                @php
+                    $classes = ['Beginner','C','B','A','Pro'];
+                @endphp
+                @foreach($classes as $classOption)
+                    <option value="{{ $classOption }}" 
+                        {{ old('class', $user->class) === $classOption ? 'selected' : '' }}>
+                        {{ $classOption }}
+                    </option>
+                @endforeach
+            </select>
         </div>
 
         {{-- 通知先 --}}
         <div class="mb-4">
             <label class="block font-semibold mb-1">通知先</label>
-            <input type="text" name="notification" class="w-full border p-2 rounded"
-                value="{{ old('notification', $user->notification) }}">
+            <select name="notification" class="w-full border p-2 rounded">
+                @php
+                    $notifications = ['メール','LINE'];
+                @endphp
+                @foreach($notifications as $notify)
+                    <option value="{{ $notify }}" 
+                        {{ old('notification', $user->notification) === $notify ? 'selected' : '' }}>
+                        {{ $notify }}
+                    </option>
+                @endforeach
+            </select>
         </div>
+
 
         <div class="mt-6 flex items-center gap-4">
     {{-- 更新ボタン --}}

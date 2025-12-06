@@ -72,7 +72,7 @@
     <label class="block mb-1">通知先（キャンセル待ち～エントリーなどの通知）</label>
     <select name="notification_type" class="w-full border p-2 rounded" required>
         <option value="email">メール</option>
-        <option value="sms">SMS</option>
+        <!-- <option value="sms">SMS</option> -->
         <option value="line">LINE</option>
     </select>
 </div>
