@@ -25,6 +25,7 @@
                     ->first();
 
                 $status = $userEntry->status ?? null;
+                $isFull = $event->entry_count >= $event->max_participants;
             @endphp
 
             <div class="bg-white shadow rounded-xl p-4 border hover:shadow-lg transition">
@@ -59,8 +60,14 @@
 
                 <p class="text-sm text-gray-700 mt-1">
                     <strong>参加人数：</strong>
-                    {{ $event->entry_count }}／{{ $event->max_participants }}
-                    （{{ $event->allow_waitlist ? $event->waitlist_count : '－' }}）
+                    {{ $event->entry_count }}／{{ $event->max_participants }}人
+                    （
+                    @if($isFull && !$event->allow_waitlist)
+                        ✕
+                    @else
+                        {{ $event->allow_waitlist ? $event->waitlist_count : '－' }}
+                    @endif
+                    ）
                 </p>
 
                 {{-- 状態バッジ（クリックで詳細ページへ） --}}
@@ -78,7 +85,11 @@
 
                         @else
                             <span class="inline-block bg-gray-400 text-white text-sm px-3 py-1 rounded hover:opacity-80 transition">
+                                @if($isFull && !$event->allow_waitlist)
+                                満員
+                                @else
                                 未エントリー
+                                @endif
                             </span>
                         @endif
                     </a>
