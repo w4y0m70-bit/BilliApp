@@ -37,46 +37,48 @@
         </div>
     </div>
 
-    <!-- 参加者カード -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <template x-for="entry in sortedParticipants" :key="entry.id">
-            <div 
-                class="relative shadow rounded-lg p-4 flex items-center gap-2"
-                :class="entry.status === 'waitlist' ? 'bg-yellow-100' : 'bg-white'"
-            >
-                <!-- 左に番号 or WL -->
-                <div class="font-medium w-12 text-center rounded bg-gray-500 text-white py-1">
-                    <span x-text="entry.status === 'entry' ? entry.order : ('WL-' + entry.order)"></span>
-                </div>
+    <!-- 参加者表 -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full border border-gray-200">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-4 py-2 border-b">No.</th>
+                    <th class="px-4 py-2 border-b">名前</th>
+                    <th class="px-4 py-2 border-b">クラス</th>
+                    <th class="px-4 py-2 border-b">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="entry in sortedParticipants" :key="entry.id">
+                    <tr :class="entry.status === 'waitlist' ? 'bg-yellow-100' : 'bg-white'">
+                        <td class="px-4 py-2 border-b text-center font-medium">
+                            <span x-text="entry.status === 'entry' ? entry.order : ('WL-' + entry.order)"></span>
+                        </td>
+                        <td class="px-4 py-2 border-b font-bold">
+                            <span :class="entry.gender === '女性' ? 'text-pink-700' : ''" x-text="entry.name"></span>
+                        </td>
+                        <td class="px-4 py-2 border-b text-center text-gray-600">
+                            <span x-text="entry.class ? (entry.class === 'Beginner' ? 'Bg' : entry.class === 'Pro' ? 'P' : entry.class) : '??'"></span>
+                        </td>
+                        <td class="px-4 py-2 border-b text-center">
+                            <button 
+                                @click="cancelEntry(entry.id)" 
+                                class="text-red-500 hover:text-red-700 text-sm"
+                                title="キャンセル"
+                            >✕</button>
+                        </td>
+                    </tr>
+                </template>
 
-                <!-- 名前 + 性別 + クラス -->
-                <div class="flex-1 font-bold">
-    <span 
-        x-text="entry.name"
-        :class="entry.gender === '女性' ? 'text-red-700' : ''"
-    ></span>
-    <template x-if="entry.gender || entry.class">
-        <span class="ml-1 text-gray-600">
-            (
-            <span x-text="entry.class === 'Beginner' ? 'Bg' : entry.class === 'Pro' ? 'P' : entry.class"></span>
-            )
-        </span>
-    </template>
-</div>
-
-                <!-- キャンセルボタン -->
-                <button 
-                    @click="cancelEntry(entry.id)"
-                    class="text-red-500 hover:text-red-700 text-sm"
-                    title="キャンセル"
-                >✕</button>
-            </div>
-        </template>
-
-        <template x-if="participants.length === 0">
-            <p class="col-span-3 text-center text-gray-500">参加者はいません</p>
-        </template>
+                <template x-if="participants.length === 0">
+                    <tr>
+                        <td colspan="4" class="px-4 py-4 text-center text-gray-500">参加者はいません</td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
     </div>
+
 
     <!-- ゲスト追加モーダル -->
     <div 
