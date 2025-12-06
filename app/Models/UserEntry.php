@@ -66,7 +66,7 @@ class UserEntry extends Model
                     ->get();
 
                 foreach ($waitlist as $w) {
-                    $w->update(['status' => 'entry']);
+                    $w->update(['status' => 'entry','waitlist_until' => null,]);
                 }
             }
 

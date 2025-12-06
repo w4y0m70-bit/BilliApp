@@ -30,17 +30,17 @@
 
             <div class="bg-white shadow rounded-xl p-4 border hover:shadow-lg transition">
 
-                <p class="text-sm text-gray-600 mb-1">
+                <p class="text-sm text-gray-600">
                     ［{{ $event->organizer->name ?? '主催者不明' }}］
                 </p>
 
-                <h3 class="text-lg font-bold mb-2">{{ $event->title }}</h3>
+                <h3 class="text-lg font-bold mb-1">{{ $event->title }}</h3>
 
                 <p class="text-sm text-gray-700">
-                    <strong>開催日時：</strong>
+                    <strong>開催日時：</strong><span class="text-lg font-bold">
                     {{ format_event_date($event->event_date) }}
                     {{ $event->event_date->format('H:i') }}
-                </p>
+                </span></p>
 
                 <p class="text-sm text-gray-700 mt-1">
                     <strong>エントリー締切：</strong>
@@ -62,10 +62,10 @@
                     <strong>参加人数：</strong>
                     {{ $event->entry_count }}／{{ $event->max_participants }}人
                     （
-                    @if($isFull && !$event->allow_waitlist)
-                        ✕
+                    @if($event->allow_waitlist)
+                        WL：{{ $event->waitlist_count }}
                     @else
-                        {{ $event->allow_waitlist ? $event->waitlist_count : '－' }}
+                        ✕
                     @endif
                     ）
                 </p>

@@ -105,6 +105,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // ユーザーのエントリー更新
         Route::patch('events/{event}/entries/{entry}', [UserEntryController::class, 'update'])
         ->name('entries.update');
+        // Route::post('/events/{event}/waitlist-update', [UserEntryController::class, 'updateWaitlist'])
+        // ->name('user.waitlist.update');
 
         // プレイヤーアカウント
         Route::get('account/show', [UserProfileController::class, 'show'])->name('account.show');
