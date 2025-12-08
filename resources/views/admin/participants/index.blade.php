@@ -8,31 +8,33 @@
     x-init="loadParticipants()"
     class="space-y-6"
 >
-    <div class="flex justify-between items-center">
-        <h2 class="text-2xl font-bold">{{ $event->title }} の参加者一覧</h2>
+    <div>
+        <!-- 1行目：戻る -->
+        <a href="{{ route('admin.events.index') }}" class="text-gray-500 hover:text-gray-800 flex items-center gap-1">
+            <span class="material-icons">arrow_back</span>
+            <!-- <span>戻る</span> -->
+        </a>
 
-        <div class="flex items-center gap-4">
+        <!-- 2行目：タイトル + ゲスト追加ボタン -->
+            <h2 class="text-2xl font-bold">{{ $event->title }} の参加者一覧</h2>
+        
+        <!-- 3行目：参加人数 -->
+         <div class="flex justify-between items-center">
             <p class="text-gray-700">
                 エントリー：
-    <span x-text="participants.filter(e => e.status === 'entry').length"></span>
-    /
-    {{ $event->max_participants }}
-
-    （キャンセル待ち：
-        <span x-text="participants.filter(e => e.status === 'waitlist').length"></span>
-    ）
+                <span x-text="participants.filter(e => e.status === 'entry').length"></span>
+                /
+                {{ $event->max_participants }}
+                （キャンセル待ち：
+                <span x-text="participants.filter(e => e.status === 'waitlist').length"></span>
+                ）
             </p>
-
-            <a href="{{ route('admin.events.index') }}" class="text-gray-500 hover:underline">
-                ← イベント一覧へ戻る
-            </a>
-
             <!-- ゲスト追加ボタン -->
             <button 
                 @click="openModal = true"
-                class="bg-admin text-white px-4 py-2 rounded hover:bg-admin-dark"
+                class="bg-admin text-white px-3 py-1 rounded hover:bg-admin-dark flex items-center justify-center"
             >
-                ＋ ゲストを追加
+                <span class="material-icons text-lg">add</span>
             </button>
         </div>
     </div>

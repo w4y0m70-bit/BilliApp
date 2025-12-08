@@ -28,7 +28,8 @@
                 $isFull = $event->entry_count >= $event->max_participants;
             @endphp
 
-            <div class="bg-white shadow rounded-xl p-4 border hover:shadow-lg transition">
+            <a href="{{ route('user.events.show', $event->id) }}"
+               class="block bg-white shadow rounded-xl p-4 border hover:shadow-lg transition">
 
                 <p class="text-sm text-gray-600">
                     ［{{ $event->organizer->name ?? '主催者不明' }}］
@@ -72,19 +73,18 @@
 
                 {{-- 状態バッジ（クリックで詳細ページへ） --}}
                 <div class="mt-3">
-                    <a href="{{ route('user.events.show', $event->id) }}" class="inline-block">
-                        @if ($status === 'entry')
-                            <span class="inline-block bg-user text-white text-sm px-3 py-1 rounded hover:opacity-80 transition">
+                    @if ($status === 'entry')
+                            <span class="inline-block bg-user text-white text-sm px-3 py-1 rounded transition">
                                 エントリー中
                             </span>
 
                         @elseif ($status === 'waitlist')
-                            <span class="inline-block bg-orange-500 text-white text-sm px-3 py-1 rounded hover:opacity-80 transition">
+                            <span class="inline-block bg-orange-500 text-white text-sm px-3 py-1 rounded transition">
                                 キャンセル待ち（{{ $userEntry->waitlist_position ?? '' }}番目）
                             </span>
 
                         @else
-                            <span class="inline-block bg-gray-400 text-white text-sm px-3 py-1 rounded hover:opacity-80 transition">
+                            <span class="inline-block bg-gray-400 text-white text-sm px-3 py-1 rounded transition">
                                 @if($isFull && !$event->allow_waitlist)
                                 満員
                                 @else
@@ -92,10 +92,9 @@
                                 @endif
                             </span>
                         @endif
-                    </a>
                 </div>
 
-            </div>
+            </a>
         @endforeach
     </div>
     @endif
