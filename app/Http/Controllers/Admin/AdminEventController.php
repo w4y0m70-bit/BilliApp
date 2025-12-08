@@ -64,6 +64,7 @@ class AdminEventController extends Controller
                                     $q->whereNull('published_at')
                                     ->orWhere('published_at', '>', $now);
                                 })
+                                ->where('event_date', '>=', $now)
                                 ->orderBy('event_date')
                                 ->get();
 
@@ -97,9 +98,21 @@ class AdminEventController extends Controller
     // 編集画面表示
     public function edit(Event $event)
     {
+        $now = now();
+
+        // 過去イベント → 複製対象でもある
+        $isPast = $event->event_date < $now;
+
+        // 公開済み（公開日時 <= 現在）
+        $isPublished = $event->published_at && $event->published_at <= $now;
+
+        // 編集制限（公開済み ＆ 過去ではない）
+        $isLimited = $isPublished && !$isPast;
+
         return view('admin.events.form', [
             'event' => $event,
             'isReplicate' => false,
+            'isLimited' => $isLimited,   // ★追加：Blade で使用するフラグ
             'formAction' => route('admin.events.update', $event->id),
             'formMethod' => 'PUT',
         ]);
@@ -109,8 +122,31 @@ class AdminEventController extends Controller
     // 更新処理
     public function update(Request $request, Event $event)
     {
+        $now = now();
+        $isPast = $event->event_date < $now;
+        $isPublished = $event->published_at && $event->published_at <= $now;
+
+        // 公開済み & 未来イベントの場合のみ「編集制限」
+        $isLimited = $isPublished && !$isPast;
+
+        if ($isLimited) {
+            // 公開済み → タイトル・説明のみ更新可能
+            $request->validate([
+                'title' => 'required|string|max:100',
+                'description' => 'nullable|string',
+            ]);
+
+            $event->update($request->only(['title', 'description']));
+
+            return redirect()
+                ->route('admin.events.index')
+                ->with('success', '公開中のイベントのため「イベント名」「内容」だけ更新しました。');
+        }
+
+        // 未公開 or 過去 or 複製後 → 全フィールド更新可能
         $request->validate([
             'title' => 'required|string|max:100',
+            'description' => 'nullable|string',
             'event_date' => 'required|date|after_or_equal:now',
             'entry_deadline' => 'required|date|before:event_date',
             'published_at' => 'nullable|date',
@@ -118,18 +154,14 @@ class AdminEventController extends Controller
             'allow_waitlist' => 'required|boolean',
         ]);
 
-        $event->update([
-            'title' => $request->title,
-            'description' => $request->description,
-            'event_date' => $request->event_date,
-            'entry_deadline' => $request->entry_deadline,
-            'published_at' => $request->published_at,
-            'max_participants' => $request->max_participants,
-            'allow_waitlist' => $request->allow_waitlist,
-        ]);
+        // 制限なし → 全更新
+        $event->update($request->all());
 
-        return redirect()->route('admin.events.index')->with('success', 'イベントを更新しました');
+        return redirect()
+            ->route('admin.events.index')
+            ->with('success', 'イベントを更新しました');
     }
+
 
     //イベント削除
     public function destroy(Event $event)
@@ -150,24 +182,11 @@ class AdminEventController extends Controller
         $replicatedEvent->event_date = now()->addDays(1); // 仮設定
         $replicatedEvent->entry_deadline = now()->addDays(1);
 
-        // // 元のイベントを複製（すべてコピーする）
-        // $newEvent = $event->replicate(); 
-
-        // // 新規作成向けに調整
-        // $newEvent->title = $event->title; // タイトルもコピー
-        // $newEvent->description = $event->description;
-        // $newEvent->max_participants = $event->max_participants;
-
-        // $newEvent->published_at = null; // 未公開
-        // $newEvent->event_date = now()->addDays(1); // 仮設定
-        // $newEvent->entry_deadline = now()->addDays(1);
-
-        // $newEvent->save();
-
         $replicatedEvent = $event->replicate();
         return view('admin.events.form', [
             'event' => $replicatedEvent,
             'isReplicate' => true,        // Blade でボタンラベル切替用
+            'isLimited' => false,
             'formAction' => route('admin.events.store'), // store に送信
             'formMethod' => 'POST',       // 新規作成なので POST
         ]);

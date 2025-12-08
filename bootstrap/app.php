@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // 🔽 グローバル・ルートミドルウェア登録
         $middleware->alias([
             'role' => RoleMiddleware::class,
+            'auth' => \App\Http\Middleware\Authenticate::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

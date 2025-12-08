@@ -3,7 +3,7 @@
 @section('title', '公開イベント一覧')
 
 @section('content')
-<div class="px-4 py-6">
+<div class="px-4">
     <h2 class="text-2xl font-bold mb-4">公開中のイベント</h2>
 
     @if($events->isEmpty())

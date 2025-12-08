@@ -4,6 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <title>イベント管理 | @yield('title')</title>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     @vite('resources/css/app.css')
@@ -16,28 +20,33 @@
         <div class="flex items-center w-full md:w-auto mb-2 md:mb-0">
             <!-- 🏠 トップページへ戻るボタン -->
             <a href="{{ url('/') }}" 
-               class="text-white hover:text-yellow-300 transition mr-4"
-               title="トップページへ戻る">
-                <svg xmlns="http://www.w3.org/2000/svg" 
-                     class="h-6 w-6 inline-block align-middle" 
-                     fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" 
-                          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6"/>
-                </svg>
+                <span class="material-icons">home</span>
             </a>
 
             <h1 class="text-xl font-bold">
-                {{ Auth::guard('admin')->user()->name ?? '管理者' }} のイベント管理
+                {{ Auth::guard('admin')->user()->name ?? '管理者' }} <span class="text-lg p-1">の</span>イベント管理
             </h1>
         </div>
 
-        <nav class="bg-gray-800 text-white p-3 flex justify-between w-full md:w-auto rounded">
-            <a href="{{ route('admin.events.index') }}" class="font-semibold hover:underline mr-4">イベント一覧</a>
-            <!-- <a href="{{ route('admin.events.create') }}" class="hover:underline">イベント作成</a> -->
-            <a href="{{ route('admin.account') }}" class="hover:underline">アカウント情報</a>
-                        <form method="POST" action="{{ route('logout') }}">
+        <nav class="bg-gray-800 text-white px-4 py-3 flex items-center gap-1 rounded shadow">
+
+            <a href="{{ route('admin.events.index') }}"
+            class="flex items-center gap-1 hover:bg-gray-700 px-3 py-1 rounded transition">
+                <span class="material-icons text-sm">event</span>
+                イベント
+            </a>
+
+            <a href="{{ route('admin.account') }}"
+            class="flex items-center gap-1 hover:bg-gray-700 px-3 py-1 rounded transition">
+                <span class="material-icons text-sm">account_circle</span>
+                アカウント
+            </a>
+
+            <form method="POST" action="{{ route('logout') }}" class="ml-auto">
                 @csrf
-                <button type="submit" class="text-gray-800 hover:text-red-600">
+                <button type="submit"
+                        class="flex items-center gap-1 hover:bg-red-600 px-3 py-1 rounded transition">
+                    <span class="material-icons text-sm">logout</span>
                     ログアウト
                 </button>
             </form>

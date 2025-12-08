@@ -13,28 +13,35 @@ class UserLoginController extends Controller
         return view('user.auth.login');
     }
 
-     public function login(Request $request)
+    public function login(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        if (Auth::guard('web')->attempt(
+        if (Auth::attempt(
             $request->only('email', 'password'),
             $request->filled('remember')
         )) {
-            return redirect()->route('user.events.index')
+            $request->session()->regenerate();
+
+            return redirect()->intended(route('user.events.index'))
                 ->with('success', 'ログインしました！');
         }
 
-        return back()->withErrors(['email' => 'メールアドレスまたはパスワードが違います'])
-                     ->withInput();
+        return back()->withErrors([
+            'email' => 'メールアドレスまたはパスワードが違います'
+        ])->withInput();
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
-        Auth::guard('web')->logout();
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         return redirect()->route('user.login')
             ->with('success', 'ログアウトしました');
     }

@@ -3,16 +3,17 @@
 @section('title', $event->title . ' 参加者一覧')
 
 @section('content')
+<div class="px-4">
 <div 
     x-data="participantManager({{ $event->id }}, {{ $event->max_participants }})"
     x-init="loadParticipants()"
-    class="space-y-6"
+    class="space-y-3"
 >
     <div>
         <!-- 1行目：戻る -->
-        <a href="{{ route('admin.events.index') }}" class="text-gray-500 hover:text-gray-800 flex items-center gap-1">
+        <a href="{{ route('admin.events.index') }}" class="text-gray-500 hover:text-gray-800 flex items-center">
             <span class="material-icons">arrow_back</span>
-            <!-- <span>戻る</span> -->
+            <span>戻る</span>
         </a>
 
         <!-- 2行目：タイトル + ゲスト追加ボタン -->
@@ -41,31 +42,31 @@
 
     <!-- 参加者表 -->
     <div class="overflow-x-auto">
-        <table class="min-w-full border border-gray-200">
-            <thead class="bg-gray-100">
+        <table class="min-w-full border border-gray-300">
+            <thead class="bg-gray-300">
                 <tr>
-                    <th class="px-4 py-2 border-b">No.</th>
-                    <th class="px-4 py-2 border-b">名前</th>
-                    <th class="px-4 py-2 border-b">クラス</th>
-                    <th class="px-4 py-2 border-b">操作</th>
+                    <th class="px-4 border-b w-3/12">No.</th>
+                    <th class="px-4 border-b w-4/12">名　前</th>
+                    <th class="px-4 border-b w-4/12">クラス</th>
+                    <th class="px-4 border-b w-1/12"></th>
                 </tr>
             </thead>
             <tbody>
                 <template x-for="entry in sortedParticipants" :key="entry.id">
                     <tr :class="entry.status === 'waitlist' ? 'bg-yellow-100' : 'bg-white'">
-                        <td class="px-4 py-2 border-b text-center font-medium">
+                        <td class="px-1 py-2 border-b text-center font-medium">
                             <span x-text="entry.status === 'entry' ? entry.order : ('WL-' + entry.order)"></span>
                         </td>
-                        <td class="px-4 py-2 border-b font-bold">
-                            <span :class="entry.gender === '女性' ? 'text-pink-700' : ''" x-text="entry.name"></span>
+                        <td class="px-1 py-2 border-b font-bold">
+                            <span :class="entry.gender === '女性' ? 'text-pink-500' : ''" x-text="entry.name"></span>
                         </td>
-                        <td class="px-4 py-2 border-b text-center text-gray-600">
+                        <td class="px-1 py-2 border-b text-center text-gray-600">
                             <span x-text="entry.class ? (entry.class === 'Beginner' ? 'Bg' : entry.class === 'Pro' ? 'P' : entry.class) : '??'"></span>
                         </td>
-                        <td class="px-4 py-2 border-b text-center">
+                        <td class="px-1 py-2 border-b text-center">
                             <button 
                                 @click="cancelEntry(entry.id)" 
-                                class="text-red-500 hover:text-red-700 text-sm"
+                                class="text-red-500 hover:text-red-700 text-xs"
                                 title="キャンセル"
                             >✕</button>
                         </td>
@@ -153,6 +154,7 @@
             </form>
         </div>
     </div>
+</div>
 </div>
 
 <script>

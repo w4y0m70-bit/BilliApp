@@ -3,6 +3,7 @@
 @section('title', 'イベント一覧')
 
 @section('content')
+<div class="px-4">
 <h2 class="text-2xl font-bold mb-6">イベント一覧</h2>
 
 <!-- 公開中のイベント -->
@@ -32,5 +33,6 @@
             'hideActions' => true   {{-- 過去イベントなので編集ボタン非表示 --}}
         ])
     </div>
+</div>
 </div>
 @endsection

@@ -81,43 +81,48 @@ Route::prefix('admin')->name('admin.')->group(function () {
 |--------------------------------------------------------------------------
 */
     Route::prefix('user')->name('user.')->group(function () {
-        // プレイヤー認証
-        Route::get('/login', [UserLoginController::class, 'showLoginForm'])->name('login');
-        Route::post('/login', [UserLoginController::class, 'login'])->name('login.post');
-        Route::post('/logout', [UserLoginController::class, 'logout'])->name('logout');
 
-        // 新規登録フォーム表示
-        Route::get('register', [UserRegisterController::class, 'showRegistrationForm'])->name('register');
-        // 新規登録処理
-        Route::post('register', [UserRegisterController::class, 'register'])->name('register.post');
+        // --- 認証不要ルート ---
+        Route::middleware('guest')->group(function () {
+            Route::get('/login', [UserLoginController::class, 'showLoginForm'])->name('login');
+            Route::post('/login', [UserLoginController::class, 'login'])->name('login.post');
 
-        // イベント一覧・詳細
-        Route::get('events', [UserEventController::class, 'index'])->name('events.index');
-        Route::get('events/{event}', [UserEventController::class, 'show'])->name('events.show');
+            Route::get('/register', [UserRegisterController::class, 'showRegistrationForm'])->name('register');
+            Route::post('/register', [UserRegisterController::class, 'register'])->name('register.post');
+        });
 
-        // ✅ エントリー処理関連
-        Route::post('events/{event}/entry', [UserEntryController::class, 'entry'])->name('entries.entry');
-        Route::post('events/{event}/waitlist', [UserEntryController::class, 'waitlist'])->name('entries.waitlist');
+        // --- 認証必須ルート ---
+        Route::middleware('auth')->group(function () {
 
-        // エントリー一覧（マイページ）
-        Route::get('entries', [UserEntryController::class, 'index'])->name('entries.index');
+            // ログアウト
+            Route::post('/logout', [UserLoginController::class, 'logout'])->name('logout');
 
-        // ユーザーのエントリー更新
-        Route::patch('events/{event}/entries/{entry}', [UserEntryController::class, 'update'])
-        ->name('entries.update');
-        // Route::post('/events/{event}/waitlist-update', [UserEntryController::class, 'updateWaitlist'])
-        // ->name('user.waitlist.update');
+            // イベント一覧・詳細
+            Route::get('events', [UserEventController::class, 'index'])->name('events.index');
+            Route::get('events/{event}', [UserEventController::class, 'show'])->name('events.show');
 
-        // プレイヤーアカウント
-        Route::get('account/show', [UserProfileController::class, 'show'])->name('account.show');
-        Route::get('account/edit', [UserProfileController::class, 'edit'])->name('account.edit');
-        Route::patch('account/update', [UserProfileController::class, 'update'])->name('account.update');
+            // エントリー処理
+            Route::post('events/{event}/entry', [UserEntryController::class, 'entry'])->name('entries.entry');
+            Route::post('events/{event}/waitlist', [UserEntryController::class, 'waitlist'])->name('entries.waitlist');
 
+            // エントリー一覧（マイページ）
+            Route::get('entries', [UserEntryController::class, 'index'])->name('entries.index');
 
-        // キャンセル処理
-        Route::patch('/events/{event}/cancel/{entryId}', [UserEntryController::class, 'cancel'])
-        ->name('entries.cancel');
-});
+            // エントリー更新
+            Route::patch('events/{event}/entries/{entry}', [UserEntryController::class, 'update'])
+                ->name('entries.update');
+
+            // キャンセル処理
+            Route::patch('/events/{event}/cancel/{entryId}', [UserEntryController::class, 'cancel'])
+                ->name('entries.cancel');
+
+            // プレイヤーアカウント
+            Route::get('account/show', [UserProfileController::class, 'show'])->name('account.show');
+            Route::get('account/edit', [UserProfileController::class, 'edit'])->name('account.edit');
+            Route::patch('account/update', [UserProfileController::class, 'update'])->name('account.update');
+        });
+
+    });
 
 /*
 |--------------------------------------------------------------------------

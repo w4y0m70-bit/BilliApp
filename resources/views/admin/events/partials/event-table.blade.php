@@ -6,11 +6,31 @@
                  @click="openModal = {{ $event->id }}">
                 <div class="flex justify-between items-start mb-2">
                     <h4 class="text-lg font-semibold">{{ $event->title }}</h4>
-                    <a href="{{ route('admin.events.edit', $event) }}"
-                       @click.stop
-                       class="text-gray-600 hover:text-gray-800">
-                        ✏️
-                    </a>
+                    <div class="flex justify-between items-start mb-2">
+                        {{-- 操作アイコン（編集 or 複製 または なし） --}}
+                        @php
+                            $isPast = $event->event_date->lt(now());
+                            $isPublished = $event->published_at && $event->published_at->lte(now());
+                        @endphp
+
+                        {{-- ① 過去イベントは最優先で複製アイコン --}}
+                        @if ($isPast)
+                            <a href="{{ route('admin.events.replicate', $event) }}"
+                            @click.stop
+                            class="text-gray-700 hover:text-blue-700"
+                            title="このイベントを元に新規作成">
+                                <span class="material-icons">content_copy</span>
+                            </a>
+
+                        {{-- ② それ以外 → 編集アイコン --}}
+                        @else
+                            <a href="{{ route('admin.events.edit', $event) }}"
+                            @click.stop
+                            class="text-gray-700 hover:text-blue-700">
+                                <span class="material-icons">edit</span>
+                            </a>
+                        @endif
+                    </div>
                 </div>
                 <div class="text-sm text-gray-700 mb-1">
                     開催日：{{ $event->event_date->format('Y-m-d H:i') }}
