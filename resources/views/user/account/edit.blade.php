@@ -52,20 +52,40 @@
             </select>
         </div>
 
-        {{-- 通知先 --}}
+        {{-- 通知設定 --}}
         <div class="mb-4">
-            <label class="block font-semibold mb-1">通知先</label>
-            <select name="notification" class="w-full border p-2 rounded">
+            <label class="block font-semibold mb-1">通知</label>
                 @php
-                    $notifications = ['メール','LINE'];
+                $notificationTypes = [
+                    'event_published' => '新規イベント公開',
+                    'waitlist_promoted' => 'キャンセル待ち繰り上げ',
+                    'waitlist_cancelled' => 'キャンセル待ち期限切れ',
+                ];
+                $notificationVias = ['mail' => 'メール', 'line' => 'LINE'];
                 @endphp
-                @foreach($notifications as $notify)
-                    <option value="{{ $notify }}" 
-                        {{ old('notification', $user->notification) === $notify ? 'selected' : '' }}>
-                        {{ $notify }}
-                    </option>
+
+                @foreach($notificationTypes as $type => $label)
+                    <div class="mb-4">
+                        <label class="block font-semibold mb-1">{{ $label }}</label>
+
+                        <div class="flex items-center gap-4">
+                            <select name="notifications[{{ $type }}][via]" class="border p-2 rounded">
+                                @foreach($notificationVias as $key => $name)
+                                    <option value="{{ $key }}" 
+                                        {{ $user->notificationSettings->firstWhere('type', $type)?->via === $key ? 'selected' : '' }}>
+                                        {{ $name }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" name="notifications[{{ $type }}][enabled]" value="1"
+                                    {{ $user->notificationSettings->firstWhere('type', $type)?->enabled ? 'checked' : '' }}>
+                                ON
+                            </label>
+                        </div>
+                    </div>
                 @endforeach
-            </select>
         </div>
 
 

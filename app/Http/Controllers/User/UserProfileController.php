@@ -24,24 +24,31 @@ class UserProfileController extends Controller
     return view('user.account.edit', compact('user'));
 }
 
-public function update(Request $request)
-{
-    $user = auth()->user();
+    public function update(Request $request)
+    {
+        $user = auth()->user();
 
-    $validated = $request->validate([
-        'address' => 'nullable|string|max:255',
-        'phone' => 'nullable|string|max:20',
-        'account_name' => 'nullable|string|max:50',
-        'email' => 'nullable|email|max:255',
-        'class' => 'nullable|string|max:50',
-        'notification' => 'nullable|string|max:255',
-    ]);
+        $validated = $request->validate([
+            'address' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'account_name' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:255',
+            'class' => 'nullable|string|max:50',
+        ]);
 
-    $user->update($validated);
+        // 通知設定を更新
+        foreach ($request->notifications ?? [] as $type => $data) {
+            $setting = $user->notificationSettings()->firstOrNew(['type' => $type]);
+            $setting->via = $data['via'] ?? 'mail';
+            $setting->enabled = isset($data['enabled']);
+            $setting->save();
+        }
+        
+        $user->update($validated);
 
-    return redirect()
-        ->route('user.account.show')
-        ->with('success', 'プロフィールを更新しました。');
-}
+        return redirect()
+            ->route('user.account.show')
+            ->with('success', 'プロフィールを更新しました。');
+    }
 
 }

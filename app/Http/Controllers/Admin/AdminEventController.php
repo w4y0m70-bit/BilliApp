@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Event;
 use App\Models\UserEntry;
+use App\Events\EventPublished;
 
 class AdminEventController extends Controller
 {
@@ -21,8 +22,8 @@ class AdminEventController extends Controller
         ]);
     }
 
-        // 新規イベント保存
-        public function store(Request $request)
+    // 新規イベント保存
+    public function store(Request $request)
     {
         // バリデーション
         $data = $request->validate([
@@ -41,14 +42,17 @@ class AdminEventController extends Controller
         $data['admin_id'] = auth('admin')->id();
 
         // DBに保存
-        Event::create($data);
+        $event = Event::create($data);
+
+        //通知発火
+        event(new EventPublished($event));
 
         return redirect()->route('admin.events.index')->with('success', 'イベントを登録しました');
     }
 
 
         // イベント一覧
-        public function index()
+    public function index()
     {
         $now = now();
 

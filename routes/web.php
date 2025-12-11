@@ -60,6 +60,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::patch('/{entry}/cancel', [AdminParticipantController::class, 'cancel'])->name('cancel');
         });
 
+        // イベント参加者JSON取得
+        Route::prefix('admin/events/{event}')->group(function() {
+            Route::get('participants/json', [EventParticipantController::class, 'json']);
+            Route::post('participants', [EventParticipantController::class, 'store']);
+        });
+
         //イベントコピー
         Route::get('events/{event}/replicate', [AdminEventController::class, 'replicate'])
          ->name('events.replicate');

@@ -28,16 +28,48 @@ class AdminAccountController extends Controller
         $admin = Auth::user();
 
         $validated = $request->validate([
-            'name'   => 'required|string|max:255',
+            'admin_id' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:255',
-            'phone'   => 'nullable|string|max:50',
-            'email'   => 'required|email|max:255',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'required|email|max:255',
+            // 'notification_methods' => 'nullable|array',
+            // 'notification_methods.*' => 'in:mail,line',
+            // 'notify_event_full_enabled' => 'nullable|boolean',
         ]);
-
+\Log::info('validated:', $validated);
+        // 基本情報更新
         $admin->update($validated);
+\Log::info('admin after update:', $admin->toArray());
+        // 通知手段（メール/LINE）を保存
+        $methods = $request->input('notification_methods', ['mail']); // デフォルト: メール
+        $admin->notification_type = implode(',', $methods);
+        $admin->save();
 
-        return redirect()
-            ->route('admin.account')
-            ->with('success', 'アカウント情報を更新しました！');
+        // 通知対象の更新
+        $this->updateNotificationSetting($admin, 'event_full', $request->boolean('notify_event_full_enabled'));
+
+        return redirect()->route('admin.account')
+            ->with('success', 'アカウント情報を更新しました。');
     }
+
+    /**
+     * 通知設定を更新する共通処理
+     */
+    protected function updateNotificationSetting($admin, string $type, bool $enabled)
+    {
+        $setting = $admin->notificationSettings()->firstOrNew(['type' => $type]);
+        $setting->enabled = $enabled;
+        $setting->save();
+    }
+
+
+    // protected function updateNotificationSetting($admin, string $type, ?string $enabled, string $method)
+    // {
+    //     $setting = $admin->notificationSettings()->firstOrNew(['type' => $type]);
+    //     $setting->enabled = (bool) $enabled;
+    //     $setting->method = $method;
+    //     $setting->save();
+    // }
+
 }

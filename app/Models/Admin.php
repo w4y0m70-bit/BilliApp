@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use App\Models\NotificationSetting;
 
 class Admin extends Authenticatable
 {
@@ -50,4 +51,24 @@ class Admin extends Authenticatable
         'subscription_until' => 'date',
         'last_login_at' => 'datetime',
     ];
+
+    public function notificationSettings()
+    {
+        return $this->hasMany(\App\Models\NotificationSetting::class, 'admin_id');
+    }
+
+    public function shouldNotify($type)
+    {
+        return $this->notificationSettings()
+            ->where('type', $type)
+            ->where('enabled', true)
+            ->exists();
+    }
+
+    public function notificationMethods(): array
+    {
+        // DBのJSONカラムなどで保存している想定
+        return $this->notification_type ? explode(',', $this->notification_type) : ['mail'];
+    }
+
 }

@@ -51,7 +51,13 @@ class Event extends Model
     }
 
     public function organizer()
-{
-    return $this->belongsTo(Admin::class, 'admin_id');
-}
+    {
+        return $this->belongsTo(Admin::class, 'admin_id');
+    }
+
+    public function isFull()
+    {
+        return $this->entries()->count() >= $this->capacity;
+    }
+
 }

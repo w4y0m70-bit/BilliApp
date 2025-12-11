@@ -35,84 +35,54 @@ class UserEntryController extends Controller
 
     public function entry(Request $request, Event $event)
     {
-        $userId = Auth::id() ?? 1;
+        $userId = auth()->id();
 
-        // 既存エントリー取得（キャンセルも含めて）
+        // 既存エントリーがある場合はキャンセル済みか確認
         $existing = UserEntry::where('user_id', $userId)
             ->where('event_id', $event->id)
             ->first();
 
-        // 既存があって、かつステータスが cancelled 以外 → 新規エントリー不可
         if ($existing && $existing->status !== 'cancelled') {
-            return back()->with('error', 'すでにエントリー済みです。');
+            return back()->with('error','すでにエントリー済みです。');
         }
 
-        // 現在の参加数
-        $entryCount = $event->userEntries()->where('status', 'entry')->count();
+        $entryCount = $event->userEntries()->where('status','entry')->count();
         $isFull = $entryCount >= $event->max_participants;
-
-        // 満員かつキャンセル待ち不可
         if ($isFull && !$event->allow_waitlist) {
-            return back()->with('error', '定員に達しているためエントリーできません。');
+            return back()->with('error','定員に達しているためエントリーできません。');
         }
 
-        // ステータス
         $status = $isFull ? 'waitlist' : 'entry';
 
         // waitlist_until
         $waitlistUntil = null;
         if ($status === 'waitlist') {
-
             $input = $request->input('waitlist_until');
-
             if ($input) {
                 $waitlistUntil = Carbon::createFromFormat('Y-m-d\TH:i', $input);
-
-                if ($waitlistUntil > $event->event_date) {
-                    $waitlistUntil = $event->event_date;
-                }
+                $waitlistUntil = min($waitlistUntil, $event->event_date);
             }
         }
 
-        // 入力値
-        $class = $request->input('class', '未設定');
-        $gender = $request->input('gender', '未設定');
-
-        if ($existing) {
-            // 既存がキャンセル済み → 復活させる
-            $existing->fill([
-                'status' => $status,
-                'waitlist_until' => $waitlistUntil,
-                'class' => $class,
-                'gender' => $gender,
-            ])->save();
-
-            $message = $status === 'entry'
-                ? 'エントリーを再開しました！'
-                : 'キャンセル待ちに再登録されました。';
-
-            return redirect()->route('user.events.show', $event->id)
-                ->with('message', $message);
-        }
-
-        // ここだけ新規作成（キャンセルも存在しない場合のみ）
-        $entry = new UserEntry();
-        $entry->fill([
+        $entryData = [
             'user_id' => $userId,
-            'event_id' => $event->id,
-            'status' => $status,
+            'event_id'=> $event->id,
+            'status'  => $status,
             'waitlist_until' => $waitlistUntil,
-            'class' => $class,
-            'gender' => $gender,
-        ])->save();
+            'class'   => $request->input('class','未設定'),
+            'gender'  => $request->input('gender','未設定'),
+        ];
+
+        $service = new \App\Services\EventEntryService();
+        $entry = $service->addEntry($event, $entryData);
 
         $message = $status === 'entry'
             ? 'イベントにエントリーしました！'
             : 'キャンセル待ちに登録されました。';
 
-        return redirect()->route('user.events.show', $event->id)
-            ->with('message', $message);
+        return redirect()->route('user.events.show', $event->id)->with('message', $message);
     }
+
 
 
     public function cancel(Event $event, $entryId)

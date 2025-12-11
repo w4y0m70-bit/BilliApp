@@ -1,0 +1,21 @@
+[90m= [39m[34;4mApp\Models\User[39;24m {#6584
+    [34mid[39m: [35m1[39m,
+    [34mname[39m: "[32mさんぷるゆーざ[39m",
+    [34memail[39m: "[32ma@a[39m",
+    [34memail_verified_at[39m: [36mnull[39m,
+    #[33mpassword[39m: "[32m$2y$12$gxG8bmEi93ZZsOKBU/HNleKLdOj9diooiK2Ez9PZGM9FU0CEo6WB6[39m",
+    #[33mremember_token[39m: [36mnull[39m,
+    [34mcreated_at[39m: "[32m2025-12-10 14:19:09[39m",
+    [34mupdated_at[39m: "[32m2025-12-10 14:19:09[39m",
+    [34mrole[39m: "[32mplayer[39m",
+    [34mgender[39m: "[32m男性[39m",
+    [34mbirthday[39m: [36mnull[39m,
+    [34maddress[39m: [36mnull[39m,
+    [34mphone[39m: [36mnull[39m,
+    [34maccount_name[39m: [36mnull[39m,
+    [34mclass[39m: "[32mB[39m",
+    [34mnotification_type[39m: "[32memail[39m",
+    [34mlast_login_at[39m: [36mnull[39m,
+    [34mis_guest[39m: [35m0[39m,
+  }
+

@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->integer('tickets')->default(0);         // 所持チケット
             $table->dateTime('last_login_at')->nullable();  // 最終ログイン
             $table->string('notification_type')->nullable();
+            $table->string('role')->default('admin');
             $table->rememberToken();
             $table->timestamps();
         });

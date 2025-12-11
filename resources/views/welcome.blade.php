@@ -28,7 +28,7 @@
                 </a> -->
             </div>
             <p class="text-sm mb-10 text-gray-600">
-            ©2025 Billents / ver 0.62-beta<br>
+            ©2025 Billents / ver 0.65-beta<br>
             </p>
         </div>
     </div>

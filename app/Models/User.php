@@ -33,4 +33,19 @@ class User extends Authenticatable
     protected $casts = [
         'birthday' => 'date',
     ];
+
+    public function notificationSettings()
+    {
+        return $this->hasMany(NotificationSetting::class);
+    }
+
+    public function shouldNotify(string $type): bool
+    {
+        return $this->notificationSettings()
+            ->where('type', $type)
+            ->where('enabled', true)
+            ->exists();
+    }
+
+
 }
