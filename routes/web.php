@@ -13,8 +13,14 @@ use App\Http\Controllers\User\UserProfileController;
 use App\Http\Controllers\User\UserLoginController;
 use App\Http\Controllers\User\Auth\UserRegisterController;
 
-require __DIR__.'/auth.php';
+use Illuminate\Support\Facades\Mail;
+use App\Mail\TestMail;
 
+// require __DIR__.'/auth.php';
+// Route::get('/test-mail', function() {
+//     Mail::to('w4y0m70@gmail.com')->send(new TestMail('これはテストメールです'));
+//     return 'メール送信しました';
+// });
 /*
 |--------------------------------------------------------------------------
 | 🌟 トップページ
@@ -33,7 +39,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // ===== 未ログイン時のみアクセス可能 =====
     Route::get('/login', [AdminLoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AdminLoginController::class, 'login'])->name('login.post');
-    Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');
+    // Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');
 
     // 新規登録
     Route::get('/register', [AdminRegisterController::class, 'showRegistrationForm'])->name('register');

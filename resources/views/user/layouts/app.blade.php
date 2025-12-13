@@ -39,7 +39,7 @@
                 アカウント
             </a>
 
-            <form method="POST" action="{{ route('logout') }}" class="ml-auto">
+            <form method="POST" action="{{ route('user.logout') }}" class="ml-auto">
                 @csrf
                 <button type="submit"
                         class="flex items-center gap-1 hover:bg-red-600 px-3 py-1 rounded transition">

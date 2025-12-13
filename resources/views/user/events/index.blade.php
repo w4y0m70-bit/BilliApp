@@ -107,7 +107,7 @@
     @foreach ($pastEntries as $entry)
         <div class="p-3 border-b last:border-0">
             <strong>{{ $entry->event->title }}</strong>
-            <p class="text-sm text-gray-600">{{ $entry->event->event_date->format('Y/m/d H:i') }}</p>
+            <span class="text-sm text-gray-600">{{ $entry->event->event_date->format('Y/m/d H:i') }}</span>
         </div>
     @endforeach
 </div>

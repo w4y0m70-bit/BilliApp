@@ -12,10 +12,6 @@
                    プレイヤーログイン
                 </a>
                 
-                <!-- <a href="{{ route('register') }}" 
-                   class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600">
-                   新規登録
-                </a> -->
                 <a href="{{ route('admin.login') }}" 
                    class="bg-admin text-white px-6 py-3 rounded-lg hover:bg-admin-dark">
                    管理者ログイン

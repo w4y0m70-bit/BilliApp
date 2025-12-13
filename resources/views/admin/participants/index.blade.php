@@ -125,13 +125,6 @@
             </form>
         </div>
     </div>
-
-    <!-- 参加者リスト -->
-    <template x-for="p in sortedParticipants" :key="p.id">
-        <div class="mt-2 border-b py-1">
-            <span x-text="p.name"></span> - <span x-text="p.status"></span>
-        </div>
-    </template>
 </div>
 
 <script>
