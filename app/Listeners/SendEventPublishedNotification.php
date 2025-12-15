@@ -6,29 +6,31 @@ use App\Events\EventPublished;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use App\Models\User;
-use App\Notifications\EventPublishedNotification;
+use App\Mail\EventPublishedMail;
+use Illuminate\Support\Facades\Mail;
 
-class SendEventPublishedNotification
+class SendEventPublishedNotification implements ShouldQueue
 {
-    /**
-     * Create the event listener.
-     */
-    public function __construct(Event $event)
-    {
-        $this->event = $event;
-    }
+    use InteractsWithQueue;
 
     /**
      * Handle the event.
      */
     public function handle(EventPublished $event)
     {
-        $users = User::whereHas('notificationSettings', function($q){
+        // 通知を受け取る設定のあるユーザーを取得
+        $users = User::whereHas('notificationSettings', function ($q) {
             $q->where('type', 'event_published')->where('enabled', true);
         })->get();
 
         foreach ($users as $user) {
-            $user->notify(new EventPublishedNotification($event->event));
+            if (!$user->email) {
+                \Log::warning("User {$user->id} has no email, skipping notification.");
+                continue;
+            }
+
+            // Mailable を送信
+            Mail::to($user->email)->send(new EventPublishedMail($event->event));
         }
     }
 }

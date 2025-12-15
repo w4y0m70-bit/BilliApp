@@ -13,9 +13,9 @@ class AdminLoginController extends Controller
     {
         if (Auth::guard('admin')->check()) {
         return redirect()->route('admin.events.index');
-    }
+        }
 
-    return view('admin.auth.login');
+        return view('admin.auth.login');
     }
 
     public function login(Request $request)
@@ -43,12 +43,14 @@ class AdminLoginController extends Controller
             ->withInput();
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
-        Auth::logout();
-        $request->session()->invalidate();
+        Auth::guard('admin')->logout();
+
+        // $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('top');
+        return redirect()->route('admin.login')
+            ->with('success', 'ログアウトしました');
     }
 }

@@ -10,6 +10,10 @@ class UserLoginController extends Controller
 {
     public function showLoginForm()
     {
+        if (Auth::guard('web')->check()) {
+            return redirect()->route('user.events.index');
+        }
+
         return view('user.auth.login');
     }
 
@@ -20,7 +24,7 @@ class UserLoginController extends Controller
             'password' => 'required',
         ]);
 
-        if (Auth::attempt(
+        if (Auth::guard('web')->attempt(
             $request->only('email', 'password'),
             $request->filled('remember')
         )) {
@@ -37,7 +41,7 @@ class UserLoginController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('web')->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

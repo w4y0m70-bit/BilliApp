@@ -35,7 +35,8 @@ class UserEntryController extends Controller
 
     public function entry(Request $request, Event $event)
     {
-        $userId = auth()->id();
+        $user = auth()->user();
+        $userId = $user->id;
 
         // 既存エントリーがある場合はキャンセル済みか確認
         $existing = UserEntry::where('user_id', $userId)
@@ -43,18 +44,22 @@ class UserEntryController extends Controller
             ->first();
 
         if ($existing && $existing->status !== 'cancelled') {
-            return back()->with('error','すでにエントリー済みです。');
+            return back()->with('error', 'すでにエントリー済みです。');
         }
 
-        $entryCount = $event->userEntries()->where('status','entry')->count();
+        $entryCount = $event->userEntries()
+            ->where('status', 'entry')
+            ->count();
+
         $isFull = $entryCount >= $event->max_participants;
+
         if ($isFull && !$event->allow_waitlist) {
-            return back()->with('error','定員に達しているためエントリーできません。');
+            return back()->with('error', '定員に達しているためエントリーできません。');
         }
 
         $status = $isFull ? 'waitlist' : 'entry';
 
-        // waitlist_until
+        // waitlist_until（元の仕様を維持）
         $waitlistUntil = null;
         if ($status === 'waitlist') {
             $input = $request->input('waitlist_until');
@@ -64,13 +69,16 @@ class UserEntryController extends Controller
             }
         }
 
+        // ★ 修正はここだけ
         $entryData = [
             'user_id' => $userId,
             'event_id'=> $event->id,
             'status'  => $status,
             'waitlist_until' => $waitlistUntil,
-            'class'   => $request->input('class','未設定'),
-            'gender'  => $request->input('gender','未設定'),
+
+            // request ではなく user からコピー
+            'class'   => $user->class ?? '未設定',
+            'gender'  => $user->gender ?? '未設定',
         ];
 
         $service = new \App\Services\EventEntryService();
@@ -80,8 +88,11 @@ class UserEntryController extends Controller
             ? 'イベントにエントリーしました！'
             : 'キャンセル待ちに登録されました。';
 
-        return redirect()->route('user.events.show', $event->id)->with('message', $message);
+        return redirect()
+            ->route('user.events.show', $event->id)
+            ->with('message', $message);
     }
+
 
 
 

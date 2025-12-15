@@ -12,6 +12,7 @@ use App\Http\Controllers\User\UserEntryController;
 use App\Http\Controllers\User\UserProfileController;
 use App\Http\Controllers\User\UserLoginController;
 use App\Http\Controllers\User\Auth\UserRegisterController;
+// use App\Http\Controllers\EventParticipantController;
 
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TestMail;
@@ -37,16 +38,15 @@ Route::get('/', function () {
 */
 Route::prefix('admin')->name('admin.')->group(function () {
     // ===== 未ログイン時のみアクセス可能 =====
-    Route::get('/login', [AdminLoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AdminLoginController::class, 'login'])->name('login.post');
-    // Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');
+    // Route::middleware('guest:admin')->group(function () {
+        Route::get('/login', [AdminLoginController::class, 'showLoginForm'])->name('login');
+        Route::post('/login', [AdminLoginController::class, 'login'])->name('login.post');
 
-    // 新規登録
-    Route::get('/register', [AdminRegisterController::class, 'showRegistrationForm'])->name('register');
-    Route::post('/register', [AdminRegisterController::class, 'register'])->name('register.post');
-
+        Route::get('/register', [AdminRegisterController::class, 'showRegistrationForm'])->name('register');
+        Route::post('/register', [AdminRegisterController::class, 'register'])->name('register.post');
+    // });
     // ===== ログイン必須エリア =====
-    Route::middleware('auth:admin')->group(function () {
+    Route::middleware(['auth:admin', 'session.lifetime:20'])->group(function () {
 
         // ログアウト
         Route::post('logout', [AdminLoginController::class, 'logout'])->name('logout');
@@ -68,8 +68,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // イベント参加者JSON取得
         Route::prefix('admin/events/{event}')->group(function() {
-            Route::get('participants/json', [EventParticipantController::class, 'json']);
-            Route::post('participants', [EventParticipantController::class, 'store']);
+            Route::get('participants/json', [AdminParticipantController::class, 'json']);
+            Route::post('participants', [AdminParticipantController::class, 'store']);
         });
 
         //イベントコピー
@@ -95,16 +95,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::prefix('user')->name('user.')->group(function () {
 
         // --- 認証不要ルート ---
-        Route::middleware('guest')->group(function () {
+        // Route::middleware('guest:web')->group(function () {
             Route::get('/login', [UserLoginController::class, 'showLoginForm'])->name('login');
             Route::post('/login', [UserLoginController::class, 'login'])->name('login.post');
 
             Route::get('/register', [UserRegisterController::class, 'showRegistrationForm'])->name('register');
             Route::post('/register', [UserRegisterController::class, 'register'])->name('register.post');
-        });
+        // });
 
         // --- 認証必須ルート ---
-        Route::middleware('auth')->group(function () {
+        Route::middleware(['auth:web', 'session.lifetime:60'])->group(function () {
 
             // ログアウト
             Route::post('/logout', [UserLoginController::class, 'logout'])->name('logout');

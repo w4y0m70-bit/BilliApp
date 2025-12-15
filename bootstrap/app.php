@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => RoleMiddleware::class,
             'auth' => \App\Http\Middleware\Authenticate::class,
+            'session.lifetime' => \App\Http\Middleware\SetSessionLifetime::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

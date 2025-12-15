@@ -4,30 +4,31 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use App\Events\EventFull;
-use App\Events\UserPromotedFromWaitlist;
-use App\Events\WaitlistCancelled;
-use App\Events\WaitlistPromoted;
 use App\Models\User;
 use App\Models\Event;
+use App\Events\EventFull;
+use App\Events\WaitlistPromoted;
+use App\Events\WaitlistCancelled;
 
 class UserEntry extends Model
 {
     protected $fillable = [
-        'user_id',       // ユーザーのID
-        'event_id',      // イベントのID
+        'user_id',
+        'event_id',
         'name',
         'gender',
-        'status',        // 'entry', 'waitlist', 'cancelled' など
+        'status',
         'waitlist_until',
-        'class',         // ユーザーのクラス（コピーで保持する場合）
+        'class',
     ];
 
     protected $casts = [
         'waitlist_until' => 'datetime',
     ];
 
-    // リレーション
+    /* =====================
+     * リレーション
+     * ===================== */
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -38,79 +39,88 @@ class UserEntry extends Model
         return $this->belongsTo(Event::class);
     }
 
-    /**
-     * エントリーをキャンセルしてキャンセル待ちを繰り上げ
-     * @return string キャンセルされた名前
-     */
+    /* =====================================================
+     * エントリーキャンセル → キャンセル待ち昇格
+     * ===================================================== */
     public function cancelAndPromoteWaitlist(): string
     {
-        $name = $this->name ?? ($this->user?->name ?? 'ゲスト');
+        $name  = $this->name ?? ($this->user?->name ?? 'ゲスト');
         $event = $this->event;
 
-        DB::transaction(function() use ($event) {
+        $promotedEntries = [];
+        $isEventFull = false;
+
+        DB::transaction(function () use ($event, &$promotedEntries, &$isEventFull) {
 
             // 1. 自分をキャンセル
             $this->update(['status' => 'cancelled']);
 
-            // 2. 最新の通常エントリー数を取得
+            // 2. 空き枠計算
             $currentEntryCount = $event->userEntries()
                 ->where('status', 'entry')
                 ->count();
 
-            // 3. 空き枠計算
             $available = $event->max_participants - $currentEntryCount;
 
+            // 3. キャンセル待ち昇格
             if ($available > 0) {
-
-                // 4. 空きがあればキャンセル待ちを繰り上げ
                 $waitlist = $event->userEntries()
                     ->where('status', 'waitlist')
-                    ->where(function($q) {
+                    ->where(function ($q) {
                         $q->whereNull('waitlist_until')
-                        ->orWhere('waitlist_until', '>', now());
+                          ->orWhere('waitlist_until', '>', now());
                     })
                     ->orderBy('created_at')
                     ->take($available)
                     ->get();
 
-                foreach ($waitlist as $w) {
-                    $w->update([
+                foreach ($waitlist as $entry) {
+                    $entry->update([
                         'status' => 'entry',
                         'waitlist_until' => null,
                     ]);
 
-                    event(new \App\Events\WaitlistPromoted($w));
+                    $promotedEntries[] = $entry;
                 }
             }
 
-            // 5. カウント更新
+            // 4. カウント更新
             $event->loadCount([
-                'userEntries as entry_count' => fn($q) => $q->where('status', 'entry'),
-                'userEntries as waitlist_count' => fn($q) => $q->where('status', 'waitlist'),
+                'userEntries as entry_count' => fn ($q) => $q->where('status', 'entry'),
+                'userEntries as waitlist_count' => fn ($q) => $q->where('status', 'waitlist'),
             ]);
 
             if ($event->entry_count >= $event->max_participants) {
-                event(new \App\Events\EventFull($event));
+                $isEventFull = true;
             }
 
             $event->save();
         });
 
+        // ===== transaction 外でイベント発火 =====
+        foreach ($promotedEntries as $entry) {
+            event(new WaitlistPromoted($entry));
+        }
+
+        if ($isEventFull) {
+            event(new EventFull($event));
+        }
+
         return $name;
     }
 
-
-    // 🔹 キャンセル待ち順番取得
+    /* =====================
+     * キャンセル待ち順位
+     * ===================== */
     public function getWaitlistPositionAttribute(): ?int
     {
         if ($this->status !== 'waitlist') {
             return null;
         }
 
-        $waitlist = $this->event
-            ->userEntries()
+        $ids = $this->event->userEntries()
             ->where('status', 'waitlist')
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('waitlist_until')
                   ->orWhere('waitlist_until', '>', now());
             })
@@ -118,33 +128,43 @@ class UserEntry extends Model
             ->pluck('id')
             ->toArray();
 
-        $position = array_search($this->id, $waitlist);
+        $pos = array_search($this->id, $ids, true);
 
-        return $position === false ? null : $position + 1;
+        return $pos === false ? null : $pos + 1;
     }
 
-    // 🔹 期限切れキャンセル待ちの一括キャンセル＆昇格
+    /* =====================================================
+     * 期限切れキャンセル待ち一括処理（cron用）
+     * ===================================================== */
     public static function cancelExpiredWaitlist(): void
     {
-        \Log::info('cancelExpiredWaitlist START');//////
-
         $expired = self::where('status', 'waitlist')
             ->whereNotNull('waitlist_until')
             ->where('waitlist_until', '<=', now())
             ->get();
 
-        DB::transaction(function() use ($expired) {
+        $cancelledEntries = [];
+        $promotedEntries = [];
+        $eventFullEvents = [];
+
+        DB::transaction(function () use (
+            $expired,
+            &$cancelledEntries,
+            &$promotedEntries,
+            &$eventFullEvents
+        ) {
             // 1. 期限切れをキャンセル
             foreach ($expired as $entry) {
                 $entry->update(['status' => 'cancelled']);
-                event(new WaitlistCancelled($entry));
+                $cancelledEntries[] = $entry;
             }
 
-            // 2. イベントごとに昇格処理
-            $eventIds = $expired->pluck('event_id')->unique();
-            foreach ($eventIds as $eventId) {
+            // 2. イベント単位で昇格処理
+            foreach ($expired->pluck('event_id')->unique() as $eventId) {
                 $event = Event::find($eventId);
-                if (!$event) continue;
+                if (!$event) {
+                    continue;
+                }
 
                 $available = $event->max_participants - $event->userEntries()
                     ->where('status', 'entry')
@@ -153,27 +173,49 @@ class UserEntry extends Model
                 if ($available > 0) {
                     $waitlist = $event->userEntries()
                         ->where('status', 'waitlist')
-                        ->where(function($q) { $q->whereNull('waitlist_until')->orWhere('waitlist_until', '>', now()); })
+                        ->where(function ($q) {
+                            $q->whereNull('waitlist_until')
+                              ->orWhere('waitlist_until', '>', now());
+                        })
                         ->orderBy('created_at')
                         ->take($available)
                         ->get();
 
-                    foreach ($waitlist as $w) {
-                        $w->update(['status' => 'entry']);
+                    foreach ($waitlist as $entry) {
+                        $entry->update([
+                            'status' => 'entry',
+                            'waitlist_until' => null,
+                        ]);
+
+                        $promotedEntries[] = $entry;
                     }
                 }
 
                 // カウント更新
                 $event->loadCount([
-                    'userEntries as entry_count' => fn($q) => $q->where('status', 'entry'),
-                    'userEntries as waitlist_count' => fn($q) => $q->where('status', 'waitlist'),
+                    'userEntries as entry_count' => fn ($q) => $q->where('status', 'entry'),
+                    'userEntries as waitlist_count' => fn ($q) => $q->where('status', 'waitlist'),
                 ]);
-                $event->save();
+
                 if ($event->entry_count >= $event->max_participants) {
-                    event(new EventFull($event));
-                    event(new UserPromotedFromWaitlist($w));
+                    $eventFullEvents[$event->id] = $event;
                 }
+
+                $event->save();
             }
         });
+
+        // ===== transaction 外で通知 =====
+        foreach ($cancelledEntries as $entry) {
+            event(new WaitlistCancelled($entry));
+        }
+
+        foreach ($promotedEntries as $entry) {
+            event(new WaitlistPromoted($entry));
+        }
+
+        foreach ($eventFullEvents as $event) {
+            event(new EventFull($event));
+        }
     }
 }

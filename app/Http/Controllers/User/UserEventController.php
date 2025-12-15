@@ -16,8 +16,7 @@ class UserEventController extends Controller
     {
         $now = now();
 
-        // 仮ログイン対応
-        $user = Auth::user() ?? User::first();
+        $user = Auth::guard('web')->user();
 
         // 公開中イベント一覧（未来のもの）
         $events = Event::with(['userEntries' => function ($q) use ($user) {

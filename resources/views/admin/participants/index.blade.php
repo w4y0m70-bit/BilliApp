@@ -82,10 +82,6 @@
         </table>
     </div>
 
-
-    <!-- ゲスト追加ボタン -->
-    <button @click="openModal = true" class="bg-admin text-white px-4 py-2 rounded">ゲスト追加</button>
-
     <!-- ゲスト追加モーダル -->
     <div x-show="openModal" x-cloak class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
         <div @click.away="openModal = false" class="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
@@ -171,6 +167,25 @@ function participantManager(eventId, maxParticipants) {
                 this.guest = { name: '', gender: '', class: '' };
                 this.openModal = false;
                 await this.loadParticipants();
+            }
+        },
+
+        async cancelEntry(entryId) {
+            if (!confirm('この参加者をキャンセルしますか？\n【注意】　この操作は取り消せません')) return;
+
+            const res = await fetch(`/admin/events/${eventId}/participants/${entryId}/cancel`, {
+                method: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                alert(data.message);
+                await this.loadParticipants();
+            } else {
+                alert('キャンセルに失敗しました');
             }
         }
     }
