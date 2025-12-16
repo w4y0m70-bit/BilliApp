@@ -10,9 +10,9 @@ class UserLoginController extends Controller
 {
     public function showLoginForm()
     {
-        if (Auth::guard('web')->check()) {
-            return redirect()->route('user.events.index');
-        }
+        // if (Auth::guard('web')->check()) {
+        //     return redirect()->route('user.events.index');
+        // }
 
         return view('user.auth.login');
     }

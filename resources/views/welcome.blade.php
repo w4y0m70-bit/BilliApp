@@ -7,7 +7,20 @@
             </p>
 
             <div class="flex flex-col gap-8 mb-6">
-                <a href="{{ route('user.login') }}" 
+                {{-- ユーザー --}}
+                @if(auth('web')->check())
+                <a href="{{ route('user.events.index') }}" class="bg-user text-white px-6 py-3 rounded-lg hover:bg-user-dark">マイページへ</a>
+                @else
+                <a href="{{ route('user.login') }}" class="bg-user text-white px-6 py-3 rounded-lg hover:bg-user-dark">ユーザーログイン</a>
+                @endif
+                
+                {{-- 管理者 --}}
+                @if(auth('admin')->check())
+                    <a href="{{ route('admin.home') }}" class="bg-admin text-white px-6 py-3 rounded-lg hover:bg-admin-dark">管理者ページへ</a>
+                @else
+                    <a href="{{ route('admin.login') }}" class="bg-admin text-white px-6 py-3 rounded-lg hover:bg-admin-dark">管理者ログイン</a>
+                @endif
+                <!-- <a href="{{ route('user.login') }}" 
                    class="bg-user text-white px-6 py-3 rounded-lg hover:bg-user-dark">
                    プレイヤーログイン
                 </a>
@@ -15,7 +28,7 @@
                 <a href="{{ route('admin.login') }}" 
                    class="bg-admin text-white px-6 py-3 rounded-lg hover:bg-admin-dark">
                    管理者ログイン
-                </a>
+                </a> -->
 
                 <!-- スコアボード（準備中） -->
                 <!-- <a href=""
@@ -24,7 +37,7 @@
                 </a> -->
             </div>
             <p class="text-sm mb-10 text-gray-600">
-            ©2025 Billents / ver 0.65-beta<br>
+            ©2025 Billents / ver 0.67-beta<br>
             </p>
         </div>
     </div>

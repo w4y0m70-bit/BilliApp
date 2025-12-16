@@ -11,9 +11,9 @@ class AdminLoginController extends Controller
 {
     public function showLoginForm()
     {
-        if (Auth::guard('admin')->check()) {
-        return redirect()->route('admin.events.index');
-        }
+        // if (Auth::guard('admin')->check()) {
+        // return redirect()->route('admin.events.index');
+        // }
 
         return view('admin.auth.login');
     }

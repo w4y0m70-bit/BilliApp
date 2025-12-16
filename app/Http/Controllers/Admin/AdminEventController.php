@@ -11,15 +11,41 @@ use App\Events\EventPublished;
 class AdminEventController extends Controller
 {
     // 新規作成画面
-    public function create()
+    public function create(Request $request)
     {
+        $event = new Event();
+        
+        // 前ページからの入力データを優先してセット
+        $data = $request->all() ?: $event->toArray();
+
         return view('admin.events.create', [
-            'event' => new Event(),
-            'isReplicate' => true,
+            'event' => $event,
+            'isReplicate' => false,
             'formAction' => route('admin.events.store'),
             'formMethod' => 'POST',
             'admin_id' => auth('admin')->id(),
+            'data' => $data,
         ]);
+    }
+
+
+    // 確認ページ
+    public function confirm(Request $request)
+    {
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'published_at' => 'required|date',
+            'max_participants' => 'required|integer|min:1',
+            'allow_waitlist' => 'nullable|boolean',
+            'description' => 'nullable|string',
+            'event_date' => 'required|date|after_or_equal:now',
+            'entry_deadline' => 'required|date|before:event_date',
+        ]);
+
+        // 公開日時が過去の場合はフラグを付ける
+        $data['isPast'] = $data['published_at'] < now();
+
+        return view('admin.events.confirm', compact('data'));
     }
 
     // 新規イベント保存

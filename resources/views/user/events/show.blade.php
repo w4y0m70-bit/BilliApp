@@ -4,10 +4,6 @@
 
 @section('content')
 @php
-    // 初期値：waitlist_until がある場合はその値、なければ entry_deadline
-    $waitlistDefault = $userEntry && $userEntry->waitlist_until
-        ? $userEntry->waitlist_until->format('Y-m-d\TH:i')
-        : $event->entry_deadline->format('Y-m-d\TH:i');
     $currentUser = Auth::user() ?? \App\Models\User::first();
     $userEntry = $event->userEntries()
         ->where('user_id', $currentUser->id)
@@ -15,10 +11,33 @@
         ->latest('created_at')
         ->first();
 
+    $waitlistDefault = $userEntry && $userEntry->waitlist_until
+        ? $userEntry->waitlist_until->format('Y-m-d\TH:i')
+        : $event->entry_deadline->format('Y-m-d\TH:i');
+
     $isFull = $event->entry_count >= $event->max_participants;
     $canWaitlist = $event->allow_waitlist;
     $canEntry = !$isFull || ($isFull && $canWaitlist);
 @endphp
+
+{{-- セッションメッセージ用モーダル（自動オープン） --}}
+<div x-data="{ open: false }" x-init="open = {{ session('message') || session('error') ? 'true' : 'false' }}">
+    <template x-if="open">
+        <div class="fixed inset-0 flex justify-center items-center bg-black bg-opacity-40 z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg w-80">
+                <h3 class="text-lg font-semibold mb-4 text-center">
+                    @if(session('message')) 通知 @elseif(session('error')) エラー @endif
+                </h3>
+                <p class="text-gray-700 mb-4 text-center">
+                    {{ session('message') ?? session('error') }}
+                </p>
+                <button @click="open = false" class="mt-2 text-center w-full bg-gray-300 text-gray-800 px-3 py-2 rounded hover:bg-gray-400 transition">
+                    閉じる
+                </button>
+            </div>
+        </div>
+    </template>
+</div>
 
 <div class="bg-white shadow rounded-lg p-6">
 
@@ -29,7 +48,6 @@
 
     {{-- タイトル --}}
     <h2 class="text-2xl font-bold mb-4">{{ $event->title }}</h2>
-
 
     {{-- ■ メインフォーム（エントリー or 変更） --}}
     <form action="{{ $userEntry
@@ -47,92 +65,52 @@
         <div class="text-sm text-gray-700 space-y-1">
             <p><strong>開催日時：</strong><span class="text-lg font-bold">{{ format_event_date($event->event_date) }} {{ $event->event_date->format('H:i') }}</span></p>
             <p><strong>エントリー締切：</strong>{{ format_event_date($event->entry_deadline) }} {{ $event->entry_deadline->format('H:i') }}</p>
-        </div>
-
-
-        {{-- ■ キャンセル待ち期限（waitlist） --}}
-        @if($userEntry && $userEntry->status === 'waitlist')
-
-            <div 
-                x-data="{
-                    openModal:false,
-                    waitlistUntil:`{{ $waitlistDefault }}`,
-                }"
-                class="mt-4 border p-4 rounded-lg bg-gray-50"
-            >
-                <p class="text-sm text-gray-700">
-                    キャンセル待ち期限：
-                    @if($userEntry->waitlist_until)
+            <p class="text-sm text-gray-700 mt-1">
+                    <strong>キャンセル待ち期限：</strong>
+                    @if ($status === 'waitlist' && $userEntry->waitlist_until)
                         {{ format_event_date($userEntry->waitlist_until) }}
                         {{ $userEntry->waitlist_until->format('H:i') }}
-                        <br><span class="text-red-600">（上記の日時に自動的にエントリーがキャンセルされます）</span>
                     @else
                         —
                     @endif
                 </p>
+        </div>
 
-                <button 
+        {{-- ■ キャンセル待ち期限（waitlist） --}}
+        @if($userEntry && $userEntry->status === 'waitlist')
+
+        <x-modal
+            title="キャンセル待ち期限の設定"
+            confirm-text="保存"
+            confirm-color="bg-user"
+            :confirm-action="route('user.entries.update', ['event' => $event->id, 'entry' => $userEntry->id])"
+        >
+            <input
+                type="datetime-local"
+                name="waitlist_until"
+                class="border rounded px-3 py-2 w-full mb-4"
+                value="{{ $waitlistDefault }}"
+            >
+
+            <button
+                type="submit"
+                name="clear"
+                value="1"
+                class="bg-gray-300 text-gray-800 px-3 py-2 rounded hover:bg-gray-400 mb-2 w-full"
+            >
+                期限をクリア
+            </button>
+
+            <x-slot name="trigger">
+                <button
                     type="button"
-                    @click="openModal = true"
+                    @click="open = true"
                     class="mt-1 text-center w-full text-gray-600 underline"
                 >
-                    設定
+                    キャンセル待ち期限設定
                 </button>
-
-
-                {{-- ▼ モーダル --}}
-                <template x-if="openModal">
-                    <div class="fixed inset-0 flex justify-center items-center bg-black bg-opacity-40 z-50">
-
-                        <div class="bg-white p-6 rounded-lg shadow-lg w-80">
-                            <h3 class="text-lg font-semibold mb-4">キャンセル待ち期限の設定</h3>
-
-                            <form
-                                method="POST"
-                                action="{{ route('user.entries.update', ['event' => $event->id, 'entry' => $userEntry->id]) }}"
-                            >
-                                @csrf
-                                @method('PATCH')
-
-                                <input 
-                                    type="datetime-local" 
-                                    name="waitlist_until"
-                                    x-model="waitlistUntil"
-                                    class="border rounded px-3 py-2 w-full mb-4"
-                                >
-
-                                <div class="flex justify-between items-center">
-
-                                    <button
-                                        type="submit"
-                                        name="clear"
-                                        value="1"
-                                        class="bg-gray-300 text-gray-800 px-3 py-2 rounded hover:bg-gray-400"
-                                    >
-                                        期限をクリア
-                                    </button>
-
-                                    <button
-                                        type="submit"
-                                        class="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700"
-                                    >
-                                        保存
-                                    </button>
-                                </div>
-                            </form>
-
-                            <button
-                                @click="openModal = false"
-                                class="mt-4 text-center w-full text-gray-600 underline"
-                            >
-                                閉じる
-                            </button>
-                        </div>
-
-                    </div>
-                </template>
-
-            </div>
+            </x-slot>
+        </x-modal>
         @endif
 
 
@@ -163,45 +141,35 @@
                 </button>
             @endif
 
-
             <a href="{{ route('user.events.index') }}"
                 class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition">
                 戻る
             </a>
         </div>
-
     </form>
 
-
-    {{-- キャンセルボタン --}}
+    {{-- ■ キャンセルボタン（モーダル化） --}}
     @if($userEntry)
-        <form 
-            action="{{ route('user.entries.cancel', ['event' => $event->id, 'entryId' => $userEntry->id]) }}"
-            method="POST"
-            class="mt-3"
-            onsubmit="return confirmCancel();"
+        <x-modal
+            title="確認"
+            confirm-text="キャンセル"
+            confirm-color="bg-red-600"
+            :confirm-action="route('user.entries.cancel', ['event' => $event->id, 'entryId' => $userEntry->id])"
         >
-            @csrf
-            @method('PATCH')
-
-            <button
-                type="submit"
-                class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
-            >
-                エントリーをキャンセル
-            </button>
-        </form>
+            このイベントのエントリーをキャンセルしますか？
+            @if($event->userEntries()->where('status','waitlist')->count() > 0)
+                <br>現在キャンセル待ちの人がいます。再度エントリーするとキャンセル待ちの最後に登録されます。
+            @endif
+            <x-slot name="trigger">
+                <button
+                    type="button"
+                    @click="open = true"
+                    class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition mt-3"
+                >
+                    エントリーをキャンセル
+                </button>
+            </x-slot>
+        </x-modal>
     @endif
 </div>
-
-
-<script>
-function confirmCancel() {
-    let message = 'このイベントのエントリーをキャンセルしますか？';
-    @if($event->userEntries()->where('status','waitlist')->count() > 0)
-        message += '\n現在キャンセル待ちの人がいます。再度エントリーするとキャンセル待ちの最後に登録されます。';
-    @endif
-    return confirm(message);
-}
-</script>
 @endsection

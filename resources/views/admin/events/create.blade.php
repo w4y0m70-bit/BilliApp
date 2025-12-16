@@ -5,7 +5,7 @@
 @section('content')
 <h2 class="text-2xl font-bold mb-6">新規イベント作成</h2>
 
-<form action="{{ route('admin.events.store') }}" method="POST" class="bg-white p-6 rounded-lg shadow w-full max-w-lg">
+<form action="{{ route('admin.events.confirm') }}" method="POST" class="bg-white p-6 rounded-lg shadow w-full max-w-lg">
     @csrf
 
     <div class="mb-4">
@@ -49,7 +49,7 @@
     </div>
 
     <button type="submit" class="bg-admin text-white px-6 py-2 rounded hover:bg-admin-dark">
-        登録する
+        確認画面へ
     </button>
     <a href="{{ route('admin.events.index') }}" class="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500">
         キャンセル

@@ -25,7 +25,7 @@ class UserEntryController extends Controller
     public function index()
     {
         $entries = UserEntry::with('event')
-            ->where('user_id', Auth::id() ?? 1) // 仮ログイン中のため
+            ->where('user_id', auth()->id())
             ->orderByDesc('created_at')
             ->latest()
             ->get();
@@ -85,8 +85,8 @@ class UserEntryController extends Controller
         $entry = $service->addEntry($event, $entryData);
 
         $message = $status === 'entry'
-            ? 'イベントにエントリーしました！'
-            : 'キャンセル待ちに登録されました。';
+            ? "「{$event->title}」にエントリーしました！"
+            : "「{$event->title}」のキャンセル待ちに登録されました。";
 
         return redirect()
             ->route('user.events.show', $event->id)
@@ -147,33 +147,4 @@ class UserEntryController extends Controller
 
         return back()->with('message', 'キャンセル待ち期限を更新しました。');
     }
-
-
-    // public function update(Request $request, Event $event, UserEntry $entry)
-    // {
-    //     if ($entry->event_id !== $event->id) {
-    //         abort(403, 'Invalid entry.');
-    //     }
-
-    //     if ($entry->status !== 'waitlist') {
-    //         return redirect()->back()->with('error', 'キャンセル待ちではないエントリーは更新できません。');
-    //     }
-
-    //     $request->validate([
-    //         'waitlist_until' => ['required','date_format:Y-m-d\TH:i'],
-    //     ]);
-        
-    //     $input = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $request->input('waitlist_until'));
-    //     if ($input > $event->event_date) {
-    //         $input = $event->event_date;
-    //     }
-
-    //     $entry->waitlist_until = $input;
-    //     // $entry->waitlist_until = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $request->input('waitlist_until'));
-    //     $entry->save();
-
-    //     return redirect()->back()->with('success', 'キャンセル待ち期限を更新しました。');
-    // }
-
-
 }

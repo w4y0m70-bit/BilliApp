@@ -4,14 +4,14 @@
 
 @section('content')
 <div class="px-4">
-<h2 class="text-2xl font-bold mb-6">イベント一覧</h2>
+<h2 class="text-2xl font-bold mb-2">イベント一覧</h2>
 
 <!-- 公開中のイベント -->
 <div class="flex items-center justify-between mb-2">
     <h3 class="text-xl font-semibold">公開中のイベント</h3>
 
     <a href="{{ route('admin.events.create') }}"
-       class="bg-admin text-white px-4 py-2 rounded hover:bg-blue-700">
+       class="bg-admin text-white px-4 py-2 rounded hover:bg-admin-dark">
         イベント作成
     </a>
 </div>
