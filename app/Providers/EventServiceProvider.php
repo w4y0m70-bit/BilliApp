@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use App\Events\EventPublished;
-use App\Listeners\SendUserNotification;
 use App\Listeners\SendEventPublishedNotification;
 use App\Events\WaitlistPromoted;
 use App\Listeners\SendWaitlistPromotedNotification;

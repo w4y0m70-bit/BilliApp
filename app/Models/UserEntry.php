@@ -12,6 +12,8 @@ use App\Events\WaitlistCancelled;
 
 class UserEntry extends Model
 {
+    public readonly UserEntry $entry;
+
     protected $fillable = [
         'user_id',
         'event_id',
@@ -49,6 +51,7 @@ class UserEntry extends Model
 
         $promotedEntries = [];
         $isEventFull = false;
+        $wasFull = $event->entry_count >= $event->max_participants;
 
         DB::transaction(function () use ($event, &$promotedEntries, &$isEventFull) {
 
@@ -102,7 +105,10 @@ class UserEntry extends Model
             event(new WaitlistPromoted($entry));
         }
 
-        if ($isEventFull) {
+        $event->refresh();
+        $isNowFull = $event->entry_count >= $event->max_participants;
+
+        if (!$wasFull && $isNowFull) {
             event(new EventFull($event));
         }
 
@@ -146,6 +152,7 @@ class UserEntry extends Model
         $cancelledEntries = [];
         $promotedEntries = [];
         $eventFullEvents = [];
+        $wasFull = $event->entry_count >= $event->max_participants;
 
         DB::transaction(function () use (
             $expired,
@@ -197,7 +204,10 @@ class UserEntry extends Model
                     'userEntries as waitlist_count' => fn ($q) => $q->where('status', 'waitlist'),
                 ]);
 
-                if ($event->entry_count >= $event->max_participants) {
+                $event->refresh();
+                $isNowFull = $event->entry_count >= $event->max_participants;
+
+                if (!$wasFull && $isNowFull) {
                     $eventFullEvents[$event->id] = $event;
                 }
 

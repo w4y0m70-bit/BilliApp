@@ -4,17 +4,22 @@ namespace App\Listeners;
 
 use App\Events\WaitlistCancelled;
 use App\Notifications\WaitlistCancelledNotification;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
 
-class SendWaitlistCancelledNotification
+class SendWaitlistCancelledNotification implements ShouldQueue
 {
+    use InteractsWithQueue;
+
     public function handle(WaitlistCancelled $event)
     {
-        \Log::info('[WaitlistCancelled] Listener triggered for entry ID: ' . $event->entry->id);
-
-        // キャンセルされたユーザーに通知
         $user = $event->entry->user;
 
-        if ($user && $user->notificationSettings()->firstWhere('type', 'waitlist_cancelled')?->enabled) {
+        if (!$user) {
+            return;
+        }
+        // ユーザー設定で通知ONのときのみ送信
+        if ($user->shouldNotify('waitlist_cancelled')) {
             $user->notify(new WaitlistCancelledNotification($event->entry));
         }
     }

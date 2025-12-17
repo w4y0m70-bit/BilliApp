@@ -35,7 +35,7 @@
                     ［{{ $event->organizer->name ?? '主催者不明' }}］
                 </p>
 
-                <h3 class="text-lg font-bold mb-1">{{ $event->title }}</h3>
+                <h3 class="text-lg font-bold mb-1 text-user">{{ $event->title }}</h3>
 
                 <p class="text-sm text-gray-700">
                     <strong>開催日時：</strong><span class="text-lg font-bold">
