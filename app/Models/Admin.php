@@ -6,13 +6,15 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use App\Models\NotificationSetting;
+use App\Notifications\AdminResetPasswordNotification;
 
 class Admin extends Authenticatable
 {
     use Notifiable;
 
     protected $guard = 'admin';
-
+    protected $table = 'admins';
+    
     protected $fillable = [
         'admin_id',
         'name',
@@ -69,6 +71,11 @@ class Admin extends Authenticatable
     {
         // DBのJSONカラムなどで保存している想定
         return $this->notification_type ? explode(',', $this->notification_type) : ['mail'];
+    }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new AdminResetPasswordNotification($token));
     }
 
 }

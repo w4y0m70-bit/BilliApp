@@ -33,7 +33,7 @@
             </form>
 
             <div class="mt-6 text-center">
-                <a href="#" class="text-sm text-blue-600 hover:underline">パスワードをお忘れの方はこちら</a>
+                <a href="{{ route('admin.password.request') }}" class="text-sm text-blue-600 hover:underline">パスワードをお忘れの方はこちら</a>
             </div>
 
             <div class="mt-6 text-center">

@@ -1,22 +1,25 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\TestMail;
 use App\Http\Controllers\Admin\{
+    Auth\AdminRegisterController,
+    AdminResetPasswordController,
+    AdminForgotPasswordController,
     AdminLoginController,
     AdminEventController,
     AdminParticipantController,
     AdminTicketController,
-    AdminAccountController
+    AdminAccountController,
 };
-use App\Http\Controllers\Admin\Auth\AdminRegisterController;
-use App\Http\Controllers\User\UserEventController;
-use App\Http\Controllers\User\UserEntryController;
-use App\Http\Controllers\User\UserProfileController;
-use App\Http\Controllers\User\UserLoginController;
-use App\Http\Controllers\User\Auth\UserRegisterController;
-
-use Illuminate\Support\Facades\Mail;
-use App\Mail\TestMail;
+use App\Http\Controllers\User\{
+    UserLoginController,
+    UserEventController,
+    UserEntryController,
+    UserProfileController,
+    Auth\UserRegisterController
+};
 
 // require __DIR__.'/auth.php';
 // Route::get('/test-mail', function() {
@@ -45,6 +48,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::get('register', [AdminRegisterController::class, 'showRegistrationForm'])->name('register');
         Route::post('register', [AdminRegisterController::class, 'register'])->name('register.post');
+        // パスワードリセット（管理者）
+        Route::get('forgot-password', [AdminForgotPasswordController::class, 'showLinkRequestForm'])
+            ->name('password.request');
+        // メール送信
+        Route::post('forgot-password', [AdminForgotPasswordController::class, 'sendResetLinkEmail'])
+            ->name('password.email');
+        // 再設定画面
+        Route::get('reset-password/{token}', [AdminResetPasswordController::class, 'showResetForm'])
+            ->name('password.reset');
+        // 再設定処理
+        Route::post('reset-password', [AdminResetPasswordController::class, 'reset'])
+            ->name('password.update');
     });
 
     // ===== ログイン必須エリア =====
