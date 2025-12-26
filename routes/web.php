@@ -18,6 +18,8 @@ use App\Http\Controllers\User\{
     UserEventController,
     UserEntryController,
     UserProfileController,
+    UserForgotPasswordController,
+    UserResetPasswordController,
     Auth\UserRegisterController
 };
 
@@ -113,13 +115,24 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::prefix('user')->name('user.')->group(function () {
 
         // --- 認証不要ルート ---
-        // Route::middleware('guest:web')->group(function () {
             Route::get('/login', [UserLoginController::class, 'showLoginForm'])->name('login');
             Route::post('/login', [UserLoginController::class, 'login'])->name('login.post');
 
             Route::get('/register', [UserRegisterController::class, 'showRegistrationForm'])->name('register');
             Route::post('/register', [UserRegisterController::class, 'register'])->name('register.post');
-        // });
+
+            Route::middleware('guest')->group(function () {
+                // パスワードリセット申請
+                Route::get('forgot-password', [UserForgotPasswordController::class, 'showLinkRequestForm'])
+                    ->name('password.request');
+                Route::post('forgot-password', [UserForgotPasswordController::class, 'sendResetLinkEmail'])
+                    ->name('password.email');
+                // 再設定画面
+                Route::get('reset-password/{token}', [UserResetPasswordController::class, 'showResetForm'])
+                    ->name('password.reset');
+                Route::post('reset-password', [UserResetPasswordController::class, 'reset'])
+                    ->name('password.update');
+            });
 
         // --- 認証必須ルート ---
         Route::middleware(['auth:web', 'session.lifetime:60'])->group(function () {
