@@ -9,43 +9,67 @@
     @csrf
 
     <div class="mb-4">
-        <label class="block font-medium mb-1">イベント名</label>
+        <div class="flex items-center mb-1">
+        <label class="font-medium">イベント名</label>
+            <x-help help-key="admin.events.title" />
+        </div>
         <input type="text" name="title" value="{{ old('title', $data['title'] ?? '') }}" class="w-full border p-2 rounded" required>
     </div>
 
     <div class="mb-4">
-        <label class="block font-medium mb-1">開催日時</label>
+        <div class="flex items-center mb-1">
+        <label class="font-medium">開催日時</label>
+            <x-help help-key="admin.events.event_date" />
+        </div>
         <input type="datetime-local" name="event_date" id="event_date" class="w-full border p-2 rounded" required>
+        <small class="text-gray-500">公開後は変更できません</small>
     </div>
 
     <div class="mb-4">
-        <label class="block font-medium mb-1">エントリー締め切り日時</label>
+        <div class="flex items-center mb-1">
+        <label class="font-medium">エントリー締め切り日時</label>
+            <x-help help-key="admin.events.entry_deadline" />
+        </div>
         <input type="datetime-local" name="entry_deadline" id="entry_deadline" class="w-full border p-2 rounded" required>
+        <small class="text-gray-500">公開後は変更できません</small>
     </div>
 
     <div class="mb-4">
-        <label class="block font-medium mb-1">公開日時</label>
+        <div class="flex items-center mb-1">
+        <label class="font-medium">公開日時</label>
+            <x-help help-key="admin.events.published_at" />
+        </div>
         <input type="datetime-local" name="published_at" id="published_at" class="border w-full p-2 rounded">
-        <small class="text-gray-500">設定した日時に公開されます</small>
+        <!-- <small class="text-gray-500">公開されるとイベントチケットが消費されます</small> -->
     </div>
 
     <div class="mb-4">
+        <div class="flex items-center mb-1">
         <label class="block font-medium mb-1">イベント内容</label>
+            <x-help help-key="admin.events.description" />
+        </div>
         <textarea name="description" rows="4" class="w-full border p-2 rounded">{{ old('description', $data['description'] ?? '') }}</textarea>
-        <small class="text-gray-500">イベントの詳細や、ルールなど参加者への説明</small>
     </div>
 
     <div class="mb-4">
+        <div class="flex items-center mb-1">
         <label class="block font-medium mb-1">最大人数</label>
+            <x-help help-key="admin.events.max_participants" />
+        </div>
         <input type="number" name="max_participants" value="{{ old('max_participants', $data['max_participants'] ?? '') }}" class="w-full border p-2 rounded" min="1" required>
+        <small class="text-gray-500">公開後は変更できません</small>
     </div>
 
     <div class="mb-4">
+        <div class="flex items-center mb-1">
         <label class="block font-medium mb-1">キャンセル待ち</label>
+            <x-help help-key="admin.events.allow_waitlist" />
+        </div>
         <div class="flex gap-6">
             <label><input type="radio" name="allow_waitlist" value="1" checked> 有</label>
             <label><input type="radio" name="allow_waitlist" value="0"> 無</label>
         </div>
+        <small class="text-gray-500">公開後は変更できません</small>
     </div>
 
     <button type="submit" class="bg-admin text-white px-6 py-2 rounded hover:bg-admin-dark">
@@ -73,8 +97,11 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // 公開日時に現在日時を初期値
-    const now = new Date();
-    publishedInput.value = toDatetimeLocal(now);
+    const tomorrowNoon = new Date();
+    tomorrowNoon.setDate(tomorrowNoon.getDate() + 1);
+    tomorrowNoon.setHours(12, 0, 0, 0);
+
+    publishedInput.value = toDatetimeLocal(tomorrowNoon);
 
     // 開催日時入力時に締め切り日時を自動設定（1日前）
     eventInput.addEventListener('change', function() {

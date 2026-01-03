@@ -24,6 +24,7 @@
 
             <div class="mt-6 text-center">
                 <a href="#" class="text-sm text-user hover:underline">パスワードをお忘れの方はこちら</a>
+                <x-help help-key="user.login.password_reset" />
             </div>
 
             <div class="mt-4 text-center">
@@ -34,6 +35,7 @@
     <a href="{{ route('user.register') }}" class="text-blue-600 hover:underline">
         新規登録
     </a>
+    <x-help help-key="user.login.register" />
 </div>
         </div>
     </div>

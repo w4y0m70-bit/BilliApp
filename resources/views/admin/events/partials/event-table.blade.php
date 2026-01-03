@@ -62,7 +62,7 @@
                             <span 
                                 href="{{ route('admin.events.participants.index', $event->id) }}"
                             >
-                                （待ち：{{ $event->waitlist_count }}）
+                                （WL：{{ $event->waitlist_count }}）
                             </span>
                         @endif
                     </a>

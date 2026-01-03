@@ -63,17 +63,26 @@
 
         {{-- イベント基本情報 --}}
         <div class="text-sm text-gray-700 space-y-1">
-            <p><strong>開催日時：</strong><span class="text-lg font-bold">{{ format_event_date($event->event_date) }} {{ $event->event_date->format('H:i') }}</span></p>
-            <p><strong>エントリー締切：</strong>{{ format_event_date($event->entry_deadline) }} {{ $event->entry_deadline->format('H:i') }}</p>
-            <p class="text-sm text-gray-700 mt-1">
-                    <strong>キャンセル待ち期限：</strong>
+            <div class="flex items-center">
+            <strong>開催日時：</strong><span class="text-lg font-bold">{{ format_event_date($event->event_date) }} {{ $event->event_date->format('H:i') }}</span>
+            </div>
+            <div>
+            <strong>エントリー締切：</strong>{{ format_event_date($event->entry_deadline) }} {{ $event->entry_deadline->format('H:i') }}
+            </div>
+            <div class="flex items-center">
+                <strong>キャンセル待ち期限：</strong>
+                <span class="ml-1">
                     @if ($status === 'waitlist' && $userEntry->waitlist_until)
                         {{ format_event_date($userEntry->waitlist_until) }}
                         {{ $userEntry->waitlist_until->format('H:i') }}
                     @else
                         —
                     @endif
-                </p>
+                </span>
+                <!-- <span help-key="user.events.waitlist_until" class="inline-block ml-2"> -->
+                   <x-help help-key="user.events.waitlist_until" />
+               <!-- </span> -->
+               </div>
         </div>
 
         {{-- ■ キャンセル待ち期限（waitlist） --}}
@@ -127,7 +136,10 @@
         {{-- ■ エントリーボタン --}}
         <div class="flex justify-end items-center gap-3 pt-4 border-t">
             @if(!$userEntry)
-                <button 
+            <span help-key="user.events.entry" class="inline-block">
+                <x-help help-key="user.events.entry" />
+            </span>
+            <button 
                     type="submit"
                     class="px-4 py-2 rounded text-white transition
                         {{ $canEntry ? 'bg-user hover:bg-user-dark' : 'bg-gray-400 cursor-not-allowed' }}"
@@ -168,6 +180,9 @@
                 >
                     エントリーをキャンセル
                 </button>
+                <span help-key="user.events.cancel" class="inline-block ml-2">
+                    <x-help help-key="user.events.cancel" />
+                </span>
             </x-slot>
         </x-modal>
     @endif

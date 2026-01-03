@@ -70,7 +70,7 @@
             更新する
         </button>
 
-        <a href="{{ route('admin.account') }}"
+        <a href="{{ route('admin.account.show') }}"
            class="ml-3 text-gray-700 underline">
             戻る
         </a>

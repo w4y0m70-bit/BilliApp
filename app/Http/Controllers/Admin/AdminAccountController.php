@@ -49,7 +49,7 @@ class AdminAccountController extends Controller
         // 通知対象の更新
         $this->updateNotificationSetting($admin, 'event_full', $request->boolean('notify_event_full_enabled'));
 
-        return redirect()->route('admin.account')
+        return redirect()->route('admin.account.show')
             ->with('success', 'アカウント情報を更新しました。');
     }
 

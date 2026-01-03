@@ -4,7 +4,11 @@
 
 @section('content')
 <div class="px-4">
-    <h2 class="text-2xl font-bold mb-4">公開中のイベント</h2>
+    <h2 class="text-2xl font-bold mb-4">公開中のイベント
+    <span help-key="user.events.index" class="inline-block mb-4">
+        <x-help help-key="user.events.index" />
+    </span>
+    </h2>
 
     @if($events->isEmpty())
         <p>公開中のイベントはありません。</p>
@@ -71,7 +75,7 @@
                     ）
                 </p>
 
-                {{-- 状態バッジ（クリックで詳細ページへ） --}}
+                {{-- 状態バッジ --}}
                 <div class="mt-3">
                     @if ($status === 'entry')
                             <span class="inline-block bg-user text-white text-sm px-3 py-1 rounded transition">

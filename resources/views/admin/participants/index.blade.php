@@ -31,12 +31,18 @@
                 ）
             </p>
             <!-- ゲスト追加ボタン -->
-            <button 
-                @click="openModal = true"
-                class="bg-admin text-white px-3 py-1 rounded hover:bg-admin-dark flex items-center justify-center"
-            >
-                <span class="material-icons text-lg">add</span>
-            </button>
+            <div class="flex items-center gap-1">
+                <x-help help-key="admin.participants.add_guest" />
+
+                <button
+                    type="button"
+                    @click="openModal = true"
+                    class="bg-admin text-white px-3 py-1 rounded hover:bg-admin-dark
+                        flex items-center justify-center"
+                >
+                    <span class="material-icons text-lg">add</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -45,10 +51,10 @@
         <table class="min-w-full border border-gray-300">
             <thead class="bg-gray-300">
                 <tr>
-                    <th class="px-4 border-b w-3/12">No.</th>
+                    <th class="px-4 border-b w-2/12">No.</th>
                     <th class="px-4 border-b w-4/12">名　前</th>
                     <th class="px-4 border-b w-4/12">クラス</th>
-                    <th class="px-4 border-b w-1/12"></th>
+                    <th class="px-4 border-b w-2/12">削除</th>
                 </tr>
             </thead>
             <tbody>

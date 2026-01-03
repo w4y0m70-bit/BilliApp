@@ -122,6 +122,9 @@
         <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
             このイベントを削除する
         </button>
+        <div help-key="admin.events.delete" class="inline-block ml-2">
+            <x-help help-key="admin.events.delete" />
+        </div>
     </form>
 </div>
 @endif

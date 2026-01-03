@@ -9,11 +9,15 @@
             <div class="flex flex-col gap-8 mb-6">
                 {{-- ユーザー --}}
                 @if(auth('web')->check())
-                <a href="{{ route('user.events.index') }}" class="bg-user text-white px-6 py-3 rounded-lg hover:bg-user-dark">マイページへ</a>
+                <div class="flex items-center justify-center">
+                <a href="{{ route('user.events.index') }}" class="bg-user text-white px-6 py-3 w-60 rounded-lg hover:bg-user-dark">
+                    プレイヤーページへ</a>
+                <x-help help-key="user.home" />
+                </div>
                 @else
                     <div class="flex items-center justify-center">
                         <a href="{{ route('user.login') }}"
-                        class="bg-user text-white px-6 py-3 rounded-lg hover:bg-user-dark">
+                        class="bg-user text-white px-6 py-3 w-60 rounded-lg hover:bg-user-dark">
                             プレイヤーログイン
                         </a>
 
@@ -23,11 +27,15 @@
                 
                 {{-- 管理者 --}}
                 @if(auth('admin')->check())
-                    <a href="{{ route('admin.home') }}" class="bg-admin text-white px-6 py-3 rounded-lg hover:bg-admin-dark">管理者ページへ</a>
+                <div class="flex items-center justify-center">
+                    <a href="{{ route('admin.home') }}" class="bg-admin text-white px-6 py-3 w-60 rounded-lg hover:bg-admin-dark">
+                        管理者ページへ</a>
+                    <x-help help-key="admin.home" />
+                </div>
                 @else
                 <div class="flex items-center justify-center">
                     <a href="{{ route('admin.login') }}" 
-                    class="bg-admin text-white px-6 py-3 rounded-lg hover:bg-admin-dark">
+                    class="bg-admin text-white px-6 py-3 w-60 rounded-lg hover:bg-admin-dark">
                         管理者ログイン
                     </a>
                     <x-help help-key="admin.login" />

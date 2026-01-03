@@ -1,23 +1,32 @@
-@php
-    $help = config("help.$helpKey");
-@endphp
-
 @if($help)
 <span x-data="{ open: false }">
     <!-- ? アイコン -->
     <span
-        class="material-symbols-outlined text-gray-400 text-sm cursor-pointer ml-2"
+        class="material-symbols-outlined
+            text-gray-400
+            cursor-pointer
+            ml-1
+            leading-none"
+        style="
+            font-size: 14px;
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 10;
+        "
         @click="open = true"
     >
         help
     </span>
+
 
     <!-- モーダル全体 -->
     <div
         x-show="open"
         x-transition
         class="fixed inset-0 z-50 flex items-center justify-center px-4"
-        @click="open = false"
+       @click.prevent="open = false"
     >
         <!-- 背景 -->
         <div class="absolute inset-0 bg-black/40"></div>
@@ -42,17 +51,20 @@
 
                 <!-- 閉じる -->
                 <button
+                    type="button"
                     class="material-symbols-outlined text-gray-400"
-                    @click="open = false"
+                   @click.prevent="open = false"
                 >
                     close
                 </button>
             </div>
 
             @if($help)
-                <p class="text-sm text-gray-700 mt-2">
-                    {{ $help['body'] ?? '' }}
-                </p>
+                @foreach(($help['body'] ?? []) as $line)
+                    <p class="text-sm text-gray-700 mt-2">
+                        {{ $line }}
+                    </p>
+                @endforeach
             @else
                 @env('local')
                     <p class="text-red-600 text-xs">

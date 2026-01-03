@@ -23,7 +23,7 @@
                 @if(!empty($data['event_date']))
                     {{ \Carbon\Carbon::parse($data['event_date'])
                         ->locale('ja')
-                        ->translatedFormat('Y-m-d（D） H:i') }}
+                        ->isoFormat('YYYY/MM/DD（ddd）HH:mm') }}
                 @else
                     —
                 @endif
@@ -48,10 +48,11 @@
             <div>
                 @if(!empty($data['published_at']))
                     @php
-                        $publishedAt = \Carbon\Carbon::parse($data['published_at'])->locale('ja');
+                        $publishedAt = \Carbon\Carbon::parse($data['published_at'])
+                        ->locale('ja');
                     @endphp
 
-                    {{ $publishedAt->translatedFormat('Y-m-d（D） H:i') }}
+                    {{ $publishedAt->isoFormat('YYYY/MM/DD（ddd）HH:mm') }}
 
                     @if($publishedAt->isPast())
                         <span class="ml-2 text-sm text-red-600">
