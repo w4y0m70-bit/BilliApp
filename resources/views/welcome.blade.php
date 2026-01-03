@@ -11,25 +11,28 @@
                 @if(auth('web')->check())
                 <a href="{{ route('user.events.index') }}" class="bg-user text-white px-6 py-3 rounded-lg hover:bg-user-dark">マイページへ</a>
                 @else
-                <a href="{{ route('user.login') }}" class="bg-user text-white px-6 py-3 rounded-lg hover:bg-user-dark">ユーザーログイン</a>
+                    <div class="flex items-center justify-center">
+                        <a href="{{ route('user.login') }}"
+                        class="bg-user text-white px-6 py-3 rounded-lg hover:bg-user-dark">
+                            プレイヤーログイン
+                        </a>
+
+                        <x-help help-key="user.login" />
+                    </div>
                 @endif
                 
                 {{-- 管理者 --}}
                 @if(auth('admin')->check())
                     <a href="{{ route('admin.home') }}" class="bg-admin text-white px-6 py-3 rounded-lg hover:bg-admin-dark">管理者ページへ</a>
                 @else
-                    <a href="{{ route('admin.login') }}" class="bg-admin text-white px-6 py-3 rounded-lg hover:bg-admin-dark">管理者ログイン</a>
+                <div class="flex items-center justify-center">
+                    <a href="{{ route('admin.login') }}" 
+                    class="bg-admin text-white px-6 py-3 rounded-lg hover:bg-admin-dark">
+                        管理者ログイン
+                    </a>
+                    <x-help help-key="admin.login" />
+                </div>
                 @endif
-                <!-- <a href="{{ route('user.login') }}" 
-                   class="bg-user text-white px-6 py-3 rounded-lg hover:bg-user-dark">
-                   プレイヤーログイン
-                </a>
-                
-                <a href="{{ route('admin.login') }}" 
-                   class="bg-admin text-white px-6 py-3 rounded-lg hover:bg-admin-dark">
-                   管理者ログイン
-                </a> -->
-
                 <!-- スコアボード（準備中） -->
                 <!-- <a href=""
                    class="bg-yellow-400 text-black px-6 py-3 rounded-lg hover:bg-yellow-500 mt-6">

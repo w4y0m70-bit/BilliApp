@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\App;
 use App\Mail\TestMail;
 use App\Http\Controllers\Admin\{
     Auth\AdminRegisterController,
@@ -160,3 +161,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::view('/scoreboard', 'scoreboard.index')->name('scoreboard');
+
+
+/*デバッグ用ヘルプ表示ページ*/
+Route::get('/_debug/help', function () {
+    abort_unless(App::environment('local'), 404);
+
+    $helps = config('help');
+
+    return view('debug.help', compact('helps'));
+});
