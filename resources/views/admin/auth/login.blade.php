@@ -33,7 +33,9 @@
             </form>
 
             <div class="mt-6 text-center">
-                <a href="{{ route('admin.password.request') }}" class="text-sm text-blue-600 hover:underline">パスワードをお忘れの方はこちら</a>
+                <a href="{{ route('admin.password.request') }}" class="text-sm text-blue-600 hover:underline">
+                    パスワードをお忘れの方はこちら</a>
+                    <x-help help-key="admin.login.password_reset" />
             </div>
 
             <div class="mt-6 text-center">
@@ -44,6 +46,7 @@
                 <a href="{{ route('admin.register') }}" class="text-blue-600 hover:underline">
                     新規登録
                 </a>
+                <x-help help-key="admin.login.register" />
             </div>
         </div>
     </div>

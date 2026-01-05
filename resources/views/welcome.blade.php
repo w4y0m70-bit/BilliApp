@@ -47,8 +47,12 @@
                    スコアボード（準備中）
                 </a> -->
             </div>
+            <div class="text-sm mb-1 text-gray-600 flex justify-center items-center gap-1">
+                <span>Billentsについて</span>
+                <x-help help-key="app.about" />
+            </div>
             <p class="text-sm mb-10 text-gray-600">
-            ©2025 Billents / ver 0.70-beta<br>
+            ©2025 Billents / ver 0.75-beta<br>
             </p>
         </div>
     </div>

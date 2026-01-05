@@ -1,12 +1,9 @@
 @if($help)
 <span x-data="{ open: false }">
+
     <!-- ? アイコン -->
     <span
-        class="material-symbols-outlined
-            text-gray-400
-            cursor-pointer
-            ml-1
-            leading-none"
+        class="material-symbols-outlined text-gray-400 cursor-pointer ml-1 leading-none"
         style="
             font-size: 14px;
             font-variation-settings:
@@ -20,13 +17,13 @@
         help
     </span>
 
-
     <!-- モーダル全体 -->
     <div
         x-show="open"
+        x-cloak
         x-transition
         class="fixed inset-0 z-50 flex items-center justify-center px-4"
-       @click.prevent="open = false"
+        @click="open = false"
     >
         <!-- 背景 -->
         <div class="absolute inset-0 bg-black/40"></div>
@@ -43,36 +40,23 @@
                         help
                     </span>
 
-                    <!-- タイトル -->
                     <h2 class="font-semibold text-base text-gray-900">
-                        {{ $help['title'] ?? '' }}
+                        {{ $help['title'] }}
                     </h2>
                 </div>
 
-                <!-- 閉じる -->
                 <button
                     type="button"
                     class="material-symbols-outlined text-gray-400"
-                   @click.prevent="open = false"
+                    @click="open = false"
                 >
                     close
                 </button>
             </div>
 
-            @if($help)
-                @foreach(($help['body'] ?? []) as $line)
-                    <p class="text-sm text-gray-700 mt-2">
-                        {{ $line }}
-                    </p>
-                @endforeach
-            @else
-                @env('local')
-                    <p class="text-red-600 text-xs">
-                        help 未定義
-                    </p>
-                @endenv
-            @endif
-
+            <div class="text-sm text-gray-700 whitespace-pre-line mt-2">
+                {!! $help['body'] !!}
+            </div>
         </div>
     </div>
 </span>

@@ -87,40 +87,42 @@
 
         {{-- ■ キャンセル待ち期限（waitlist） --}}
         @if($userEntry && $userEntry->status === 'waitlist')
-
-        <x-modal
-            title="キャンセル待ち期限の設定"
-            confirm-text="保存"
-            confirm-color="bg-user"
-            :confirm-action="route('user.entries.update', ['event' => $event->id, 'entry' => $userEntry->id])"
+<x-modal
+    title="キャンセル待ち期限の設定"
+    confirm-text="保存"
+    confirm-color="bg-user"
+    :confirm-action="route('user.entries.update', ['event' => $event->id, 'entry' => $userEntry->id])"
+>
+    <x-slot name="form">
+        <input
+            type="datetime-local"
+            name="waitlist_until"
+            class="border rounded px-3 py-2 w-full mb-4"
+            value="{{ $waitlistDefault }}"
         >
-            <input
-                type="datetime-local"
-                name="waitlist_until"
-                class="border rounded px-3 py-2 w-full mb-4"
-                value="{{ $waitlistDefault }}"
-            >
 
-            <button
-                type="submit"
-                name="clear"
-                value="1"
-                class="bg-gray-300 text-gray-800 px-3 py-2 rounded hover:bg-gray-400 mb-2 w-full"
-            >
-                期限をクリア
-            </button>
+        <button
+            type="submit"
+            name="clear"
+            value="1"
+            class="bg-gray-300 text-gray-800 px-3 py-2 rounded hover:bg-gray-400 mb-2 w-full"
+        >
+            キャンセル待ち期限を設定しない
+        </button>
+    </x-slot>
 
-            <x-slot name="trigger">
-                <button
-                    type="button"
-                    @click="open = true"
-                    class="mt-1 text-center w-full text-gray-600 underline"
-                >
-                    キャンセル待ち期限設定
-                </button>
-            </x-slot>
-        </x-modal>
-        @endif
+    <x-slot name="trigger">
+        <button
+            type="button"
+            @click="open = true"
+            class="mt-1 text-center w-full text-gray-600 underline"
+        >
+            キャンセル待ち期限の設定・変更をする
+        </button>
+    </x-slot>
+</x-modal>
+@endif
+
 
 
         {{-- ■ イベント概要 --}}

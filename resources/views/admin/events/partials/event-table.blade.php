@@ -19,7 +19,7 @@
                             @click.stop
                             class="text-gray-700 hover:text-blue-700"
                             title="このイベントを元に新規作成">
-                                <span class="material-icons">content_copy</span>
+                                <span class="material-symbols-outlined">content_copy</span>
                             </a>
 
                         {{-- ② それ以外 → 編集アイコン --}}
@@ -27,7 +27,7 @@
                             <a href="{{ route('admin.events.edit', $event) }}"
                             @click.stop
                             class="text-gray-700 hover:text-blue-700">
-                                <span class="material-icons">edit</span>
+                                <span class="material-symbols-outlined">edit</span>
                             </a>
                         @endif
                     </div>
@@ -53,21 +53,28 @@
 
                 <div class="text-sm mt-2">
                     参加数：
-                    <a 
-                        href="{{ route('admin.events.participants.index', $event->id) }}" 
-                        class="text-blue-600 underline hover:text-blue-800"
-                    >
+                    @if ($isPast)
                         {{ $event->entry_count }} / {{ $event->max_participants }}
                         @if ($event->waitlist_count > 0)
-                            <span 
-                                href="{{ route('admin.events.participants.index', $event->id) }}"
-                            >
+                            <span>
                                 （WL：{{ $event->waitlist_count }}）
                             </span>
                         @endif
-                    </a>
-
+                    @else
+                        <a 
+                            href="{{ route('admin.events.participants.index', $event->id) }}" 
+                            class="text-blue-600 underline hover:text-blue-800"
+                        >
+                            {{ $event->entry_count }} / {{ $event->max_participants }}
+                            @if ($event->waitlist_count > 0)
+                                <span>
+                                    （WL：{{ $event->waitlist_count }}）
+                                </span>
+                            @endif
+                        </a>
+                    @endif
                 </div>
+
             </div>
 
             <!-- モーダル -->

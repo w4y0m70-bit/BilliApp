@@ -12,14 +12,20 @@
 
     {{-- イベント名（常に編集可） --}}
     <div class="mb-4">
-        <label class="block font-medium mb-1">イベント名</label>
+        <div class="flex items-center mb-1">
+            <label class="block font-medium mb-1">イベント名</label>
+            <x-help help-key="admin.events.title" />
+        </div>
         <input type="text" name="title" class="w-full border p-2 rounded"
                value="{{ old('title', $event->title) }}" required>
     </div>
 
     {{-- 開催日時 --}}
     <div class="mb-4">
-        <label class="block font-medium mb-1">開催日時</label>
+        <div class="flex items-center mb-1">
+            <label class="block font-medium mb-1">開催日時</label>
+            <x-help help-key="admin.events.event_date" />
+        </div>
         <input id="event_date" type="datetime-local" name="event_date"
             class="border w-full p-2 rounded
                 @if($isLimited)
@@ -31,7 +37,10 @@
 
     {{-- エントリー締め切り --}}
     <div class="mb-4">
-        <label class="block font-medium mb-1">エントリー締め切り日時</label>
+        <div class="flex items-center mb-1">
+            <label class="block font-medium mb-1">エントリー締め切り日時</label>
+            <x-help help-key="admin.events.entry_deadline" />
+        </div>
         <input id="entry_deadline" type="datetime-local" name="entry_deadline"
             class="w-full border p-2 rounded
                 @if($isLimited)
@@ -43,7 +52,10 @@
 
     {{-- 公開日時 --}}
     <div class="mb-4">
-        <label class="block font-medium mb-1">公開日時</label>
+        <div class="flex items-center mb-1">
+            <label class="block font-medium mb-1">公開日時</label>
+            <x-help help-key="admin.events.published_at" />
+        </div>
         <input id="published_at" type="datetime-local" name="published_at"
             class="border w-full p-2 rounded
                 @if($isLimited)
@@ -56,14 +68,20 @@
 
     {{-- 内容（常に編集可） --}}
     <div class="mb-4">
-        <label class="block font-medium mb-1">イベント内容</label>
+        <div class="flex items-center mb-1">
+            <label class="block font-medium mb-1">イベント内容</label>
+            <x-help help-key="admin.events.description" />
+        </div>
         <textarea name="description" rows="4" class="w-full border p-2 rounded">{{ old('description', $event->description) }}</textarea>
         <small class="text-gray-500">イベントの詳細や、ルールなど参加者への説明</small>
     </div>
 
     {{-- 最大人数 --}}
     <div class="mb-4">
-        <label class="block font-medium mb-1">最大人数</label>
+        <div class="flex items-center mb-1">
+            <label class="block font-medium mb-1">最大人数</label>
+            <x-help help-key="admin.events.max_participants" />
+        </div>
         <input type="number" min="1" name="max_participants"
             class="w-full border p-2 rounded
                 @if($isLimited)
@@ -75,12 +93,15 @@
 
     {{-- キャンセル待ち --}}
     <div class="mb-4">
+        <div class="flex items-center mb-1">
         <label class="block font-medium mb-1">
             キャンセル待ち
             @if($isLimited)
                 <span class="text-sm text-gray-500">(公開済みのため編集不可)</span>
             @endif
         </label>
+            <x-help help-key="admin.events.allow_waitlist" />
+        </div>
 
         <div class="flex gap-6">
 

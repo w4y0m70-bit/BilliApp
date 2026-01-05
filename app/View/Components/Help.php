@@ -15,19 +15,17 @@ class Help extends Component
     {
         $this->helpKey = $helpKey;
 
-        $parts = explode('.', $helpKey, 2);
+        // 可変階層対応：そのまま config パスとして取得
+        $help = config('help.' . $helpKey);
 
-        if (count($parts) !== 2) {
-            $this->handleInvalidKey("形式が不正です");
+        if (!is_array($help)) {
+            $this->handleInvalidKey('定義が見つかりません');
             return;
         }
 
-        [$group, $name] = $parts;
-
-        $help = config("help.$group.$name");
-
-        if (!is_array($help)) {
-            $this->handleInvalidKey("定義が見つかりません");
+        // 必須キーの最低限チェック
+        if (!isset($help['title'], $help['body'])) {
+            $this->handleInvalidKey('title または body が未定義です');
             return;
         }
 
@@ -42,7 +40,7 @@ class Help extends Component
             );
         }
 
-        // 本番では静かに無視
+        // 本番では表示しない
         $this->help = null;
     }
 
