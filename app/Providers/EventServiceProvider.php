@@ -21,9 +21,9 @@ class EventServiceProvider extends ServiceProvider
         WaitlistPromoted::class => [
             SendWaitlistPromotedNotification::class,
         ],
-        WaitlistCancelled::class => [
-            SendWaitlistCancelledNotification::class,
-        ],
+        // WaitlistCancelled::class => [
+        //     SendWaitlistCancelledNotification::class,
+        // ],
         EventFull::class => [
             SendEventFullNotification::class,
         ],
