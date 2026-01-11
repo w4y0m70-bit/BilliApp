@@ -37,11 +37,24 @@ class UserProfileController extends Controller
         ]);
 
         // 通知設定を更新
-        foreach ($request->notifications ?? [] as $type => $data) {
-            $setting = $user->notificationSettings()->firstOrNew(['type' => $type]);
-            $setting->via = $data['via'] ?? 'mail';
-            $setting->enabled = isset($data['enabled']);
-            $setting->save();
+        // 1. 既存の通知設定をすべてオフにする、あるいは削除する
+        // 今回はシンプルに一度削除して再登録する例です
+        $user->notificationSettings()->delete();
+
+        // 2. チェックが入っている項目を保存する
+        if ($request->has('notifications')) {
+            foreach ($request->notifications as $type => $vias) {
+                foreach ($vias as $via => $value) {
+                    if ($value == '1') {
+                        \App\Models\NotificationSetting::create([
+                            'user_id' => $user->id,
+                            'type'    => $type,
+                            'via'     => $via,
+                            'enabled' => true,
+                        ]);
+                    }
+                }
+            }
         }
         
         $user->update($validated);

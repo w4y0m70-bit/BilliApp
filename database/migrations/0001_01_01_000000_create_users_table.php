@@ -23,7 +23,7 @@ return new class extends Migration {
             $table->string('phone')->nullable();
             $table->string('account_name')->nullable();
             $table->string('class')->nullable();
-            $table->string('notification_type')->nullable();
+            // $table->string('notification_type')->nullable();
             $table->dateTime('last_login_at')->nullable();
             $table->boolean('is_guest')->default(false);
         });

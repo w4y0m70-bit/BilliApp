@@ -54,38 +54,41 @@
 
         {{-- 通知設定 --}}
         <div class="mb-4">
-            <label class="block font-semibold mb-1">通知</label>
-                @php
+            <label class="block font-semibold mb-4 border-b pb-2">通知設定</label>
+            @php
                 $notificationTypes = [
                     'event_published' => '新規イベント公開',
                     'waitlist_promoted' => 'キャンセル待ち繰り上げ',
                     'waitlist_cancelled' => 'キャンセル待ち期限切れ',
                 ];
                 $notificationVias = ['mail' => 'メール', 'line' => 'LINE'];
-                @endphp
+            @endphp
 
-                @foreach($notificationTypes as $type => $label)
-                    <div class="mb-4">
-                        <label class="block font-semibold mb-1">{{ $label }}</label>
-
-                        <div class="flex items-center gap-4">
-                            <select name="notifications[{{ $type }}][via]" class="border p-2 rounded">
-                                @foreach($notificationVias as $key => $name)
-                                    <option value="{{ $key }}" 
-                                        {{ $user->notificationSettings->firstWhere('type', $type)?->via === $key ? 'selected' : '' }}>
-                                        {{ $name }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            <label class="flex items-center gap-2">
-                                <input type="checkbox" name="notifications[{{ $type }}][enabled]" value="1"
-                                    {{ $user->notificationSettings->firstWhere('type', $type)?->enabled ? 'checked' : '' }}>
-                                ON
+            @foreach($notificationTypes as $type => $label)
+                <div class="mb-4">
+                    <span class="block font-medium mb-2 text-sm text-gray-700">{{ $label }}</span>
+                    <div class="flex gap-6">
+                        @foreach($notificationVias as $viaKey => $viaLabel)
+                            @php
+                                // 現在のユーザーの設定の中に、該当する type と via が存在し、かつ enabled かどうかを確認
+                                $isEnabled = $user->notificationSettings
+                                    ->where('type', $type)
+                                    ->where('via', $viaKey)
+                                    ->where('enabled', true)
+                                    ->isNotEmpty();
+                            @endphp
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" 
+                                    name="notifications[{{ $type }}][{{ $viaKey }}]" 
+                                    value="1"
+                                    @checked(old("notifications.$type.$viaKey", $isEnabled))
+                                    class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500">
+                                <span class="ml-2 text-sm text-gray-600">{{ $viaLabel }}</span>
                             </label>
-                        </div>
+                        @endforeach
                     </div>
-                @endforeach
+                </div>
+            @endforeach
         </div>
 
 

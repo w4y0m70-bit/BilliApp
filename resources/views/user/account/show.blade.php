@@ -62,12 +62,42 @@
             <span>{{ $user->last_login_at?->format('Y/m/d H:i') ?? '－' }}</span>
         </div>
 
-        {{-- 通知先（編集可） --}}
-        <div class="flex justify-between">
-            <span class="font-semibold">通知先</span>
-            <span>{{ $user->notification_type ?? '－' }}</span>
+        {{-- 通知設定（詳細表示） --}}
+        <div class="border-t pt-4">
+            <span class="font-semibold block mb-2">通知設定</span>
+            <div class="space-y-2">
+                @php
+                    $notificationTypes = [
+                        'event_published' => '新規イベント公開',
+                        'waitlist_promoted' => 'キャンセル待ち繰り上げ',
+                        'waitlist_cancelled' => 'キャンセル待ち期限切れ',
+                    ];
+                    $viaLabels = ['mail' => 'メール', 'line' => 'LINE'];
+                @endphp
+
+                @foreach($notificationTypes as $type => $label)
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">{{ $label }}</span>
+                        <span>
+                            @php
+                                // そのタイプで有効（enabled）な通知手段を配列で取得
+                                $activeVias = $user->notificationSettings
+                                    ->where('type', $type)
+                                    ->where('enabled', true)
+                                    ->map(fn($setting) => $viaLabels[$setting->via] ?? $setting->via)
+                                    ->toArray();
+                            @endphp
+
+                            @if(count($activeVias) > 0)
+                                {{ implode('・', $activeVias) }}
+                            @else
+                                <span class="text-gray-400">通知しない</span>
+                            @endif
+                        </span>
+                    </div>
+                @endforeach
+            </div>
         </div>
-    </div>
 
     {{-- 編集ボタン --}}
     <div class="mt-6 text-right">

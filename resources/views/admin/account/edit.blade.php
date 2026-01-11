@@ -43,37 +43,36 @@
                    value="{{ old('email', $admin->email) }}">
         </div>
 
-        <!-- 通知手段 -->
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">通知手段</label>
-            <select name="notification_methods[]" multiple class="border rounded w-full p-2">
-                <option value="mail" {{ in_array('mail', $admin->notificationMethods()) ? 'selected' : '' }}>メール</option>
-                <option value="line" {{ in_array('line', $admin->notificationMethods()) ? 'selected' : '' }}>LINE</option>
-            </select>
-            <p class="text-sm text-gray-500 mt-1">通知手段を選択してください（複数可）</p>
-        </div>
-
-        <!-- 通知対象 -->
+        <!-- 通知設定 -->
         <div class="mb-4">
             <label class="block font-semibold mb-1">通知設定</label>
             <div class="flex flex-col gap-2">
-                <label>
-                    <input type="checkbox" name="notify_event_full_enabled" value="1"
-                           {{ $admin->shouldNotify('event_full') ? 'checked' : '' }}>
-                    満員時に通知
-                </label>
-                <!-- 将来追加される通知項目はここにチェックボックス追加 -->
+                @php
+                    $adminNotificationTypes = [
+                        'event_full' => 'イベントが満員時に通知',
+                        // 'new_user' => '新規ユーザー登録時', // 将来の拡張例
+                    ];
+                @endphp
+
+                @foreach($adminNotificationTypes as $type => $label)
+                    <label>
+                        <input type="checkbox" name="notify_{{ $type }}_enabled" value="1"
+                               {{ $admin->shouldNotify($type) ? 'checked' : '' }}>
+                        {{ $label }}
+                    </label>
+                @endforeach
             </div>
         </div>
-
-        <button type="submit" class="bg-admin text-white px-4 py-2 rounded">
-            更新する
-        </button>
-
-        <a href="{{ route('admin.account.show') }}"
-           class="ml-3 text-gray-700 underline">
-            戻る
-        </a>
-    </form>
+            <button type="submit" class="bg-admin text-white px-4 py-2 rounded">
+                更新する
+            </button>
+    
+            <a href="{{ route('admin.account.show') }}"
+                class="ml-3 text-gray-700 underline">
+                戻る
+            </a>
+        </form>
+        </div>
+    </div> 
 </div>
 @endsection

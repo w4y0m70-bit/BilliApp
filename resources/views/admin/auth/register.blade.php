@@ -41,15 +41,6 @@
             <input type="text" name="address" value="{{ old('address') }}" class="w-full border rounded px-3 py-2">
         </div>
 
-        <div class="mb-3">
-    <label class="block mb-1">通知先（エントリーに関する通知）</label>
-    <select name="notification_type" class="w-full border p-2 rounded" required>
-        <option value="email">メール</option>
-        <option value="sms">SMS</option>
-        <option value="line">LINE</option>
-    </select>
-</div>
-
         {{-- ログイン情報 --}}
         <div class="mb-3">
             <label class="block mb-1">メールアドレス</label>
@@ -64,6 +55,26 @@
         <div class="mb-3">
             <label class="block mb-1">パスワード確認</label>
             <input type="password" name="password_confirmation" class="w-full border rounded px-3 py-2" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="block mb-1">通知設定</label>
+            <div class="flex gap-4 p-2 border rounded bg-white">
+                {{-- メール: 初期状態でチェックを入れる --}}
+                <label class="inline-flex items-center">
+                    <input type="checkbox" name="notification_via[]" value="mail" 
+                        {{-- oldが空（初回表示）の時、またはoldに'mail'が含まれる時にチェック --}}
+                        @checked(!old('notification_via') || (is_array(old('notification_via')) && in_array('mail', old('notification_via'))))>
+                    <span class="ml-2">メール</span>
+                </label>
+                {{-- LINE: oldに'line'が含まれる時だけチェック --}}
+                <!-- <label class="inline-flex items-center">
+                    <input type="checkbox" name="notification_via[]" value="line" 
+                        @checked(is_array(old('notification_via')) && in_array('line', old('notification_via')))>
+                    <span class="ml-2">LINE</span>
+                </label> -->
+            </div>
+            <span class="text-sm text-gray-500">※メールでの通知を推奨</span>
         </div>
 
         <button type="submit" class="bg-admin text-white px-4 py-2 rounded hover:bg-admin-dark">
