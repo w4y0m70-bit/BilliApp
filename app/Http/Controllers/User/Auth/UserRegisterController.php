@@ -48,14 +48,25 @@ class UserRegisterController extends Controller
         'role' => 'player',
     ]);
 
-    // 通知設定の保存
-    if ($request->has('notification_via')) {
-        foreach ($request->notification_via as $via) {
-            // notification_settingsテーブルに保存
+    // 通知設定の初期化
+    // 1. システムにある通知種別のリストを定義
+    $notificationTypes = [
+        'event_published',   // 新規イベント公開
+        'waitlist_promoted',  // キャンセル待ち繰り上げ
+        'waitlist_cancelled', // キャンセル待ち期限切れ
+    ];
+
+    // 2. フォームで選ばれた手段（mail, lineなど）を取得
+    $vias = $request->input('notification_via', []);
+
+    // 3. 全種類 × 全手段 のレコードを作成する
+    foreach ($notificationTypes as $type) {
+        foreach ($vias as $via) {
             \App\Models\NotificationSetting::create([
+                'admin_id' => null,
                 'user_id' => $user->id,
-                'type'    => 'mail', // 必要に応じてタイプを分けてください
-                'via'     => $via,
+                'type'    => $type, // ここに各種類が入る
+                'via'     => $via,  // ここに mail や line が入る
                 'enabled' => true,
             ]);
         }
