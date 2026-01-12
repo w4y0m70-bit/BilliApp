@@ -24,6 +24,7 @@ class EventServiceProvider extends ServiceProvider
         // WaitlistCancelled::class => [
         //     SendWaitlistCancelledNotification::class,
         // ],
+        // キャンセル待ち期限切れの通知は自動送信されるのでここでは不要
         EventFull::class => [
             SendEventFullNotification::class,
         ],

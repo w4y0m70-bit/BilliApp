@@ -9,9 +9,19 @@ use App\Models\UserEntry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use App\Services\WaitlistService;
 
 class AdminParticipantController extends Controller
 {
+    // サービスを保持する変数
+    protected $waitlistService;
+
+    // コンストラクタでWaitlistServiceを注入
+    public function __construct(WaitlistService $waitlistService)
+    {
+        $this->waitlistService = $waitlistService;
+    }
+
     /**
      * 参加者一覧
      */
@@ -81,19 +91,20 @@ class AdminParticipantController extends Controller
 }
 
 
-
     /**
      * キャンセル処理
      */
     public function cancel(Event $event, UserEntry $entry)
-{
-    // モデル側の共通メソッドを呼び出し
-    $name = $entry->cancelAndPromoteWaitlist();
-
-    return response()->json([
-        'message' => "{$name} のエントリーをキャンセルしました",
-    ]);
-}
+    {
+        // 以前の名前を保存（削除後に名前を取得できなくなるのを防ぐため）
+        $name = $entry->name ?? ($entry->user->name ?? 'ゲスト');
+            
+        // サービス側で繰り上げロジック（$this->delete() など）が実装されている前提です
+        $this->waitlistService->cancelAndPromote($entry);
+            return response()->json([
+                'message' => "{$name} のエントリーをキャンセルしました",
+            ]);
+    }
 
     /**
      * JSON出力（APIなどで使う用）

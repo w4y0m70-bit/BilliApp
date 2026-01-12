@@ -10,7 +10,7 @@ use App\Notifications\AdminResetPasswordNotification;
 
 class Admin extends Authenticatable
 {
-    use Notifiable;
+    use Notifiable, SoftDeletes;
 
     protected $guard = 'admin';
     protected $table = 'admins';

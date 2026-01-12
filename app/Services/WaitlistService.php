@@ -12,38 +12,36 @@ use Illuminate\Support\Facades\DB;
 class WaitlistService
 {
     /**
-     * 期限切れのキャンセル待ちを処理する
+     * 特定の参加者をキャンセルし、必要であれば繰り上げを行う（★今回追加）
+     */
+    public function cancelAndPromote(UserEntry $entry): void
+    {
+        DB::transaction(function () use ($entry) {
+            // 1. ステータスをキャンセルに変更（または delete()）
+            $entry->update(['status' => 'cancelled']);
+            
+            // 2. キャンセル通知イベント（既存のものを流用）
+            event(new WaitlistCancelled($entry));
+
+            // 3. 空いた枠に次の人を繰り上げる（既存のプライベートメソッドを活用！）
+            $this->promoteNext($entry->event_id);
+        });
+    }
+    
+    /**
+     * 期限切れのキャンセル待ちを処理する（既存メソッドを整理）
      */
     public function handleExpiredWaitlist(): void
     {
-        // ★ログ1：今から動くことを記録
-    \Log::info('期限切れチェック開始: ' . now());
-        // 1. 期限が過ぎた人たちを探す
         $expiredEntries = UserEntry::where('status', 'waitlist')
             ->whereNotNull('waitlist_until')
             ->where('waitlist_until', '<=', now())
             ->get();
 
-            // ★ログ2：何人見つかったか記録
-            \Log::info('期限切れ対象者数: ' . $expiredEntries->count());
-        if ($expiredEntries->isEmpty()) {
-            return; // 誰もいなければ何もしない
+        foreach ($expiredEntries as $entry) {
+            // 上で作った共通メソッドを呼び出すだけで済むようになる
+            $this->cancelAndPromote($entry);
         }
-
-        DB::transaction(function () use ($expiredEntries) {
-            foreach ($expiredEntries as $entry) {
-                // ★ログ3：誰をキャンセルするか記録
-            \Log::info('キャンセル処理実行中: ID ' . $entry->id);
-                // 2. ステータスをキャンセルに変更
-                $entry->update(['status' => 'cancelled']);
-                
-                // 3. 通知を送る（1回だけ飛ばすためにここで行う）
-                event(new WaitlistCancelled($entry));
-
-                // 4. 空いた枠に次の人を繰り上げる
-                $this->promoteNext($entry->event_id);
-            }
-        });
     }
 
     /**

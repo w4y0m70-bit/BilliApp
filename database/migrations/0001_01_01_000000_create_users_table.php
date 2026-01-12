@@ -26,6 +26,7 @@ return new class extends Migration {
             // $table->string('notification_type')->nullable();
             $table->dateTime('last_login_at')->nullable();
             $table->boolean('is_guest')->default(false);
+            $table->softDeletes();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

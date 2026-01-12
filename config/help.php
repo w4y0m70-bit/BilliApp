@@ -9,7 +9,7 @@ return [
     */
     'app' => [
         'about' => [
-            'title' => 'このアプリについて',
+            'title' => 'Billents について',
             'body' => <<<TEXT
 Billents は、イベントの「開催」と「参加」を
 シンプルに管理するためのイベント管理アプリです。
