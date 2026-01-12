@@ -44,8 +44,30 @@
                     ];
                     $viaLabels = ['mail' => 'メール', 'line' => 'LINE'];
                 @endphp
-
+                
                 @foreach($adminNotificationTypes as $type => $label)
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">{{ $label }}</span>
+                        <span>
+                            @php
+                                // そのタイプで有効（enabled）な通知手段を配列で取得
+                                $activeVias = $admin->notificationSettings
+                                    ->where('type', $type)
+                                    ->where('enabled', true)
+                                    ->map(fn($setting) => $viaLabels[$setting->via] ?? $setting->via)
+                                    ->toArray();
+                            @endphp
+
+                            @if(count($activeVias) > 0)
+                                {{ implode('・', $activeVias) }}
+                            @else
+                                <span class="text-gray-400">通知しない</span>
+                            @endif
+                        </span>
+                    </div>
+                @endforeach
+
+                <!-- @foreach($adminNotificationTypes as $type => $label)
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600">{{ $label }}</span>
                         <span>
@@ -67,7 +89,7 @@
                             @endif
                         </span>
                     </div>
-                @endforeach
+                @endforeach -->
             </div>
         </div>
     <a href="{{ route('admin.account.edit') }}" 

@@ -44,11 +44,24 @@ Route::get('/', function () {
 Route::prefix('admin')->name('admin.')->group(function () {
     // ===== 未ログイン時のみアクセス可能 =====
     Route::middleware('guest:admin')->group(function () {
+        Route::middleware('guest:admin')->group(function () {
+        // 1. ログイン
         Route::get('login', [AdminLoginController::class, 'showLoginForm'])->name('login');
         Route::post('login', [AdminLoginController::class, 'login'])->name('login.post');
 
-        Route::get('register', [AdminRegisterController::class, 'showRegistrationForm'])->name('register');
-        Route::post('register', [AdminRegisterController::class, 'register'])->name('register.post');
+        // 2. 【第一ステップ】メールアドレス入力画面（ログイン画面のリンク先）
+        Route::get('register/email', [AdminRegisterController::class, 'showEmailForm'])->name('register.email');
+        Route::post('register/email', [AdminRegisterController::class, 'sendVerificationEmail'])->name('register.email.post');
+
+        // 3. 【第二ステップ】本登録フォーム（メールのURLをクリックした時）
+        // ここで {email} パラメータが必要になります
+        Route::get('register/form/{email}', [AdminRegisterController::class, 'showRegistrationForm'])
+            ->name('register');
+            // ->middleware('signed'); // 開発段階ではコメントアウト
+
+        // 4. 【最終ステップ】保存処理
+        Route::post('register/store', [AdminRegisterController::class, 'register'])->name('register.post');
+    });
         // パスワードリセット（管理者）
         Route::get('forgot-password', [AdminForgotPasswordController::class, 'showLinkRequestForm'])
             ->name('password.request');
@@ -114,14 +127,23 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::prefix('user')->name('user.')->group(function () {
 
         // --- 認証不要ルート ---
-        // Route::middleware('guest:web')->group(function () {
-            Route::get('/login', [UserLoginController::class, 'showLoginForm'])->name('login');
-            Route::post('/login', [UserLoginController::class, 'login'])->name('login.post');
+        // 1. プレイヤーログイン
+        Route::get('/login', [UserLoginController::class, 'showLoginForm'])->name('login');
+        Route::post('/login', [UserLoginController::class, 'login'])->name('login.post');
 
-            Route::get('/register', [UserRegisterController::class, 'showRegistrationForm'])->name('register');
-            Route::post('/register', [UserRegisterController::class, 'register'])->name('register.post');
-        // });
+        // 2. プレイヤー新規登録：ステップ1（メールアドレス入力画面）
+        // ※これが抜けていたので追加しました
+        Route::get('/register/email', [UserRegisterController::class, 'showEmailForm'])->name('register.email');
+        Route::post('/register/email', [UserRegisterController::class, 'sendVerificationEmail'])->name('register.email.post');
 
+        // 3. プレイヤー新規登録：ステップ2（メールのリンクをクリックして表示される本登録画面）
+        // ※{email} を受け取る専用のルート名にします
+        Route::get('/register/form/{email}', [UserRegisterController::class, 'showRegistrationForm'])->name('register');
+        // ->middleware('signed');
+
+        // 4. プレイヤー新規登録：ステップ3（保存処理）
+        // ※名前の重複を避けるため register.post に統一
+        Route::post('/register', [UserRegisterController::class, 'register'])->name('register.post');
         // --- 認証必須ルート ---
         Route::middleware(['auth:web', 'session.lifetime:60'])->group(function () {
 

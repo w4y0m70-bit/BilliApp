@@ -43,7 +43,7 @@
             </div>
 
             <div class="mt-4 text-center">
-                <a href="{{ route('admin.register') }}" class="text-blue-600 hover:underline">
+                <a href="{{ route('admin.register.email') }}" class="text-blue-600 hover:underline">
                     新規登録
                 </a>
                 <x-help help-key="admin.login.register" />

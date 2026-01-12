@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // 🔽 グローバル・ルートミドルウェア登録
+        $middleware->trustProxies(at: '*');
         $middleware->alias([
             'role' => RoleMiddleware::class,
             'auth' => \App\Http\Middleware\Authenticate::class,

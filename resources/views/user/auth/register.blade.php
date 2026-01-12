@@ -69,15 +69,15 @@
         </div>
 
         {{-- ログイン情報 --}}
-        <div class="mb-3">
+        <!-- <div class="mb-3">
             <label class="block mb-1">メールアドレス</label>
             <input type="email" name="email" value="{{ old('email') }}" class="w-full border rounded px-3 py-2" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="block mb-1">メールアドレス（確認用）</label>
-            <input type="email" name="email_confirmation" class="w-full border rounded px-3 py-2" required>
-            <span class="text-xs text-gray-500">※コピーせずに入力してください</span>
+        </div> -->
+        <div class="mb-4 bg-gray-50 p-3 rounded border">
+            <label class="block text-sm font-medium text-gray-700">メールアドレス</label>
+            <input type="email" name="email" value="{{ $email }}" readonly 
+                class="mt-1 block w-full border-none bg-transparent font-bold text-gray-900 focus:ring-0">
+            <p class="text-xs text-gray-500 mt-1">※このアドレスは認証済みです</p>
         </div>
 
         <div class="mb-3">

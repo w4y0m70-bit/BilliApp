@@ -29,25 +29,41 @@ class AdminAccountController extends Controller
 
         $validated = $request->validate([
             'admin_id' => 'required|string|max:255',
-            'name' => 'required|string|max:255',
-            'address' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:50',
-            'email' => 'required|email|max:255',
-            // 'notification_methods' => 'nullable|array',
-            // 'notification_methods.*' => 'in:mail,line',
-            // 'notify_event_full_enabled' => 'nullable|boolean',
+            'name'     => 'required|string|max:255',
+            'address'  => 'nullable|string|max:255',
+            'phone'    => 'nullable|string|max:50',
+            'email'    => 'required|email|max:255',
+            // 通知設定のバリデーションを追加
+            'notifications' => 'nullable|array',
         ]);
-\Log::info('validated:', $validated);
-        // 基本情報更新
-        $admin->update($validated);
-\Log::info('admin after update:', $admin->toArray());
-        // 通知手段（メール/LINE）を保存
-        $methods = $request->input('notification_methods', ['mail']); // デフォルト: メール
-        $admin->notification_type = implode(',', $methods);
-        $admin->save();
 
-        // 通知対象の更新
-        $this->updateNotificationSetting($admin, 'event_full', $request->boolean('notify_event_full_enabled'));
+        // 1. 基本情報の更新
+        $admin->update($validated);
+
+        // 2. 通知設定の更新
+        // 画面で定義した「通知の種類」と「手段」のリスト
+        $notificationTypes = ['event_full']; // 必要に応じて追加
+        $notificationVias  = ['mail', 'line'];
+
+        // 送信されたデータをループして保存
+        foreach ($notificationTypes as $type) {
+            foreach ($notificationVias as $via) {
+                // notifications[event_full][mail] が存在するかチェック
+                $enabled = isset($request->notifications[$type][$via]);
+
+                // updateOrCreate で更新または新規作成
+                // 注意: $admin->notificationSettings() が HasMany または MorphMany リレーションである前提
+                $admin->notificationSettings()->updateOrCreate(
+                    [
+                        'type' => $type,
+                        'via'  => $via,
+                    ],
+                    [
+                        'enabled' => $enabled,
+                    ]
+                );
+            }
+        }
 
         return redirect()->route('admin.account.show')
             ->with('success', 'アカウント情報を更新しました。');

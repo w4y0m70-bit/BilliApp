@@ -7,10 +7,11 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use App\Models\NotificationSetting;
 use App\Notifications\AdminResetPasswordNotification;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Admin extends Authenticatable
 {
-    use Notifiable, SoftDeletes;
+    use Notifiable;
 
     protected $guard = 'admin';
     protected $table = 'admins';

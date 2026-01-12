@@ -39,29 +39,56 @@
         <!-- メールアドレス -->
         <div class="mb-4">
             <label class="block font-semibold">メールアドレス</label>
-            <input type="email" name="email" class="border rounded w-full p-2"
-                   value="{{ old('email', $admin->email) }}">
+            <input type="email" name="email"
+                   value="{{ old('email', $admin->email) }}"
+                   readonly
+                     class="border rounded w-full p-2w-full border p-2 rounded mt-1 block bg-gray-100 border-gray-300 shadow-sm focus:ring-0 cursor-not-allowed">
         </div>
 
         <!-- 通知設定 -->
         <div class="mb-4">
-            <label class="block font-semibold mb-1">通知設定</label>
-            <div class="flex flex-col gap-2">
-                @php
-                    $adminNotificationTypes = [
-                        'event_full' => 'イベントが満員時に通知',
-                        // 'new_user' => '新規ユーザー登録時', // 将来の拡張例
-                    ];
-                @endphp
+            <label class="block font-semibold mb-4 border-b pb-2">通知設定</label>
+            
+            @php
+                // 通知の種類
+                $adminNotificationTypes = [
+                    'event_full' => 'イベントが満員時に通知',
+                    // 'new_user' => '新規ユーザー登録時',
+                ];
+                // 通知の手段
+                $notificationVias = [
+                    'mail' => 'メール',
+                    'line' => 'LINE'
+                ];
+            @endphp
 
-                @foreach($adminNotificationTypes as $type => $label)
-                    <label>
-                        <input type="checkbox" name="notify_{{ $type }}_enabled" value="1"
-                               {{ $admin->shouldNotify($type) ? 'checked' : '' }}>
-                        {{ $label }}
-                    </label>
-                @endforeach
-            </div>
+            @foreach($adminNotificationTypes as $type => $label)
+                <div class="mb-4">
+                    <span class="block font-medium mb-2 text-sm text-gray-700">{{ $label }}</span>
+                    <div class="flex gap-6">
+                        @foreach($notificationVias as $viaKey => $viaLabel)
+                            @php
+                                // 管理者の設定から、該当する種別と手段が有効かチェック
+                                // ※ $admin->shouldNotify($type, $viaKey) のようなメソッドがある想定、
+                                // もしくは 1つ目のコードと同様の where 句での判定に調整してください
+                                $isChecked = $admin->notificationSettings
+                                    ->where('type', $type)
+                                    ->where('via', $viaKey)
+                                    ->where('enabled', true)
+                                    ->isNotEmpty();
+                            @endphp
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" 
+                                    name="notifications[{{ $type }}][{{ $viaKey }}]" 
+                                    value="1"
+                                    @checked(old("notifications.$type.$viaKey", $isChecked))
+                                    class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500">
+                                <span class="ml-2 text-sm text-gray-600">{{ $viaLabel }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+            @endforeach
         </div>
             <button type="submit" class="bg-admin text-white px-4 py-2 rounded">
                 更新する

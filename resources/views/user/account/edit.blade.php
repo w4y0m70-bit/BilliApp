@@ -32,8 +32,11 @@
         {{-- メールアドレス --}}
         <div class="mb-4">
             <label class="block font-semibold mb-1">メールアドレス</label>
-            <input type="email" name="email" class="w-full border p-2 rounded"
-                value="{{ old('email', $user->email) }}">
+            <input type="email" name="email" 
+                value="{{ old('email', $user->email) }}"
+                readonly 
+                class="w-full border p-2 rounded mt-1 block bg-gray-100 border-gray-300 shadow-sm focus:ring-0 cursor-not-allowed">
+            <!-- <p class="text-xs text-gray-500 mt-1">※メールアドレスは変更できません。</p> -->
         </div>
 
         {{-- クラス --}}
