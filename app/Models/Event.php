@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\UserEntry;
 
 class Event extends Model
 {
@@ -18,6 +20,7 @@ class Event extends Model
         'max_participants',
         'allow_waitlist',
         'admin_id',
+        'instruction_label',
     ];
 
     protected $casts = [
@@ -32,6 +35,13 @@ class Event extends Model
         return $this->hasMany(UserEntry::class);
     }
 
+    // EventClass モデルを参照
+    public function eventClasses(): HasMany
+    {
+        return $this->hasMany(EventClass::class);
+    }
+
+    // 公開されているイベントのみを取得するスコープ
     public function scopePublished($query)
     {
         return $query->whereNotNull('published_at')
@@ -50,11 +60,13 @@ class Event extends Model
         return $this->userEntries()->where('status', 'waitlist')->count();
     }
 
+    // 管理者（オーガナイザー）とのリレーション
     public function organizer()
     {
         return $this->belongsTo(Admin::class, 'admin_id');
     }
 
+    // 定員に達しているかを判定
     public function isFull()
     {
         return $this->entries()->count() >= $this->capacity;

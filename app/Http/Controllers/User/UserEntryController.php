@@ -33,12 +33,37 @@ class UserEntryController extends Controller
         return view('user.entries.index', compact('entries'));
     }
 
+    public function create(Event $event)
+    {
+        $event->load('eventClasses');
+        // すでにエントリー済みかチェック
+        $existing = UserEntry::where('user_id', auth()->id())
+            ->where('event_id', $event->id)
+            ->where('status', '!=', 'cancelled')
+            ->first();
+
+        if ($existing) {
+            return redirect()->route('user.events.show', $event->id)->with('error', 'すでにエントリー済みです。');
+        }
+
+        // Eager Loading でクラス一覧も取得
+        $event->load('eventClasses');
+
+        return view('user.events.create', compact('event'));
+    }
+
     public function entry(Request $request, Event $event)
     {
         $user = auth()->user();
         $userId = $user->id;
 
-        // 既存エントリーがある場合はキャンセル済みか確認
+        // バリデーション（ユーザーが選んだクラスと回答）
+        $request->validate([
+            'class' => 'required|string', 
+            'user_answer' => 'nullable|string|max:500',
+        ]);
+
+        // 既存エントリーの確認（既存コード維持）
         $existing = UserEntry::where('user_id', $userId)
             ->where('event_id', $event->id)
             ->first();
@@ -47,10 +72,7 @@ class UserEntryController extends Controller
             return back()->with('error', 'すでにエントリー済みです。');
         }
 
-        $entryCount = $event->userEntries()
-            ->where('status', 'entry')
-            ->count();
-
+        $entryCount = $event->userEntries()->where('status', 'entry')->count();
         $isFull = $entryCount >= $event->max_participants;
 
         if ($isFull && !$event->allow_waitlist) {
@@ -59,25 +81,22 @@ class UserEntryController extends Controller
 
         $status = $isFull ? 'waitlist' : 'entry';
 
-        // waitlist_until（元の仕様を維持）
+        // キャンセル待ち期限の計算（既存コード維持）
         $waitlistUntil = null;
-        if ($status === 'waitlist') {
-            $input = $request->input('waitlist_until');
-            if ($input) {
-                $waitlistUntil = Carbon::createFromFormat('Y-m-d\TH:i', $input);
-                $waitlistUntil = min($waitlistUntil, $event->event_date);
-            }
+        if ($status === 'waitlist' && $request->input('waitlist_until')) {
+            $waitlistUntil = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $request->input('waitlist_until'));
+            $waitlistUntil = min($waitlistUntil, $event->event_date);
         }
 
-        // ★ 修正はここだけ
         $entryData = [
             'user_id' => $userId,
             'event_id'=> $event->id,
             'status'  => $status,
             'waitlist_until' => $waitlistUntil,
 
-            // request ではなく user からコピー
-            'class'   => $user->class ?? '未設定',
+            // 修正ポイント：ユーザー情報からではなく、フォームからの入力を優先
+            'class'   => $request->input('class'),
+            'user_answer' => $request->input('user_answer'), // 新しく追加したカラム
             'gender'  => $user->gender ?? '未設定',
         ];
 
@@ -93,19 +112,33 @@ class UserEntryController extends Controller
             ->with('message', $message);
     }
 
-
-
-
-    public function cancel(Event $event, $entryId)
+    public function cancel(Event $event, $entryId, \App\Services\WaitlistService $service)
     {
-        // エントリー取得（必ずそのイベント内）
-        $entry = $event->userEntries()->findOrFail($entryId);
+        $entry = UserEntry::findOrFail($entryId);
 
-        // モデル側のキャンセルメソッドを呼び出す
-        $name = $entry->cancelAndPromoteWaitlist();
+        // 自分のエントリーであることを確認（セキュリティ上重要）
+        if ($entry->user_id !== auth()->id()) {
+            abort(403);
+        }
 
-        return redirect()->back()->with('success', "$name さんのエントリーをキャンセルしました");
+        // モデルのメソッドではなく、Serviceクラスのメソッドを呼び出す
+        $service->cancelAndPromote($entry);
+
+        return redirect()
+            ->route('user.events.show', $event->id)
+            ->with('message', 'エントリーをキャンセルしました。');
     }
+
+    // public function cancel(Event $event, $entryId)
+    // {
+    //     // エントリー取得（必ずそのイベント内）
+    //     $entry = $event->userEntries()->findOrFail($entryId);
+
+    //     // モデル側のキャンセルメソッドを呼び出す
+    //     $name = $entry->cancelAndPromoteWaitlist();
+
+    //     return redirect()->back()->with('success', "$name さんのエントリーをキャンセルしました");
+    // }
 
     public function update(Request $request, Event $event, UserEntry $entry)
     {

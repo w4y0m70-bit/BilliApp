@@ -155,6 +155,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('events/{event}', [UserEventController::class, 'show'])->name('events.show');
 
             // エントリー処理
+            Route::get('events/{event}/create', [UserEntryController::class, 'create'])->name('entries.create');
             Route::post('events/{event}/entry', [UserEntryController::class, 'entry'])->name('entries.entry');
             Route::post('events/{event}/waitlist', [UserEntryController::class, 'waitlist'])->name('entries.waitlist');
 

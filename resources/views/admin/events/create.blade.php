@@ -71,7 +71,35 @@
         </div>
         <small class="text-gray-500">公開後は変更できません</small>
     </div>
+    
+    <div class="flex items-center mb-0">
+        <label class="block font-medium mb-1">募集クラスの設定</label>
+        <x-help help-key="admin.events.classes" />
+    </div>
+    <div class="mb-4 bg-gray-50 p-4 rounded-lg border">
+        <div class="grid grid-cols-4 gap-2">
+            @foreach(['P','SA', 'A', 'SB', 'B', 'C', 'Bg','L'] as $cls)
+                <label class="flex items-center gap-2 cursor-pointer bg-white p-2 border rounded hover:bg-gray-100">
+                    <input type="checkbox" name="classes[]" value="{{ $cls }}" 
+                        {{ (is_array(old('classes')) && in_array($cls, old('classes'))) ? 'checked' : '' }}>
+                    <span>{{ $cls }}</span>
+                </label>
+            @endforeach
+        </div>
+        <small class="text-gray-500 block mt-1">エントリー時にユーザーが選択できるクラスを指定します</small>
+    </div>
 
+    <div class="mb-6">
+        <div class="flex items-center mb-1">
+            <label class="font-medium">ユーザーへの追加質問・伝達事項</label>
+            <x-help help-key="admin.events.instruction_label" />
+        </div>
+        <input type="text" name="instruction_label" 
+            value="{{ old('instruction_label', $data['instruction_label'] ?? '') }}" 
+            class="w-full border p-2 rounded" 
+            placeholder="例：所属店舗を入力してください / Fargo Rateを入力してください">
+        <small class="text-gray-500">空欄にすると、エントリーフォームに入力欄は表示されません</small>
+    </div>
     <button type="submit" class="bg-admin text-white px-6 py-2 rounded hover:bg-admin-dark">
         確認画面へ
     </button>

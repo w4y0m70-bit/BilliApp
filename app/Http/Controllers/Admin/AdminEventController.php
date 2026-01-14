@@ -40,6 +40,8 @@ class AdminEventController extends Controller
             'description' => 'nullable|string',
             'event_date' => 'required|date|after_or_equal:now',
             'entry_deadline' => 'required|date|before:event_date',
+            'classes' => 'required|array|min:1', 
+            'instruction_label' => 'nullable|string|max:100',
         ]);
 
         // 公開日時が過去の場合はフラグを付ける
@@ -51,26 +53,37 @@ class AdminEventController extends Controller
     // 新規イベント保存
     public function store(Request $request)
     {
-        // バリデーション
+        // バリデーションに instruction_label と classes を追加
         $data = $request->validate([
             'title' => 'required|string|max:100',
             'description' => 'nullable|string',
             'event_date' => 'required|date|after_or_equal:now',
             'entry_deadline' => 'required|date|before_or_equal:event_date',
-            'published_at' => 'nullable|date', // ← 追加
+            'published_at' => 'nullable|date',
             'max_participants' => 'required|integer|min:1',
             'allow_waitlist' => 'required|boolean',
+            'instruction_label' => 'nullable|string|max:100', // 伝達事項のラベル
+            'classes' => 'required|array',            // クラスは配列
+            'classes.*' => 'string',                        // 各クラス名は文字列
         ]);
 
-        // 初期値をセット
-        $data['entry_count'] = 0;
-        $data['waitlist_count'] = 0;
-        $data['admin_id'] = auth('admin')->id();
+        // DB保存用にデータを整理
+        $eventData = collect($data)->except('classes')->toArray();
+        $eventData['admin_id'] = auth('admin')->id();
 
-        // DBに保存
-        $event = Event::create($data);
+        // 1. イベント本体を保存
+        $eventData = collect($data)->except('classes')->toArray();
+        $eventData['admin_id'] = auth('admin')->id();
+        $event = Event::create($eventData);
 
-        //通知発火
+        // 2. 選択されたクラスを保存 (event_classesテーブル)
+        foreach ($data['classes'] as $className) {
+            $event->eventClasses()->create([
+                'class_name' => $className
+            ]);
+        }
+
+        // 通知発火
         event(new EventPublished($event));
 
         return redirect()->route('admin.events.index')->with('success', 'イベントを登録しました');

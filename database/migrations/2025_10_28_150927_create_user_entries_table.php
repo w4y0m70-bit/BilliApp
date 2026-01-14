@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->string('name')->nullable();
             $table->string('gender', 10)->nullable();
             $table->string('class', 20)->nullable();
+            $table->text('user_answer')->nullable(); // ユーザー回答
 
             // エントリーステータス
             $table->enum('status', ['entry', 'waitlist', 'cancelled'])->default('entry');

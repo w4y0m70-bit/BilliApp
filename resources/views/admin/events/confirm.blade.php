@@ -75,14 +75,38 @@
             <label class="font-semibold">キャンセル待ち:</label>
             <div>{{ ($data['allow_waitlist'] ?? false) ? '有効' : '無効' }}</div>
         </div>
+    
+        <div class="mb-2">
+            <label class="font-semibold">募集クラス:</label>
+            <div>
+                @if(!empty($data['classes']))
+                    {{ implode(', ', $data['classes']) }}
+                @else
+                    <span class="text-red-500">選択なし</span>
+                @endif
+            </div>
+        </div>
+    
+        <div class="mb-2">
+            <label class="font-semibold">ユーザーへの伝達事項（質問ラベル）:</label>
+            <div>{{ $data['instruction_label'] ?? '（設定なし）' }}</div>
+        </div>
     </div>
-
+        
     <div class="flex space-x-4">
         <form action="{{ route('admin.events.store') }}" method="POST">
             @csrf
             @foreach($data as $key => $value)
-                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                @if(is_array($value))
+                    {{-- 配列（classesなど）の場合はループして隠しタグを作る --}}
+                    @foreach($value as $v)
+                        <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
+                    @endforeach
+                @else
+                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                @endif
             @endforeach
+            
             <button type="submit" class="bg-admin text-white px-4 py-2 rounded hover:bg-admin-dark">
                 登録する
             </button>

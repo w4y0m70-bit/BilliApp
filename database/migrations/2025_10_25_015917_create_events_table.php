@@ -9,14 +9,15 @@ return new class extends Migration {
     {
         Schema::create('events', function (Blueprint $table) {
             $table->id();
-            $table->string('title', 100);
-            $table->text('description')->nullable();
-            $table->dateTime('event_date');
-            $table->dateTime('entry_deadline');
-            $table->dateTime('published_at')->nullable(); // ← 公開日時追加
-            $table->integer('max_participants')->unsigned();
-            $table->boolean('allow_waitlist')->default(true);
-            $table->foreignId('admin_id')->constrained()->onDelete('cascade');
+            $table->string('title', 100); // イベントタイトル
+            $table->text('description')->nullable(); // イベント説明
+            $table->dateTime('event_date'); // イベント開催日時
+            $table->dateTime('entry_deadline'); // エントリー締切日時
+            $table->dateTime('published_at')->nullable(); // 公開日時
+            $table->integer('max_participants')->unsigned(); // 最大参加者数
+            $table->boolean('allow_waitlist')->default(true); // キャンセル待ちを許可するか
+            $table->foreignId('admin_id')->constrained()->onDelete('cascade'); // 管理者ユーザーID
+            $table->string('instruction_label')->nullable(); // 案内ラベル
             $table->timestamps();
         });
     }

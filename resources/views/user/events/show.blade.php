@@ -43,7 +43,7 @@
 
     {{-- 主催者 --}}
     <p class="text-sm text-gray-600 mb-1">
-        ［{{ $event->organizer->name ?? '主催者不明' }}］
+        【{{ $event->organizer->name ?? '主催者不明' }}】
     </p>
 
     {{-- タイトル --}}
@@ -129,7 +129,7 @@
         @if(!empty($event->description))
             <div class="mt-4">
                 <p class="text-gray-700 break-words border-t pt-4">
-                    <strong class="text-sm">【イベント内容】</strong><br>
+                    <strong class="text-sm">《イベント詳細》</strong><br>
                     {{ $event->description }}
                 </p>
             </div>
@@ -147,10 +147,16 @@
                         {{ $canEntry ? 'bg-user hover:bg-user-dark' : 'bg-gray-400 cursor-not-allowed' }}"
                     {{ $canEntry ? '' : 'disabled' }}
                 >
-                    @if(!$canEntry)
-                        満員のためエントリー不可
-                    @else
-                        このイベントにエントリー
+                    @if(!$userEntry)
+                        <a href="{{ route('user.entries.create', $event->id) }}"
+                        class="px-4 py-2 rounded text-white transition text-center
+                                {{ $canEntry ? 'bg-user hover:bg-user-dark' : 'bg-gray-400 pointer-events-none' }}">
+                            @if(!$canEntry)
+                                満員のためエントリー不可
+                            @else
+                                エントリー入力画面へ
+                            @endif
+                        </a>
                     @endif
                 </button>
             @endif
