@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Event;
 use App\Models\UserEntry;
 
+// イベント参加者（ゲスト）管理コントローラー
 class EventParticipantController extends Controller
 {
     public function json(Event $event)

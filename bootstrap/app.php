@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth' => \App\Http\Middleware\Authenticate::class,
             'session.lifetime' => \App\Http\Middleware\SetSessionLifetime::class,
         ]);
+        $middleware->validateCsrfTokens(except: [
+            'api/line/webhook', // WebhookのURLを除外
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

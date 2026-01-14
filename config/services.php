@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'line' => [
+        'access_token' => env('LINE_CHANNEL_ACCESS_TOKEN'),
+    ],
+
 ];

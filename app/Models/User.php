@@ -15,6 +15,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'line_id',
         'gender',
         'birthday',
         'address',
