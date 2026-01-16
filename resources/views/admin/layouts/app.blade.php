@@ -37,6 +37,12 @@
                 イベント
             </a>
 
+            <a href="{{ route('admin.tickets.index') }}"
+            class="flex items-center gap-1 hover:bg-gray-700 px-3 py-1 rounded transition">
+                <span class="material-icons text-sm">confirmation_number</span>
+                チケット
+            </a>
+
             <a href="{{ route('admin.account.show') }}"
             class="flex items-center gap-1 hover:bg-gray-700 px-3 py-1 rounded transition">
                 <span class="material-icons text-sm">account_circle</span>

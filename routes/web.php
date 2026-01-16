@@ -11,8 +11,8 @@ use App\Http\Controllers\Admin\{
     AdminLoginController,
     AdminEventController,
     AdminParticipantController,
-    AdminTicketController,
     AdminAccountController,
+    TicketController
 };
 use App\Http\Controllers\User\{
     UserLoginController,
@@ -89,12 +89,20 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // イベント管理
         Route::prefix('events')->name('events.')->group(function () {
             Route::get('create', [AdminEventController::class, 'create'])->name('create');
-            Route::post('confirm', [AdminEventController::class, 'confirm'])->name('confirm');
+            Route::match(['get', 'post'], 'confirm', [AdminEventController::class, 'confirm'])->name('confirm');
             Route::post('store', [AdminEventController::class, 'store'])->name('store');
 
             Route::get('{event}/replicate', [AdminEventController::class, 'replicate'])->name('replicate');
 
-            Route::resource('/', AdminEventController::class)->parameters(['' => 'event'])->except(['create','store']);
+            Route::resource('/', AdminEventController::class)
+                ->names([
+                    'index' => 'index',
+                    'edit' => 'edit',
+                    'update' => 'update',
+                    'destroy' => 'destroy',
+                ])
+                ->parameters(['' => 'event'])
+                ->except(['create', 'store', 'show']);
 
             // 参加者管理
             Route::prefix('{event}/participants')->name('participants.')->group(function () {
@@ -107,7 +115,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         });
 
         // チケット管理
-        Route::resource('tickets', AdminTicketController::class);
+        Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
+        Route::post('/tickets/use-code', [TicketController::class, 'useCode'])->name('tickets.use_code');
 
         // アカウント情報
         Route::prefix('account')->name('account.')->group(function () {

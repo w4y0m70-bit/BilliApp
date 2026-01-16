@@ -79,4 +79,10 @@ class Admin extends Authenticatable
         $this->notify(new AdminResetPasswordNotification($token));
     }
 
+    public function tickets()
+    {
+        // 1人が複数のチケットを持つので「hasMany」
+        return $this->hasMany(Ticket::class);
+    }
+
 }

@@ -4,8 +4,16 @@
 
 @section('content')
 <h2 class="text-2xl font-bold mb-6">新規イベント作成</h2>
-
-<form action="{{ route('admin.events.confirm') }}" method="POST" class="bg-white p-6 rounded-lg shadow w-full max-w-lg">
+@if ($errors->any())
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+<form id="event-form" action="{{ route('admin.events.confirm') }}" method="POST" class="bg-white p-6 rounded-lg shadow w-full max-w-lg">
     @csrf
 
     <div class="mb-4">
@@ -21,7 +29,7 @@
         <label class="font-medium">開催日時</label>
             <x-help help-key="admin.events.event_date" />
         </div>
-        <input type="datetime-local" name="event_date" id="event_date" class="w-full border p-2 rounded" required>
+        <input type="datetime-local" name="event_date" value="{{ old('event_date') }}" id="event_date" class="w-full border p-2 rounded" required>
         <small class="text-gray-500">公開後は変更できません</small>
     </div>
 
@@ -30,7 +38,7 @@
         <label class="font-medium">エントリー締め切り日時</label>
             <x-help help-key="admin.events.entry_deadline" />
         </div>
-        <input type="datetime-local" name="entry_deadline" id="entry_deadline" class="w-full border p-2 rounded" required>
+        <input type="datetime-local" name="entry_deadline" value="{{ old('entry_deadline') }}" id="entry_deadline" class="w-full border p-2 rounded" required>
         <small class="text-gray-500">公開後は変更できません</small>
     </div>
 
@@ -39,13 +47,13 @@
         <label class="font-medium">公開日時</label>
             <x-help help-key="admin.events.published_at" />
         </div>
-        <input type="datetime-local" name="published_at" id="published_at" class="border w-full p-2 rounded">
+        <input type="datetime-local" name="published_at" value="{{ old('published_at') }}" id="published_at" class="border w-full p-2 rounded">
         <!-- <small class="text-gray-500">公開されるとイベントチケットが消費されます</small> -->
     </div>
 
     <div class="mb-4">
         <div class="flex items-center mb-1">
-        <label class="block font-medium mb-1">イベント内容</label>
+        <label class="block font-medium mb-1">イベント内容・詳細</label>
             <x-help help-key="admin.events.description" />
         </div>
         <textarea name="description" rows="4" class="w-full border p-2 rounded">{{ old('description', $data['description'] ?? '') }}</textarea>
@@ -53,11 +61,31 @@
 
     <div class="mb-4">
         <div class="flex items-center mb-1">
-        <label class="block font-medium mb-1">最大人数</label>
+            <label for="max_participants" class="block font-medium mb-1">最大人数</label>
             <x-help help-key="admin.events.max_participants" />
         </div>
-        <input type="number" name="max_participants" value="{{ old('max_participants', $data['max_participants'] ?? '') }}" class="w-full border p-2 rounded" min="1" required>
+        <input type="number" name="max_participants" id="max_participants" 
+            value="{{ old('max_participants', $data['max_participants'] ?? '') }}" 
+            class="w-full border p-2 rounded" min="1" required>
         <small class="text-gray-500">公開後は変更できません</small>
+    </div>
+
+    <div class="mb-4 bg-blue-50 p-4 rounded-lg border border-blue-200">
+        <div class="flex items-center mb-1">
+            <label class="font-medium text-blue-800">使用するチケットの選択</label>
+            <x-help help-key="admin.events.ticket_id" />
+        </div>
+        
+        <select name="ticket_id" class="w-full border p-2 rounded bg-white" required>
+            <option value="">-- 使用するチケットを選択 --</option>
+            @foreach($availableTickets as $ticket)
+                <option value="{{ $ticket->id }}" data-capacity="{{ $ticket->plan->max_capacity }}">
+                    {{ $ticket->plan->display_name }} 
+                    （上限{{ $ticket->plan->max_capacity }}名 ／ 有効期限：{{ $ticket->expired_at->format('Y/m/d') }}）
+                </option>
+            @endforeach
+        </select>
+        <small class="text-blue-600 block mt-1">公開時にこのチケットが1枚消費されます</small>
     </div>
 
     <div class="mb-4">
@@ -97,7 +125,7 @@
         <input type="text" name="instruction_label" 
             value="{{ old('instruction_label', $data['instruction_label'] ?? '') }}" 
             class="w-full border p-2 rounded" 
-            placeholder="例：所属店舗を入力してください / Fargo Rateを入力してください">
+            placeholder="例：所属店舗を入力してください / ご質問・ご要望があればご記入ください">
         <small class="text-gray-500">空欄にすると、エントリーフォームに入力欄は表示されません</small>
     </div>
     <button type="submit" class="bg-admin text-white px-6 py-2 rounded hover:bg-admin-dark">
@@ -111,53 +139,78 @@
 <!-- JavaScript -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // 1. IDを使ってより確実に取得（id="event-form"をHTMLに追加してください）
+    const eventForm = document.getElementById('event-form') || document.querySelector('form');
     const eventInput = document.getElementById('event_date');
     const deadlineInput = document.getElementById('entry_deadline');
     const publishedInput = document.getElementById('published_at');
+    const maxParticipantsInput = document.getElementById('max_participants');
+    const ticketSelect = document.querySelector('select[name="ticket_id"]');
+
+    // デバッグ用：正しく要素が取得できているか確認
+    console.log('要素取得確認:', { 
+        form: !!eventForm, 
+        maxInput: !!maxParticipantsInput, 
+        ticketSelect: !!ticketSelect 
+    });
 
     const pad = num => num.toString().padStart(2, '0');
     const toDatetimeLocal = date => {
-        return date.getFullYear() + '-' +
-               pad(date.getMonth()+1) + '-' +
-               pad(date.getDate()) + 'T' +
-               pad(date.getHours()) + ':' +
-               pad(date.getMinutes());
+        if (!date) return '';
+        return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T' + pad(date.getHours()) + ':' + pad(date.getMinutes());
     };
 
-    // 公開日時に現在日時を初期値
-    const tomorrowNoon = new Date();
-    tomorrowNoon.setDate(tomorrowNoon.getDate() + 1);
-    tomorrowNoon.setHours(12, 0, 0, 0);
+    // 公開日時の初期設定
+    if (publishedInput && !publishedInput.value) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(12, 0, 0, 0);
+        publishedInput.value = toDatetimeLocal(tomorrow);
+    }
 
-    publishedInput.value = toDatetimeLocal(tomorrowNoon);
+    // 開催日時変更時の自動設定
+    if (eventInput) {
+        eventInput.addEventListener('change', function() {
+            const eventDate = new Date(this.value);
+            if (!isNaN(eventDate)) {
+                let deadline = new Date(eventDate.getTime() - 24 * 60 * 60 * 1000);
+                const now = new Date();
+                if (deadline < now) deadline = now;
+                deadlineInput.value = toDatetimeLocal(deadline);
+            }
+        });
+    }
 
-    // 開催日時入力時に締め切り日時を自動設定（1日前）
-    eventInput.addEventListener('change', function() {
-        const eventDate = new Date(this.value);
-        if(!isNaN(eventDate)) {
-            let deadline = new Date(eventDate.getTime() - 24*60*60*1000); // 1日前
+    // --- 送信時のバリデーション（onsubmitで直接定義） ---
+    if (eventForm) {
+        eventForm.onsubmit = function(e) {
+            console.log('送信処理を開始しました'); // これが出ない場合はここより前でエラーが出ています
 
-            // 締め切りが過去なら現在日時に調整
-            if(deadline < now) deadline = now;
+            // A. チケット定員チェック
+            const selectedOption = ticketSelect.options[ticketSelect.selectedIndex];
+            if (selectedOption && selectedOption.value !== "") {
+                const capacity = Number(selectedOption.getAttribute('data-capacity'));
+                const inputVal = Number(maxParticipantsInput.value);
 
-            deadlineInput.value = toDatetimeLocal(deadline);
-        }
-    });
+                console.log('チェック内容:', { capacity, inputVal });
 
-    // フォーム送信前にバリデーション
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const eventDate = new Date(eventInput.value);
-        const deadline = new Date(deadlineInput.value);
+                if (!isNaN(capacity) && inputVal > capacity) {
+                    alert('【定員オーバー】\n選択したチケットの定員（' + capacity + '名）を超えています。');
+                    return false; // 送信中止
+                }
+            }
 
-        if(deadline > eventDate) {
-            alert('エントリー締め切りは開催日時より前にしてください');
-            e.preventDefault();
-        }
-        if(deadline < now) {
-            alert('エントリー締め切りは過去に設定できません');
-            e.preventDefault();
-        }
-    });
+            // B. 日付整合性チェック
+            const eventDate = new Date(eventInput.value);
+            const deadline = new Date(deadlineInput.value);
+            if (!isNaN(eventDate) && !isNaN(deadline) && deadline > eventDate) {
+                alert('エントリー締め切りは開催日時より前にしてください');
+                return false; // 送信中止
+            }
+
+            return true; // 問題なければ送信
+        };
+    }
 });
 </script>
 
