@@ -11,6 +11,18 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
+            // 管理者用設定
+            Route::middleware('web')
+                ->prefix('admin')
+                ->name('admin.')
+                ->group(base_path('routes/admin.php'));
+
+            // 一般ユーザー用設定
+            Route::middleware('web')
+                ->prefix('user')
+                ->name('user.')
+                ->group(base_path('routes/user.php'));
+            // マスタ用設定
             Route::middleware('web')
                 ->group(base_path('routes/super_admin.php'));
         },
