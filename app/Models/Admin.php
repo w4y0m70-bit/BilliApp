@@ -13,6 +13,15 @@ class Admin extends Authenticatable
 {
     use Notifiable;
 
+    const ROLE_SUPER_ADMIN = 'super_admin';
+    const ROLE_ADMIN = 'admin';
+
+    // マスターアカウント（super_admin）かどうかを判定
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === self::ROLE_SUPER_ADMIN;
+    }
+
     protected $guard = 'admin';
     protected $table = 'admins';
     

@@ -29,10 +29,19 @@ class AdminLoginController extends Controller
             $request->only('admin_id', 'password'),
             $request->filled('remember')
         )) {
-            // 最終ログイン更新
-            Auth::guard('admin')->user()->update([
+            // --- ここで $admin 変数を定義します ---
+            $admin = Auth::guard('admin')->user();
+
+            // 最終ログイン更新（定義した $admin を使う）
+            $admin->update([
                 'last_login_at' => now(),
             ]);
+
+            // マスター判定
+            if ($admin->isSuperAdmin()) {
+                return redirect()->route('master.dashboard')
+                    ->with('success', 'システムマスターとしてログインしました');
+            }
 
             return redirect()->route('admin.events.index')
                 ->with('success', 'ログインしました!');

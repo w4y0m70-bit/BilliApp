@@ -35,6 +35,13 @@ module.exports = {
                     dark: '#C0500E',
                     light: '#F08030',
                 },
+
+                // マスター専用カラー
+                master: {
+                    DEFAULT: '#CC0088',
+                    dark:   '#AA0055',
+                    light:  '#EE22AA'
+                }
             },
         },
     },

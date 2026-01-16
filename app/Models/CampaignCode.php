@@ -11,6 +11,7 @@ class CampaignCode extends Model
     protected $fillable = [
         'code',
         'plan_id',
+        'issue_count',
         'usage_limit',
         'used_count',
         'valid_until',

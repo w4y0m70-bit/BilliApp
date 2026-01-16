@@ -23,11 +23,6 @@ use App\Http\Controllers\User\{
 };
 use App\Services\LineService;
 
-// require __DIR__.'/auth.php';
-// Route::get('/test-mail', function() {
-//     Mail::to('w4y0m70@gmail.com')->send(new TestMail('これはテストメールです'));
-//     return 'メール送信しました';
-// });
 /*
 |--------------------------------------------------------------------------
 | 🌟 トップページ

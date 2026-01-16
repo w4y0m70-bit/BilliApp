@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Models\Admin;
+use Illuminate\Support\Facades\Gate;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,5 +25,11 @@ class AppServiceProvider extends ServiceProvider
         if (str_contains(config('app.url'), 'https')) {
             URL::forceScheme('https');
         }
+
+        // 'master-only' という名前の権限（ゲート）を定義
+        Gate::define('master-only', function ($user) {
+            // 管理者としてログインしており、かつ role が super_admin の場合のみ許可
+            return $user instanceof Admin && $user->isSuperAdmin();
+        });
     }
 }
