@@ -14,8 +14,7 @@
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">名前</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">メールアドレス</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">名前・メールアドレス</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">登録日</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
                                 </tr>
@@ -24,8 +23,8 @@
                                 @foreach($users as $user)
                                 <tr>
                                     <td class="px-6 py-4 text-sm">{{ $user->id }}</td>
-                                    <td class="px-6 py-4 text-sm font-bold">{{ $user->name }}</td>
-                                    <td class="px-6 py-4 text-sm">{{ $user->email }}</td>
+                                    <td class="px-6 py-4 text-sm font-bold">{{ $user->name }}
+                                        {{ $user->email }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ $user->created_at->format('Y-m-d H:i') }}</td>
                                     <td class="px-6 py-4 text-sm text-right">
                                         <div class="flex justify-end space-x-2">

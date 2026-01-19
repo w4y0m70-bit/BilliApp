@@ -44,7 +44,7 @@
             <label class="block font-semibold mb-1">クラス</label>
             <select name="class" class="w-full border p-2 rounded">
                 @php
-                    $classes = ['Beginner','C','B','A','Pro'];
+                    $classes = ['Beginner','C','B','SB','A','SA','Pro'];
                 @endphp
                 @foreach($classes as $classOption)
                     <option value="{{ $classOption }}" 

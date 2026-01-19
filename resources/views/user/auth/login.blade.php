@@ -3,13 +3,24 @@
         <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
             <h2 class="text-2xl font-bold mb-6 text-center">プレイヤーログイン</h2>
 
+            {{-- エラーメッセージの表示エリア --}}
+            @if ($errors->any())
+                <div class="mb-4 font-medium text-sm text-red-600">
+                    <ul class="list-disc list-inside">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             {{-- 仮ログインフォーム --}}
             <form method="POST" action="{{ route('user.login.post') }}">
                 @csrf
 
                 <div class="mb-4">
                     <label class="block mb-1 font-medium">メールアドレス</label>
-                    <input type="text" name="email" class="border w-full p-2 rounded" placeholder="mail@xxx.com">
+                    <input type="text" name="email" class="border w-full p-2 rounded value="{{ old('email') }}" placeholder="mail@xxx.com">
                 </div>
 
                 <div class="mb-4">

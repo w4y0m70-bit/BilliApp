@@ -13,15 +13,15 @@
                 <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <dt class="text-sm text-gray-500">名前</dt>
-                        <dd class="text-base font-bold">{{ $user->name }}</dd>
+                        <dd class="text-master font-bold">{{ $user->name }}</dd>
                     </div>
                     <div>
                         <dt class="text-sm text-gray-500">メールアドレス</dt>
-                        <dd class="text-base">{{ $user->email }}</dd>
+                        <dd class="text-master">{{ $user->email }}</dd>
                     </div>
                     <div>
                         <dt class="text-sm text-gray-500">登録日時</dt>
-                        <dd class="text-base">{{ $user->created_at->format('Y-m-d H:i') }}</dd>
+                        <dd class="text-master">{{ $user->created_at->format('Y-m-d H:i') }}</dd>
                     </div>
                 </dl>
             </div>
