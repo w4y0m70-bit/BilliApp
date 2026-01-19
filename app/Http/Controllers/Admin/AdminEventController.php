@@ -17,32 +17,41 @@ class AdminEventController extends Controller
     // 新規作成画面
     public function create(Request $request)
     {
-        // 1. まずチケットのチェックを最初に行う
-        $availableTickets = auth('admin')->user()->tickets()
+        $admin = auth('admin')->user();
+        
+        // 1. 有効なチケットを期限が近い順に取得
+        $availableTickets = $admin->tickets()
             ->with('plan')
+            ->whereNull('event_id') // まだ使われていない
             ->whereNull('used_at')
             ->where('expired_at', '>', now())
+            ->orderBy('expired_at', 'asc') // 期限が近い順
             ->get();
 
-        // チケットがない場合は作成画面すら見せない（親切設計）
         if ($availableTickets->isEmpty()) {
             return redirect()->route('admin.tickets.index')
-                ->with('error', '有効なチケットがありません。まず入手してください。');
+                ->with('error_msg', '有効なチケットがありません。まず入手してください。');
         }
 
-        // 2. イベントデータの準備
+        // 2. 「使う」ボタンから来た場合の特定のチケットIDを取得
+        $selectedTicketId = $request->query('ticket_id');
+
+        // もしID指定があればそのチケットを、なければ一番期限が近いものを初期選択にする
+        $selectedTicket = $availableTickets->firstWhere('id', $selectedTicketId) 
+                        ?? $availableTickets->first();
+
         $event = new Event();
         $data = $request->all() ?: $event->toArray();
 
-        // 3. 最後にすべての変数を一度に View へ渡す
         return view('admin.events.create', [
             'event' => $event,
             'isReplicate' => false,
-            'formAction' => route('admin.events.confirm'), // 確認ページへ送信
+            'formAction' => route('admin.events.confirm'),
             'formMethod' => 'POST',
-            'admin_id' => auth('admin')->id(),
+            'admin_id' => $admin->id,
             'data' => $data,
             'availableTickets' => $availableTickets,
+            'selectedTicket' => $selectedTicket, // Viewに「選ばれたチケット」を渡す
         ]);
     }
 

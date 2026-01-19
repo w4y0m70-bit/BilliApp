@@ -8,6 +8,9 @@ use App\Models\Ticket;
 use App\Models\CampaignCode;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Event;
+use App\Models\Plan;
+use App\Models\Admin;
 
 class TicketController extends Controller
 {
@@ -17,32 +20,36 @@ class TicketController extends Controller
         $adminId = auth('admin')->id();
         $now = now();
 
+        // 全タブ共通の基本クエリ
         $query = Ticket::where('admin_id', $adminId)->with(['plan', 'event']);
 
         if ($tab === 'active') {
-            // 【使用中】イベントが紐付いていて、かつ「まだ開催前」のもの
+            // 【使用中】イベント紐付けあり ＆ 開催日が未来
             $tickets = $query->whereHas('event', function($q) use ($now) {
                 $q->where('events.event_date', '>', $now); 
-            })->get();
+            })->get()->sortBy('expired_at');
 
             return view('admin.tickets.index', compact('tickets', 'tab'));
 
         } elseif ($tab === 'used') {
-            // 【使用済み】
+            // 【使用済み】イベント紐付けあり ＆ 開催日が過去
             $tickets = $query->whereHas('event', function($sq) use ($now) {
-                $sq->where('events.event_date', '<', $now); // 過去のイベント
-            })->orderBy('updated_at', 'desc')->get();
+                $sq->where('events.event_date', '<=', $now);
+            })->get()->sortByDesc('updated_at'); // ひとまず更新順で確実に動かす
 
             $groupedTickets = $tickets->groupBy(fn($t) => $t->plan_id . '-' . $t->expired_at->format('Y-m-d'));
             return view('admin.tickets.index', compact('groupedTickets', 'tab'));
+
         } else {
-            // 【利用可能】イベント紐付けなし ＆ 期限内
+            // 【利用可能】紐付けなし ＆ 未使用 ＆ 期限内
             $tickets = $query->whereNull('event_id')
                             ->whereNull('used_at')
                             ->where('expired_at', '>=', $now)
-                            ->get();
+                            ->get()
+                            ->sortBy('expired_at');
 
             $groupedTickets = $tickets->groupBy(fn($t) => $t->plan_id . '-' . $t->expired_at->format('Y-m-d'));
+            
             return view('admin.tickets.index', compact('groupedTickets', 'tab'));
         }
     }

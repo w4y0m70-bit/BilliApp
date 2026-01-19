@@ -40,7 +40,24 @@ module.exports = {
                 master: {
                     DEFAULT: '#CC0088',
                     dark:   '#AA0055',
-                    light:  '#EE22AA'
+                    light:  '#EE22AA',
+                },
+
+                // チケット専用カラー
+                ticket_a: {
+                    DEFAULT: '#0abe97',
+                    dark:   '#0a879b',
+                    light:  '#20ddbb',
+                },
+                ticket_b: {
+                    DEFAULT: '#0a58beff',
+                    dark:   '#07489cff',
+                    light:  '#0d6ff0ff',
+                },
+                ticket_c: {
+                    DEFAULT: '#be0a79ff',
+                    dark:   '#a00a67ff',
+                    light:  '#e01693ff',
                 }
             },
         },

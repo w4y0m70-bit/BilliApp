@@ -32,9 +32,14 @@
                                             <td class="px-6 py-4 whitespace-nowrap">{{ $admin->name }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap">{{ $admin->email }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap">{{ $admin->created_at->format('Y-m-d') }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <a href="#" class="text-indigo-600 hover:text-indigo-900 mr-3">編集</a>
-                                                <button class="text-red-600 hover:text-red-900">削除</button>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-2">
+                                                <a href="{{ route('master.admins.edit', $admin->id) }}" class="text-indigo-600 hover:text-indigo-900">編集</a>
+
+                                                <form action="{{ route('master.admins.destroy', $admin->id) }}" method="POST" onsubmit="return confirm('この管理者を削除しますか？');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-600 hover:text-red-900">削除</button>
+                                                </form>
                                             </td>
                                         </tr>
                                         @endforeach

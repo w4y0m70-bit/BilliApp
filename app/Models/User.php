@@ -48,5 +48,8 @@ class User extends Authenticatable
             ->exists();
     }
 
-
+    public function userEntries()
+    {
+        return $this->hasMany(UserEntry::class);
+    }
 }

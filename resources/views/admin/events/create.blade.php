@@ -79,9 +79,14 @@
         <select name="ticket_id" class="w-full border p-2 rounded bg-white" required>
             <option value="">-- 使用するチケットを選択 --</option>
             @foreach($availableTickets as $ticket)
-                <option value="{{ $ticket->id }}" data-capacity="{{ $ticket->plan->max_capacity }}">
+                <option value="{{ $ticket->id }}" 
+                        data-capacity="{{ $ticket->plan->max_capacity }}"
+                        {{-- 追加：渡された選択中チケットIDと一致、または1つしかない場合にselected --}}
+                        {{ (isset($selectedTicket) && $selectedTicket->id === $ticket->id) ? 'selected' : '' }}>
                     {{ $ticket->plan->display_name }} 
                     （上限{{ $ticket->plan->max_capacity }}名 ／ 有効期限：{{ $ticket->expired_at->format('Y/m/d') }}）
+                    {{-- 拡張：期限が近い場合に視覚的なヒントを追加 --}}
+                    {{ $ticket->isUrgent() ? ' ⚠️' : '' }}
                 </option>
             @endforeach
         </select>

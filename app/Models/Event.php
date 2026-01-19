@@ -69,7 +69,8 @@ class Event extends Model
     // 定員に達しているかを判定
     public function isFull()
     {
-        return $this->entries()->count() >= $this->capacity;
+        // return $this->entries()->count() >= $this->capacity;
+        return $this->userEntries()->where('status', 'entry')->count() >= $this->max_participants;
     }
 
 }

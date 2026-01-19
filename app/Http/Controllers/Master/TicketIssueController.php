@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
 use App\Models\CampaignCode;
-use App\Models\Plan; // Planモデルをインポート
+use App\Models\Plan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
