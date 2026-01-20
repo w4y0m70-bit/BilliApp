@@ -32,14 +32,20 @@
                 $isFull = $event->entry_count >= $event->max_participants;
             @endphp
 
-            <a href="{{ route('user.events.show', $event->id) }}"
-               class="block bg-white shadow rounded-xl p-4 border hover:shadow-lg transition">
+            {{-- カード部分 --}}
+            <div class="block bg-white shadow rounded-xl p-4 border hover:shadow-lg transition">
 
-                <p class="text-sm text-gray-600">
+                <p class="text-sm font-bold text-gray-600">
                     ［{{ $event->organizer->name ?? '主催者不明' }}］
                 </p>
 
-                <h3 class="text-lg font-bold mb-1 text-user">{{ $event->title }}</h3>
+                {{-- タイトルをリンクに --}}
+                <h3 class="text-2xl font-black mb-1 text-user">
+                    <a href="{{ route('user.events.show', $event->id) }}" class="hover:underline">
+                        {{ $event->title }}
+                    </a>
+                    <x-help help-key="user.events.show" />
+                </h3>
 
                 <p class="text-sm text-gray-700">
                     <strong>開催日時：</strong><span class="text-lg font-bold">
@@ -53,27 +59,37 @@
                     {{ $event->entry_deadline->format('H:i') }}
                 </p>
 
-                <p class="text-sm text-gray-700 mt-1">
-                    <strong>キャンセル待ち期限：</strong>
-                    @if ($status === 'waitlist' && $userEntry->waitlist_until)
-                        {{ format_event_date($userEntry->waitlist_until) }}
-                        {{ $userEntry->waitlist_until->format('H:i') }}
-                    @else
-                        —
-                    @endif
-                </p>
+                <div class="flex items-center">
+                    <p class="text-sm text-gray-700 mt-1">
+                        <strong>キャンセル待ち期限：</strong>
+                        @if ($status === 'waitlist' && $userEntry->waitlist_until)
+                            {{ format_event_date($userEntry->waitlist_until) }}
+                            {{ $userEntry->waitlist_until->format('H:i') }}
+                        @else
+                            —
+                        @endif
+                    </p>
+                    <x-help help-key="user.events.waitlist_until" />
+                </div>
 
+                {{-- ★ 修正箇所：参加人数の数字をリンクにする --}}
+                <div class="flex items-center mb-1">
                 <p class="text-sm text-gray-700 mt-1">
                     <strong>参加人数：</strong>
-                    {{ $event->entry_count }}／{{ $event->max_participants }}人
-                    （
-                    @if($event->allow_waitlist)
+                    <a href="{{ route('user.events.participants', $event->id) }}" class="text-blue-600 hover:underline font-bold">
+                        {{ $event->entry_count }}
+                        ／{{ $event->max_participants }}人
+                        （
+                        @if($event->allow_waitlist)
                         WL：{{ $event->waitlist_count }}
-                    @else
+                        @else
                         ✕
-                    @endif
-                    ）
+                        @endif
+                        ）
+                    </a>
                 </p>
+                <x-help help-key="user.events.participants" />
+                </div>
 
                 {{-- 状態バッジ --}}
                 <div class="mt-3">
@@ -81,12 +97,10 @@
                             <span class="inline-block bg-user text-white text-sm px-3 py-1 rounded transition">
                                 エントリー中
                             </span>
-
                         @elseif ($status === 'waitlist')
                             <span class="inline-block bg-orange-500 text-white text-sm px-3 py-1 rounded transition">
                                 キャンセル待ち（{{ $userEntry->waitlist_position ?? '' }}番目）
                             </span>
-
                         @else
                             <span class="inline-block bg-gray-400 text-white text-sm px-3 py-1 rounded transition">
                                 @if($isFull && !$event->allow_waitlist)
@@ -97,8 +111,7 @@
                             </span>
                         @endif
                 </div>
-
-            </a>
+            </div>
         @endforeach
     </div>
     @endif

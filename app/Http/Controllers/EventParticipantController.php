@@ -5,10 +5,24 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Event;
 use App\Models\UserEntry;
+use App\Events\EventFull;
 
 // イベント参加者（ゲスト）管理コントローラー
 class EventParticipantController extends Controller
 {
+    public function index(Event $event)
+    {
+        // ステータスを entry -> waitlist の順にし、それぞれ登録順(created_at)で取得
+        $participants = $event->userEntries()
+            ->with('user')
+            ->whereIn('status', ['entry', 'waitlist'])
+            ->orderByRaw("FIELD(status, 'entry', 'waitlist')") // statusの順序を指定
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return view('user.events.participants', compact('event', 'participants'));
+    }
+    
     public function json(Event $event)
     {
         return $event->userEntries()->get();

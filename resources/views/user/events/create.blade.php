@@ -12,7 +12,10 @@
 
         {{-- 1. クラス選択（主催者が選んだものだけを表示） --}}
         <div>
+            <div class="flex items-center mb-2">
             <label class="block font-bold mb-2">クラスの申告</label>
+                <x-help help-key="user.entries.class" />
+            </div>
             <div class="grid grid-cols-4 gap-3">
                 @foreach($event->eventClasses as $class)
                     <label class="flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50 has-[:checked]:border-user has-[:checked]:bg-user/5">
@@ -47,7 +50,7 @@
             <button type="submit" class="w-full bg-user text-white py-3 rounded-lg font-bold hover:bg-user-dark transition">
                 この内容でエントリーする
             </button>
-            <a href="{{ route('user.events.show', $event->id) }}" class="text-center text-gray-500 text-sm underline">
+            <a href="{{ route('user.events.show', $event->id) }}" class="text-center text-user text-sm underline">
                 戻る
             </a>
         </div>

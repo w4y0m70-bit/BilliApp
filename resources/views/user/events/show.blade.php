@@ -42,7 +42,7 @@
 <div class="bg-white shadow rounded-lg p-6">
 
     {{-- 主催者 --}}
-    <p class="text-sm text-gray-600 mb-1">
+    <p class="text-sm font-bold text-gray-600 mb-1">
         【{{ $event->organizer->name ?? '主催者不明' }}】
     </p>
 
@@ -79,9 +79,6 @@
                         —
                     @endif
                 </span>
-                <!-- <span help-key="user.events.waitlist_until" class="inline-block ml-2"> -->
-                   <x-help help-key="user.events.waitlist_until" />
-               <!-- </span> -->
                </div>
         </div>
 

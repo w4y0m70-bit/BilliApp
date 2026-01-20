@@ -8,6 +8,7 @@ use App\Http\Controllers\User\{
     UserProfileController,
     Auth\UserRegisterController
 };
+use App\Http\Controllers\EventParticipantController;
 
 Route::get('/login', [UserLoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [UserLoginController::class, 'login'])->name('login.post');
@@ -46,6 +47,10 @@ Route::middleware(['auth:web', 'session.lifetime:60'])->group(function () {
     // エントリー更新
     Route::patch('events/{event}/entries/{entry}', [UserEntryController::class, 'update'])
         ->name('entries.update');
+
+    // エントリープレイヤー一覧
+    Route::get('events/{event}/participants', [EventParticipantController::class, 'index'])
+    ->name('events.participants');
 
     // キャンセル処理
     Route::patch('/events/{event}/cancel/{entryId}', [UserEntryController::class, 'cancel'])

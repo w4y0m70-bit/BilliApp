@@ -11,7 +11,7 @@ module.exports = {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['"Kosugi Maru"','Figtree', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 // ベースカラー（アプリ全体で共通）

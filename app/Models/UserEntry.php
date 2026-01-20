@@ -10,6 +10,7 @@ use App\Models\Event;
 use App\Events\EventFull;
 use App\Events\WaitlistPromoted;
 use App\Events\WaitlistCancelled;
+use App\Enums\PlayerClass;
 
 class UserEntry extends Model
 {
@@ -34,7 +35,7 @@ class UserEntry extends Model
      * ===================== */
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function event(): BelongsTo
@@ -64,6 +65,13 @@ class UserEntry extends Model
         $pos = array_search($this->id, $ids, true);
 
         return $pos === false ? null : $pos + 1;
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'class' => PlayerClass::class,
+        ];
     }
 
 }

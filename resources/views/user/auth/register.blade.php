@@ -60,14 +60,14 @@
             <label class="block font-mb-1">クラス</label>
             <select name="class" class="w-full border p-2 rounded" required>
                 <option value="">選択してください</option>
-                @foreach(['Beginner','C','B','A','Pro'] as $c)
-                    <option value="{{ $c }}" @selected(old('class') === $c)>
-                        {{ $c }}
+                @foreach(\App\Enums\PlayerClass::cases() as $classOption)
+                    <option value="{{ $classOption->value }}" @selected(old('class') === $classOption->value)>
+                        {{ $classOption->label() }}
                     </option>
                 @endforeach
             </select>
         </div>
-
+        
         {{-- ログイン情報 --}}
         <!-- <div class="mb-3">
             <label class="block mb-1">メールアドレス</label>

@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Enums\PlayerClass;
+use App\Models\NotificationSetting;
+use App\Models\UserEntry;
 
 class User extends Authenticatable
 {
@@ -51,5 +53,12 @@ class User extends Authenticatable
     public function userEntries()
     {
         return $this->hasMany(UserEntry::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'class' => PlayerClass::class,
+        ];
     }
 }

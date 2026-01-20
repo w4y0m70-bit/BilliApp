@@ -8,14 +8,14 @@
     </div>
 
     {{-- 1. コード入力セクション（デザイン微調整） --}}
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-2">
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
         <div class="flex items-center">
-            <h3 class="text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">キャンペーンコード入力
+            <h3 class="text-base font-bold text-gray-500 mb-2 uppercase tracking-wider">キャンペーンコード入力
             <x-help help-key="admin.tickets.use_code" /></h3>
         </div>
         <form action="{{ route('admin.tickets.use_code') }}" method="POST" class="flex gap-2">
             @csrf
-            <input type="text" name="code" class="form-control w-64 border-gray-300 rounded-lg" placeholder="コードを入力" required>
+            <input type="text" name="code" class="form-control w-42 border-gray-300 rounded-lg" placeholder="コードを入力" required>
             <button type="submit" class="bg-admin text-white px-6 py-2 rounded-lg hover:bg-admin-dark transition">
                 チケットを受け取る
             </button>
@@ -25,15 +25,15 @@
     {{-- 2. タブ切り替え（3タブ構成） --}}
     <div class="flex border-b border-gray-200 mb-6">
         <a href="{{ route('admin.tickets.index', ['tab' => 'ready']) }}" 
-           class="px-6 py-2 font-medium {{ $tab === 'ready' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700' }}">
+           class="px-6 py-2 font-medium {{ $tab === 'ready' ? 'border-b-2 border-admin text-admin' : 'text-gray-500 hover:text-gray-700' }}">
             利用可能
         </a>
         <a href="{{ route('admin.tickets.index', ['tab' => 'active']) }}" 
-           class="px-6 py-2 font-medium {{ $tab === 'active' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-500 hover:text-gray-700' }}">
+           class="px-6 py-2 font-medium {{ $tab === 'active' ? 'border-b-2 border-admin text-admin' : 'text-gray-500 hover:text-gray-700' }}">
             使用中
         </a>
         <a href="{{ route('admin.tickets.index', ['tab' => 'used']) }}" 
-           class="px-6 py-2 font-medium {{ $tab === 'used' ? 'border-b-2 border-gray-600 text-gray-600' : 'text-gray-500 hover:text-gray-700' }}">
+           class="px-6 py-2 font-medium {{ $tab === 'used' ? 'border-b-2 border-admin text-admin' : 'text-gray-500 hover:text-gray-700' }}">
             使用済み履歴
         </a>
     </div>

@@ -11,7 +11,7 @@
 >
     <div>
         <!-- 1行目：戻る -->
-        <a href="{{ route('admin.events.index') }}" class="text-gray-500 hover:text-gray-800 flex items-center">
+        <a href="{{ route('admin.events.index') }}" class="text-admin hover:text-gray-800 flex items-center">
             <span class="material-icons">arrow_back</span>
             <span>戻る</span>
         </a>
@@ -67,7 +67,7 @@
                             <span :class="entry.gender === '女性' ? 'text-pink-500' : ''" x-text="entry.name"></span>
                         </td>
                         <td class="px-1 py-2 border-b text-center text-gray-600">
-                            <span x-text="entry.class ? (entry.class === 'Beginner' ? 'Bg' : entry.class === 'Pro' ? 'P' : entry.class) : '??'"></span>
+                            <span x-text="entry.class ? (classShortLabels[entry.class] || entry.class) : '??'"></span>
                         </td>
                         <td class="px-1 py-2 border-b text-center">
                             <button 
@@ -112,11 +112,11 @@
                     <label class="block mb-1 font-medium">クラス</label>
                     <select x-model="guest.class" class="border rounded w-full px-3 py-2">
                         <option value="">選択してください</option>
-                        <option value="Beginner">Beginner</option>
-                        <option value="C">C</option>
-                        <option value="B">B</option>
-                        <option value="A">A</option>
-                        <option value="Pro">Pro</option>
+                        @foreach(\App\Enums\PlayerClass::cases() as $classOption)
+                            <option value="{{ $classOption->value }}">
+                                {{ $classOption->label() }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -130,71 +130,75 @@
 </div>
 
 <script>
-function participantManager(eventId, maxParticipants) {
-    return {
-        openModal: false,
-        participants: [],
-        guest: { name: '', gender: '', class: '' },
+    const classShortLabels = {{ Js::from(
+            collect(App\Enums\PlayerClass::cases())
+                ->mapWithKeys(fn($case) => [$case->value => $case->shortLabel()])
+        ) }};
+        function participantManager(eventId, maxParticipants) {
+        return {
+            openModal: false,
+            participants: [],
+            guest: { name: '', gender: '', class: '' },
 
-        async loadParticipants() {
-            const res = await fetch(`/admin/events/${eventId}/participants/json`);
-            const list = await res.json();
+            async loadParticipants() {
+                const res = await fetch(`/admin/events/${eventId}/participants/json`);
+                const list = await res.json();
 
-            const sorted = list.sort((a, b) => a.status === b.status ? 0 : (a.status === 'entry' ? -1 : 1));
-            this.participants = sorted;
-        },
+                const sorted = list.sort((a, b) => a.status === b.status ? 0 : (a.status === 'entry' ? -1 : 1));
+                this.participants = sorted;
+            },
 
-        get sortedParticipants() { return this.participants; },
+            get sortedParticipants() { return this.participants; },
 
-        async addGuest() {
-            if (!this.guest.name) return;
+            async addGuest() {
+                if (!this.guest.name) return;
 
-            const currentEntryCount = this.participants.filter(e => e.status === 'entry').length;
-            const status = currentEntryCount < maxParticipants ? 'entry' : 'waitlist';
+                const currentEntryCount = this.participants.filter(e => e.status === 'entry').length;
+                const status = currentEntryCount < maxParticipants ? 'entry' : 'waitlist';
 
-            const payload = { 
-                name: this.guest.name, 
-                gender: this.guest.gender,
-                class: this.guest.class,
-                status
-            };
+                const payload = { 
+                    name: this.guest.name, 
+                    gender: this.guest.gender,
+                    class: this.guest.class,
+                    status
+                };
 
-            const res = await fetch(`/admin/events/${eventId}/participants`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify(payload)
-            });
+                const res = await fetch(`/admin/events/${eventId}/participants`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(payload)
+                });
 
-            if (res.ok) {
-                this.guest = { name: '', gender: '', class: '' };
-                this.openModal = false;
-                await this.loadParticipants();
-            }
-        },
-
-        async cancelEntry(entryId) {
-            if (!confirm('この参加者をキャンセルしますか？\n【注意】　この操作は取り消せません')) return;
-
-            const res = await fetch(`/admin/events/${eventId}/participants/${entryId}/cancel`, {
-                method: 'PATCH',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                if (res.ok) {
+                    this.guest = { name: '', gender: '', class: '' };
+                    this.openModal = false;
+                    await this.loadParticipants();
                 }
-            });
+            },
 
-            if (res.ok) {
-                const data = await res.json();
-                alert(data.message);
-                await this.loadParticipants();
-            } else {
-                alert('キャンセルに失敗しました');
+            async cancelEntry(entryId) {
+                if (!confirm('この参加者をキャンセルしますか？\n【注意】　この操作は取り消せません')) return;
+
+                const res = await fetch(`/admin/events/${eventId}/participants/${entryId}/cancel`, {
+                    method: 'PATCH',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    alert(data.message);
+                    await this.loadParticipants();
+                } else {
+                    alert('キャンセルに失敗しました');
+                }
             }
         }
     }
-}
 </script>
 @endsection
