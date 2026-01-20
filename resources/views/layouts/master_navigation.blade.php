@@ -35,6 +35,9 @@
                     <a href="{{ route('master.users.index') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
                         ユーザー一覧
                     </a>
+                    <a href="{{ route('master.events.index') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+                        イベント一覧
+                    </a>
                     <a href="{{ route('master.plans.index') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
                         プラン設定
                     </a>

@@ -52,7 +52,7 @@
                 <x-help help-key="app.about" />
             </div>
             <p class="text-sm mb-10 text-gray-600">
-            ©2025 Billents / ver 0.80-beta<br>
+            ©2025 Billents / ver 0.90-beta<br>
             </p>
         </div>
     </div>

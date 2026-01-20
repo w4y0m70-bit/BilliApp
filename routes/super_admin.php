@@ -6,6 +6,7 @@ use App\Http\Controllers\Master\AdminManagementController;
 use App\Http\Controllers\Master\TicketIssueController;
 use App\Http\Controllers\Master\PlanController;
 use App\Http\Controllers\Master\UserManagementController;
+use App\Http\Controllers\Master\EventManagementController;
 
 Route::middleware(['web', 'auth:admin', 'can:master-only'])
     ->prefix('master') // URLの先頭に /master/ を付与
@@ -29,4 +30,7 @@ Route::middleware(['web', 'auth:admin', 'can:master-only'])
         
         // 登録ユーザー管理（ユーザーは自分で登録するため、create/storeは不要な場合が多い）
         Route::resource('users', UserManagementController::class)->only(['index', 'show', 'destroy']);
+
+        // イベント管理
+        Route::resource('events', EventManagementController::class)->only(['index', 'show', 'destroy']);
     });

@@ -20,8 +20,8 @@
                                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                     <thead>
                                         <tr>
-                                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">名前</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">メールアドレス</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">ID</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">名前・メールアドレス</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">登録日</th>
                                             <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">操作</th>
                                         </tr>
@@ -29,8 +29,8 @@
                                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                                         @foreach($admins as $admin)
                                         <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap">{{ $admin->name }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap">{{ $admin->email }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ $admin->id }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ $admin->name }}{{ $admin->email }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap">{{ $admin->created_at->format('Y-m-d') }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-2">
                                                 <a href="{{ route('master.admins.edit', $admin->id) }}" class="text-indigo-600 hover:text-indigo-900">編集</a>

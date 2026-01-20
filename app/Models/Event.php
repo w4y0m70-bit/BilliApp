@@ -32,7 +32,7 @@ class Event extends Model
     // UserEntry モデルを参照
     public function userEntries()
     {
-        return $this->hasMany(UserEntry::class);
+        return $this->hasMany(UserEntry::class)->orderBy('created_at', 'asc');
     }
 
     // EventClass モデルを参照
@@ -63,7 +63,9 @@ class Event extends Model
     // 管理者（オーガナイザー）とのリレーション
     public function organizer()
     {
-        return $this->belongsTo(Admin::class, 'admin_id');
+        return $this->belongsTo(Admin::class, 'admin_id')->withDefault([
+        'name' => '不明（削除済み）',
+        ]);
     }
 
     // 定員に達しているかを判定
