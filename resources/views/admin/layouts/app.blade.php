@@ -17,49 +17,48 @@
 
 <body class="bg-gray-100 min-h-screen font-sans text-gray-900">
 
-    <header class="bg-admin text-white p-4 flex flex-col md:flex-row justify-between items-center">
-        <div class="flex items-center w-full md:w-auto mb-2 md:mb-0">
-            <!-- 🏠 トップページへ戻るボタン -->
-            <a href="{{ url('/') }}" 
-                <span class="material-icons">home</span>
-            </a>
+    <header class="bg-admin text-white p-4 flex flex-wrap md:flex-row justify-between items-center gap-y-3">
+    
+    <div class="flex items-center w-full md:w-auto mb-2 md:mb-0">
+        <a href="{{ url('/') }}">
+            <span class="material-icons">home</span>
+        </a>
+        <h1 class="text-xl font-bold ml-2">
+            {{ Auth::guard('admin')->user()->name ?? '管理者' }} <span class="text-lg p-1">の</span>イベント管理
+        </h1>
+    </div>
 
-            <h1 class="text-xl font-bold">
-                {{ Auth::guard('admin')->user()->name ?? '管理者' }} <span class="text-lg p-1">の</span>イベント管理
-            </h1>
-        </div>
+    <nav class="bg-gray-800 text-white px-2 py-2 flex items-center gap-1 rounded shadow w-full overflow-x-auto whitespace-nowrap">
+    
+    <a href="{{ route('admin.events.index') }}"
+       class="flex flex-col items-center min-w-[70px] hover:bg-gray-700 px-2 py-1 rounded transition flex-shrink-0">
+        <span class="material-icons text-xl">event</span>
+        <span class="text-[10px] mt-0.5">イベント</span>
+    </a>
 
-        <nav class="bg-gray-800 text-white px-4 py-3 flex items-center gap-1 rounded shadow">
+    <a href="{{ route('admin.tickets.index') }}"
+       class="flex flex-col items-center min-w-[70px] hover:bg-gray-700 px-2 py-1 rounded transition flex-shrink-0">
+        <span class="material-icons text-xl">confirmation_number</span>
+        <span class="text-[10px] mt-0.5">チケット</span>
+    </a>
 
-            <a href="{{ route('admin.events.index') }}"
-            class="flex items-center gap-1 hover:bg-gray-700 px-3 py-1 rounded transition">
-                <span class="material-icons text-sm">event</span>
-                イベント
-            </a>
+    <a href="{{ route('admin.account.show') }}"
+       class="flex flex-col items-center min-w-[70px] hover:bg-gray-700 px-2 py-1 rounded transition flex-shrink-0">
+        <span class="material-icons text-xl">account_circle</span>
+        <span class="text-[10px] mt-0.5">アカウント</span>
+    </a>
 
-            <a href="{{ route('admin.tickets.index') }}"
-            class="flex items-center gap-1 hover:bg-gray-700 px-3 py-1 rounded transition">
-                <span class="material-icons text-sm">confirmation_number</span>
-                チケット
-            </a>
+    <form method="POST" action="{{ route('admin.logout') }}" class="ml-auto flex-shrink-0">
+        @csrf
+        <button type="submit"
+                class="flex flex-col items-center min-w-[70px] hover:bg-red-600 px-2 py-1 rounded transition">
+            <span class="material-icons text-xl">logout</span>
+            <span class="text-[10px] mt-0.5">ログアウト</span>
+        </button>
+    </form>
 
-            <a href="{{ route('admin.account.show') }}"
-            class="flex items-center gap-1 hover:bg-gray-700 px-3 py-1 rounded transition">
-                <span class="material-icons text-sm">account_circle</span>
-                アカウント
-            </a>
-
-            <form method="POST" action="{{ route('admin.logout') }}" class="ml-auto">
-                @csrf
-                <button type="submit"
-                        class="flex items-center gap-1 hover:bg-red-600 px-3 py-1 rounded transition">
-                    <span class="material-icons text-sm">logout</span>
-                    ログアウト
-                </button>
-            </form>
-
-        </nav>
-    </header>
+</nav>
+</header>
 
     <main class="container mx-auto py-6">
         @yield('content')

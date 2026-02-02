@@ -30,7 +30,7 @@ class AdminEventController extends Controller
 
         if ($availableTickets->isEmpty()) {
             return redirect()->route('admin.tickets.index')
-                ->with('error_msg', '有効なチケットがありません。まず入手してください。');
+                ->with('error_msg', '有効なチケットがありません。チケットページでチケットを入手してください。');
         }
 
         // 2. 「使う」ボタンから来た場合の特定のチケットIDを取得

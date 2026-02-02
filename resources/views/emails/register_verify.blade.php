@@ -15,5 +15,5 @@
         ※お心当たりのない場合は、このメールを破棄してください。
     </p>
     <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-    <p style="font-size: 0.8em; color: #999;">©2025 Billents</p>
+    <p style="font-size: 0.8em; color: #999;">©2026 Billents</p>
 </div>
