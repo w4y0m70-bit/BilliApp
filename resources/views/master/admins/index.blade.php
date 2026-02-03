@@ -30,7 +30,7 @@
                                         @foreach($admins as $admin)
                                         <tr>
                                             <td class="px-6 py-4 whitespace-nowrap">{{ $admin->id }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap">{{ $admin->name }}{{ $admin->email }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ $admin->name }} >> {{ $admin->email }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap">{{ $admin->created_at->format('Y-m-d') }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-2">
                                                 <a href="{{ route('master.admins.edit', $admin->id) }}" class="text-indigo-600 hover:text-indigo-900">編集</a>

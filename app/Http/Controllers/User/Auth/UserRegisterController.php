@@ -37,9 +37,9 @@ class UserRegisterController extends Controller
             ['email' => $request->email]
         );
 
-        Mail::to($request->email)->send(new RegisterVerifyMail($url));
+        Mail::to($request->email)->queue(new RegisterVerifyMail($url));
 
-        return back()->with('status', '登録用URLをメールで送信しました。30分以内に手続きを完了してください。');
+        return back()->with('status', '登録用URLをメールで送信しました。30分以内に手続きを完了してください。迷惑メールに入っている可能性もありますのでご確認ください。');
     }
 
     // 3. 本登録フォームを表示

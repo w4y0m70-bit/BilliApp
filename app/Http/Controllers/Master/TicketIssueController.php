@@ -28,6 +28,7 @@ class TicketIssueController extends Controller
             'issue_count' => 'required|integer|min:1|max:10',
             'usage_limit' => 'required|integer|min:1',
             'expiry_days' => 'required|integer|min:1',
+            'valid_until' => 'nullable|date|after_or_equal:today',
             'code_type' => 'required|in:auto,manual',
             'manual_code' => 'required_if:code_type,manual|nullable|string|max:50|unique:campaign_codes,code',
         ]);
@@ -50,6 +51,7 @@ class TicketIssueController extends Controller
             'issue_count' => $request->issue_count,
             'usage_limit' => $request->usage_limit,
             'expiry_days' => $request->expiry_days,
+            'valid_until' => $request->valid_until,
             'used_count' => 0,
         ]);
 

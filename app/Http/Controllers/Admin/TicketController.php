@@ -64,15 +64,28 @@ class TicketController extends Controller
         $campaignCode = CampaignCode::where('code', $request->code)->first();
 
         if (!$campaignCode) {
-            return back()->with('error_msg', 'コードが違います。');
+            return back()->with('error_msg', '存在しないコードです。');
+        }
+
+        // 2. この管理者がすでにこのコードを使っていないかチェック
+        $alreadyUsed = DB::table('campaign_code_admin')
+            ->where('campaign_code_id', $campaignCode->id)
+            ->where('admin_id', auth('admin')->id())
+            ->exists();
+
+        if ($alreadyUsed) {
+            return back()->with('error_msg', 'このコードは既に使用済みです。');
         }
 
         // 2. 有効期限と使用上限のチェック
-        $isExpired = $campaignCode->valid_until && $campaignCode->valid_until <= now();
+        $isExpired = $campaignCode->valid_until?->isPast();
         $isLimitOver = $campaignCode->used_count >= $campaignCode->usage_limit;
 
-        if ($isExpired || $isLimitOver) {
-            return back()->with('error_msg', 'そのコードは使用済、または期限切れです。');
+        if ($isExpired) {
+            return back()->with('error_msg', 'このコードの有効期限は終了しています。');
+        }
+        if ($isLimitOver) {
+            return back()->with('error_msg', 'このコードは先着上限に達したため終了しました。');
         }
 
         try {
@@ -87,6 +100,14 @@ class TicketController extends Controller
                         'expired_at' => now()->addDays($days)->endOfDay(),
                     ]);
                 }
+
+                DB::table('campaign_code_admin')->insert([
+                    'campaign_code_id' => $campaignCode->id,
+                    'admin_id' => auth('admin')->id(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
                 $campaignCode->increment('used_count');
             });
 

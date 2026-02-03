@@ -14,8 +14,8 @@ class AdminSeeder extends Seeder
             'name'     => 'Superadmin',
             'email'    => 'jiyuhonpostudio@gmail.com',
             'password' => Hash::make(env('ADMIN_PASSWORD')),
-            'admin_id' => '000',
-            'role'     => 'super admin',
+            'admin_id' => 'superadmin',
+            'role'     => 'super_admin',
         ]);
     }
 }

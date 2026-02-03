@@ -47,19 +47,25 @@
 
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">先着人数 (利用上限)</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">コード利用上限回数</label>
                                 <input type="number" name="usage_limit" value="1" min="1" class="mt-1 block w-full border-gray-300 dark:bg-gray-700 dark:text-white rounded-md shadow-sm">
+                                <p class="text-xs text-gray-500 mt-1">このコードが全体で何回まで利用可能か設定します。</p>
                             </div>
-
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">チケット有効日数</label>
                                 <input type="number" name="expiry_days" value="40" min="1" class="mt-1 block w-full border-gray-300 dark:bg-gray-700 dark:text-white rounded-md shadow-sm">
                             </div>
-
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">1コードあたりの付与枚数</label>
                                 <input type="number" name="issue_count" value="1" min="1" class="mt-1 block w-full border-gray-300 dark:bg-gray-700 dark:text-white rounded-md shadow-sm">
                                 <p class="text-xs text-gray-500 mt-1">ユーザーがコードを入力した際、何枚のチケットを付与するか設定します。</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">コード入力期限</label>
+                                <input type="date" name="valid_until" 
+                                    value="{{ now()->addMonths(1)->format('Y-m-d') }}" 
+                                    class="w-full border p-2 rounded" required>
+                                <p class="text-xs text-gray-500 mt-1">※設定した日付までこのコードが使用できます。</p>
                             </div>
                         </div>
                     </div>

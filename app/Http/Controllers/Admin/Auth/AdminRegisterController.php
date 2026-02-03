@@ -38,9 +38,9 @@ class AdminRegisterController extends Controller
         );
 
         // 管理者用のメールクラスで送信
-        Mail::to($request->email)->send(new AdminRegisterVerifyMail($url));
+        Mail::to($request->email)->queue(new AdminRegisterVerifyMail($url));
 
-        return back()->with('status', '登録用URLをメールで送信しました。30分以内に手続きを完了してください。');
+        return back()->with('status', '登録用URLをメールで送信しました。30分以内に手続きを完了してください。迷惑メールに入っている可能性もありますのでご確認ください。');
     }
 
     // 3. 本登録フォームを表示（署名付きURLからのみ）

@@ -24,7 +24,7 @@
                                 <tr>
                                     <td class="px-6 py-4 text-sm">{{ $user->id }}</td>
                                     <td class="px-6 py-4 text-sm font-bold">{{ $user->name }}
-                                        {{ $user->email }}</td>
+                                         >> {{ $user->email }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ $user->created_at->format('Y-m-d H:i') }}</td>
                                     <td class="px-6 py-4 text-sm text-right">
                                         <div class="flex justify-end space-x-2">
