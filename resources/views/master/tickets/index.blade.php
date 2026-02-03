@@ -84,20 +84,20 @@
                     <thead>
                         <tr>
                             <th class="px-4 py-2 text-left">コード</th>
+                            <th class="px-4 py-2 text-left">入力期限</th>
                             <th class="px-4 py-2 text-left">プラン</th>
                             <th class="px-4 py-2 text-left">利用 / 上限</th>
                             <th class="px-4 py-2 text-left">有効日数</th>
-                            <th class="px-4 py-2 text-left">付与枚数</th>
                             <th class="px-4 py-2 text-left">削除</th> </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         @foreach($codes as $code)
                         <tr>
                             <td class="px-4 py-2 font-mono font-bold text-indigo-600 dark:text-indigo-400">{{ $code->code }}</td>
-                            <td class="px-4 py-2">{{ $code->plan?->display_name }}</td>
+                            <td class="px-4 py-2">{{ $code->valid_until->format('Y/m/d') }}</td>
+                            <td class="px-4 py-2">{{ $code->plan?->display_name }} ✕ {{ $code->issue_count }} 枚</td>
                             <td class="px-4 py-2">{{ $code->used_count }} / {{ $code->usage_limit }}</td>
                             <td class="px-4 py-2">{{ $code->expiry_days }}日</td>
-                            <td class="px-4 py-2">{{ $code->issue_count }} 枚</td>
                             <td class="px-4 py-2">
                                 <form action="{{ route('master.tickets.destroy', $code->id) }}" method="POST" onsubmit="return confirm('本当にこのコードを削除しますか？');">
                                     @csrf

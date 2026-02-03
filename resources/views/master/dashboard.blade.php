@@ -43,21 +43,11 @@
                     <p class="text-3xl font-bold">-- 件</p>
                 </div>
 
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow sm text-gray-400">
+                <!-- <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow sm text-gray-400">
                     <p class="text-sm uppercase">システム稼働状況</p>
                     <p class="text-3xl font-bold text-green-500">Normal</p>
-                </div>
+                </div> -->
             </div>
-
-            <!-- <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
-                    <h3 class="text-lg font-bold mb-4">クイックリンク</h3>
-                    <ul class="list-disc ml-5 space-y-2">
-                        <li><a href="{{ route('master.admins.index') }}" class="text-blue-500 hover:underline">管理者アカウントの管理</a></li>
-                        <li><a href="{{ route('master.tickets.index') }}" class="text-blue-500 hover:underline">チケットコードの新規発行</a></li>
-                    </ul>
-                </div>
-            </div> -->
         </div>
     </div>
     

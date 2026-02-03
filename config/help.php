@@ -183,7 +183,7 @@ return [
                     'title' => '過去のイベント一覧',
                     'body'  => <<<TEXT
                     過去に開催されたイベントが一覧で表示されます。
-                    イベントパネルの<span class="material-symbols-outlined text-gray-500" style="font-size: 20px;">content_copy</span>アイコンをクリックすると、同じ内容で新しいイベントを作成することができます。
+                    イベントパネルの<span class="material-symbols-outlined text-gray-500" style="font-size: 20px;">content_copy</span>アイコンをクリックすると、同じ内容で新しいイベントを作成することができます。（チケットを消費します）
                     TEXT
                 ],
             ],
