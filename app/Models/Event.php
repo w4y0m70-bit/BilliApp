@@ -90,7 +90,16 @@ class Event extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['title', 'event_date', 'admin_id', 'ticket_id']) // 変更を監視するカラム
+            ->logOnly(['title',
+                        'description',
+                        'event_date',
+                        'entry_deadline',
+                        'published_at',
+                        'max_participants',
+                        'allow_waitlist',
+                        'admin_id',
+                        'ticket_id',
+                        'instruction_label',])
             ->logOnlyDirty(); // 値が変わった時だけ記録
     }
 }

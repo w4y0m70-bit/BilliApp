@@ -70,7 +70,16 @@ class User extends Authenticatable
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'email', 'line_id', 'class', 'address', 'phone']) // 変更を監視するカラム
+            ->logOnly(['name',
+                        'email',
+                        'line_id',
+                        'gender',
+                        'birthday',
+                        'address',
+                        'phone',
+                        'account_name',
+                        'class',
+                        'notification_type',])
             ->logOnlyDirty(); // 値が変わった時だけ記録
     }
 

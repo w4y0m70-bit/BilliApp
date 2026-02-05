@@ -16,6 +16,12 @@ class PlanSeeder extends Seeder
         Plan::create([
             'slug' => 'pocket',
             'display_name' => 'POCKET',
+            'max_capacity' => 20,
+            'price' => 500,
+        ]);
+        Plan::create([
+            'slug' => 'rack',
+            'display_name' => 'RACK',
             'max_capacity' => 35,
             'price' => 800,
         ]);

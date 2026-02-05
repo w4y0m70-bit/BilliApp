@@ -85,7 +85,13 @@ class UserEntry extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['user_id', 'name', 'event_id', 'status']) // 変更を監視するカラム
+            ->logOnly(['user_id',
+                        'event_id',
+                        'name',
+                        'gender',
+                        'status',
+                        'waitlist_until',
+                        'class',])
             ->logOnlyDirty(); // 値が変わった時だけ記録
     }
 

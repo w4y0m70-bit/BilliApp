@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,5 +33,7 @@ class AppServiceProvider extends ServiceProvider
             // 管理者としてログインしており、かつ role が super_admin の場合のみ許可
             return $user instanceof Admin && $user->isSuperAdmin();
         });
+
+        Paginator::useBootstrapFive(); // または useBootstrapFour()
     }
 }

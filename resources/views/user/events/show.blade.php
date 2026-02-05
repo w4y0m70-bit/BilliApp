@@ -169,7 +169,7 @@
     @if($userEntry)
         <x-modal
             title="確認"
-            confirm-text="キャンセル"
+            confirm-text="エントリーをキャンセルする"
             confirm-color="bg-red-600"
             :confirm-action="route('user.entries.cancel', ['event' => $event->id, 'entryId' => $userEntry->id])"
         >

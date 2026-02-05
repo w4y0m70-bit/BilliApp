@@ -102,7 +102,16 @@ class Admin extends Authenticatable
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['admin_id', 'name', 'email', 'address', 'phone']) // 変更を監視するカラム
+            ->logOnly(['admin_id',
+                    'name',
+                    'manager_name',
+                    'email',
+                    'address',
+                    'phone',
+                    'notification_type',
+                    'subscription_until',
+                    'tickets',
+                    'last_login_at',]) // 変更を監視するカラム
             ->logOnlyDirty(); // 値が変わった時だけ記録
     }
 

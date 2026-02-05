@@ -7,6 +7,7 @@ use App\Http\Controllers\Master\TicketIssueController;
 use App\Http\Controllers\Master\PlanController;
 use App\Http\Controllers\Master\UserManagementController;
 use App\Http\Controllers\Master\EventManagementController;
+use App\Http\Controllers\Master\ActivityLogController;
 
 Route::middleware(['web', 'auth:admin', 'can:master-only'])
     ->prefix('master') // URLの先頭に /master/ を付与
@@ -33,4 +34,7 @@ Route::middleware(['web', 'auth:admin', 'can:master-only'])
 
         // イベント管理
         Route::resource('events', EventManagementController::class)->only(['index', 'show', 'destroy']);
+
+        // アクティビティログ
+        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity_logs.index');
     });

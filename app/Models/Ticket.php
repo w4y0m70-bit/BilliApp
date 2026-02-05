@@ -69,7 +69,12 @@ class Ticket extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['admin_id', 'plan_id', 'event_id', 'used_at', 'expired_at']) // 変更を監視するカラム
+            ->logOnly(['admin_id',
+                        'plan_id',
+                        'used_at',
+                        'event_id',
+                        'expired_at',
+                        'is_expiry_notified',])
             ->logOnlyDirty(); // 値が変わった時だけ記録
     }
 }
