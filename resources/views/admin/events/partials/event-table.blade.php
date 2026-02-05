@@ -83,27 +83,55 @@
                 class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
                 x-cloak>
                 <div class="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative max-h-[80vh] overflow-y-auto">
-                    <button class="absolute top-2 right-2 text-gray-600" @click="openModal = null">×</button>
-                    <h3 class="text-xl font-semibold mb-4">{{ $event->title }}</h3>
-                    <p class="mb-2">開催日：{{ $event->event_date->isoFormat('YYYY/MM/DD（ddd）HH:mm') }}</p>
-                    <p class="mb-2">締　切：{{ $event->entry_deadline->isoFormat('YYYY/MM/DD（ddd）HH:mm') }}</p>
-                    <p class="mb-2">公開日：{{ $event->published_at->isoFormat('YYYY/MM/DD（ddd）HH:mm') }}</p>
-                    <p class="mb-4">
-                        参加：{{ $event->entry_count }} / {{ $event->max_participants }}
-                        @if ($event->waitlist_count > 0)
-                            <span class="ml-2 text-red-700">（キャンセル待ち：{{ $event->waitlist_count }}）</span>
-                        @endif
-                    </p>
-                    <div class="text-sm text-gray-700 space-y-2 break-words">
-                        <!-- <p>会場：{{ $event->venue }}</p> -->
-                        <p>説明：{!! nl2br(e($event->description)) !!}</p>
-                    </div>
-                    <div class="mt-4 text-right">
-                        <button class="px-4 py-2 bg-gray-600 text-white rounded" @click="openModal = null">
-                            閉じる
-                        </button>
+                <button class="absolute top-2 right-2 text-gray-600 text-2xl" @click="openModal = null">&times;</button>
+                
+                <h3 class="text-xl font-semibold mb-4 border-b pb-2">{{ $event->title }}</h3>
+                
+                <div class="grid grid-cols-1 gap-2 mb-4 text-sm">
+                    <p><span class="font-bold w-20 inline-block">開催日：</span>{{ $event->event_date->isoFormat('YYYY/MM/DD（ddd）HH:mm') }}</p>
+                    <p><span class="font-bold w-20 inline-block">締　切：</span>{{ $event->entry_deadline->isoFormat('YYYY/MM/DD（ddd）HH:mm') }}</p>
+                    <p><span class="font-bold w-20 inline-block">公開日：</span>{{ $event->published_at ? $event->published_at->isoFormat('YYYY/MM/DD（ddd）HH:mm') : '未設定' }}</p>
+                </div>
+
+                <div class="bg-blue-50 p-3 rounded mb-4 text-sm">
+                    <p class="font-bold text-blue-800 mb-1">【使用チケット】</p>
+                    @if($event->ticket && $event->ticket->plan)
+                        <p>{{ $event->ticket->plan->display_name }} (ID: {{ $event->ticket_id }})</p>
+                        <p class="text-xs text-gray-500">上限：{{ $event->ticket->plan->max_capacity }}名</p>
+                    @else
+                        <p class="text-red-500">チケットが紐付いていません</p>
+                    @endif
+                </div>
+
+                <div class="bg-gray-50 p-3 rounded mb-4 text-sm">
+                    <p class="font-bold mb-1 text-gray-800">【募集クラス】</p>
+                    <div class="flex flex-wrap gap-2">
+                        @forelse($event->eventClasses as $class)
+                            <span class="bg-white border px-2 py-1 rounded shadow-sm">{{ $class->class_name }}</span>
+                        @empty
+                            <span class="text-red-500">クラス設定なし</span>
+                        @endforelse
                     </div>
                 </div>
+
+    @if($event->instruction_label)
+        <div class="mb-4 text-sm">
+            <p class="font-bold text-gray-800">【追加質問項目】</p>
+            <p class="p-2 bg-yellow-50 rounded border border-yellow-100">{{ $event->instruction_label }}</p>
+        </div>
+    @endif
+
+    <div class="text-sm text-gray-700 space-y-2 break-words border-t pt-4">
+        <p class="font-bold">【イベント詳細説明】</p>
+        <div class="p-2 bg-gray-50 rounded whitespace-pre-wrap">{!! e($event->description) !!}</div>
+    </div>
+
+    <div class="mt-6 text-right">
+        <button class="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700" @click="openModal = null">
+            閉じる
+        </button>
+    </div>
+</div>
             </div>
 
         </div>

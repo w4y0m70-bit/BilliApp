@@ -94,7 +94,7 @@
                         @foreach($codes as $code)
                         <tr>
                             <td class="px-4 py-2 font-mono font-bold text-indigo-600 dark:text-indigo-400">{{ $code->code }}</td>
-                            <td class="px-4 py-2">{{ $code->valid_until->format('Y/m/d') }}</td>
+                            <td class="px-4 py-2">{{ $code->valid_until?->format('Y/m/d') ?? '無期限' }}</td>
                             <td class="px-4 py-2">{{ $code->plan?->display_name }} ✕ {{ $code->issue_count }} 枚</td>
                             <td class="px-4 py-2">{{ $code->used_count }} / {{ $code->usage_limit }}</td>
                             <td class="px-4 py-2">{{ $code->expiry_days }}日</td>

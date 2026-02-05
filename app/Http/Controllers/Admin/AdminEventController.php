@@ -11,6 +11,8 @@ use App\Models\Ticket;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Models\Admin;
+use App\Models\EventClass;
 
 class AdminEventController extends Controller
 {
@@ -58,34 +60,48 @@ class AdminEventController extends Controller
     // 確認ページ
     public function confirm(Request $request)
     {
-        // 1. 全てのバリデーション結果を $data に入れる
-        $data = $request->validate([
+        // 1. バリデーション実行（$validator変数をここで確実に定義します）
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'id'                => 'nullable|exists:events,id',
             'title'             => 'required|string|max:100',
             'ticket_id'         => 'required|exists:tickets,id',
-            'published_at'      => 'required|date',
+            'event_date'        => 'required|date|after_or_equal:now', 
+            'entry_deadline'    => 'required|date|before:event_date', // 締切は開催日より前
+            'published_at'      => 'nullable|date',
             'max_participants'  => 'required|integer|min:1',
             'allow_waitlist'    => 'nullable|boolean',
             'description'       => 'nullable|string',
-            'event_date'        => 'required|date|after_or_equal:now',
-            'entry_deadline'    => 'required|date|before:event_date',
             'classes'           => 'required|array|min:1', 
             'instruction_label' => 'nullable|string|max:100',
         ]);
 
-        // 2. チケット情報を取得（プラン情報も一緒に読み込む）
-        $selectedTicket = \App\Models\Ticket::with('plan')->findOrFail($data['ticket_id']);
+        // バリデーション失敗時は、以前の「入力画面」にエラーを持って戻る
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
 
-        // 3. サーバー側での定員最終チェック ($data を使う)
+        // 3. 検証済みデータを取得
+        $data = $validator->validated();
+
+        // 複製時は ID を持っているが、新規作成として扱うためのフラグ
+        $data['is_replicate'] = $request->has('is_replicate');
+
+        // 4. チケット情報の取得
+        $selectedTicket = Ticket::with('plan')->findOrFail($data['ticket_id']);
+        if ($data['max_participants'] > $selectedTicket->plan->max_capacity) {
+            return back()->withErrors(['max_participants' => "チケットのプラン上限を超えています。"])->withInput();
+        }
+
+        // 5. 定員チェック（以前のロジック）
         if ($data['max_participants'] > $selectedTicket->plan->max_capacity) {
             return back()->withErrors([
-                'max_participants' => "選択したチケットの定員上限（{$selectedTicket->plan->max_capacity}名）を超えています。"
+                'max_participants' => "チケットのプラン上限を超えています。"
             ])->withInput();
         }
 
-        // 4. 公開日時が過去かどうかの判定を追加
-        $data['isPast'] = \Carbon\Carbon::parse($data['published_at'])->isPast();
+        // 6. 公開済み判定
+        $data['isPast'] = isset($data['published_at']) && \Carbon\Carbon::parse($data['published_at'])->isPast();
 
-        // 5. ビューへ渡す (変数を $data に統一)
         return view('admin.events.confirm', [
             'data' => $data,
             'selectedTicket' => $selectedTicket
@@ -94,53 +110,73 @@ class AdminEventController extends Controller
 
     // 新規イベント保存
     public function store(Request $request)
-    {
-        // 1. バリデーション
-        $data = $request->validate([
-            'title'             => 'required|string|max:100',
-            'ticket_id'         => [
-                'required',
-                \Illuminate\Validation\Rule::exists('tickets', 'id')->where(fn ($q) => $q->whereNull('event_id')),
-            ],
-            'description'       => 'nullable|string',
-            'event_date'        => 'required|date|after_or_equal:now',
-            'entry_deadline'    => 'required|date|before_or_equal:event_date',
-            'published_at'      => 'nullable|date',
-            'max_participants'  => 'required|integer|min:1',
-            'allow_waitlist'    => 'required|boolean',
-            'instruction_label' => 'nullable|string|max:100',
-            'classes'           => 'required|array',
-            'classes.*'         => 'string',
-        ]);
+{
+    // 1. バリデーション
+    $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+        'title'             => 'required|string|max:100',
+        'ticket_id'         => 'required|exists:tickets,id',
+        'description'       => 'nullable|string',
+        'event_date'        => 'required|date',
+        'entry_deadline'    => 'required|date',
+        'published_at'      => 'nullable|date',
+        'max_participants'  => 'required|integer|min:1',
+        'allow_waitlist'    => 'required|boolean',
+        'instruction_label' => 'nullable|string|max:100',
+        'classes'           => 'required|array',
+        'classes.*'         => 'string',
+    ]);
 
-        // 2. 定員チェック
-        $ticket = Ticket::with('plan')->findOrFail($data['ticket_id']);
-        if ($data['max_participants'] > $ticket->plan->max_capacity) {
-            return back()->withErrors(['max_participants' => '定員上限を超えています。'])->withInput();
-        }
+    // ★ ここで定義した $validator を使う
+    if ($validator->fails()) {
+        // ループを断ち切るため、確認画面ではなく「作成画面」へ戻す
+        return redirect()->route('admin.events.create')
+            ->withErrors($validator)
+            ->withInput();
+    }
 
+    // 検証済みデータを取得
+    $data = $validator->validated();
+
+    // 2. チケット取得
+    $ticketId = $data['ticket_id']; // $data から取るのが安全
+    $ticket = Ticket::with('plan')->findOrFail($ticketId);
+    
+    // 2. データの保存とチケット更新を「ひとまとめ」にする
+    try {
         DB::transaction(function () use ($data) {
-            $eventData = collect($data)->except('classes')->toArray();
-            $eventData['admin_id'] = auth('admin')->id();
+            // チケットの最終チェック（悲観的ロックなどで二重送信を防ぐのが理想）
+            $ticket = Ticket::with('plan')->lockForUpdate()->findOrFail($data['ticket_id']);
+            
+            if ($ticket->event_id !== null || $ticket->used_at !== null) {
+                throw new \Exception('このチケットは既に使用されています。');
+            }
 
-            // イベント作成
+            // A. イベント作成
+            $eventData = \Illuminate\Support\Arr::except($data, ['classes']);
+            $eventData['admin_id'] = auth('admin')->id();
             $event = Event::create($eventData);
 
-            // クラス保存（既存の処理）
+            // B. クラス保存
             foreach ($data['classes'] as $className) {
                 $event->eventClasses()->create(['class_name' => $className]);
             }
 
-            // チケットにイベントIDを紐付け＆使用済みに更新
-            Ticket::where('id', $data['ticket_id'])->update(['event_id' => $event->id,'used_at' => now()]);
+            // C. チケット更新（ここで初めて「使用済み」にする）
+            $ticket->update([
+                'event_id' => $event->id,
+                'used_at'  => now()
+            ]);
 
-            // 通知発火
             event(new \App\Events\EventPublished($event));
         });
-
-        // 4. トランザクションを抜けた「後」でリダイレクトする
-        return redirect()->route('admin.events.index')->with('success', 'イベントを登録しました');
+    } catch (\Exception $e) {
+        return redirect()->route('admin.events.create')
+            ->withErrors(['error' => $e->getMessage()])
+            ->withInput();
     }
+
+    return redirect()->route('admin.events.index')->with('success', 'イベントを登録しました');
+}
 
         // イベント一覧
     public function index()
@@ -189,30 +225,70 @@ class AdminEventController extends Controller
         return view('admin.events.partials.index', compact('event', 'participants'));
     }
 
-
-    // 編集画面表示
+    // --- 編集画面表示 ---
     public function edit(Event $event)
     {
         $now = now();
-
-        // 過去イベント → 複製対象でもある
         $isPast = $event->event_date < $now;
-
-        // 公開済み（公開日時 <= 現在）
         $isPublished = $event->published_at && $event->published_at <= $now;
-
-        // 編集制限（公開済み ＆ 過去ではない）
         $isLimited = $isPublished && !$isPast;
+        $existingClasses = $event->eventClasses->pluck('class_name')->toArray();
 
-        return view('admin.events.form', [
-            'event' => $event,
-            'isReplicate' => false,
-            'isLimited' => $isLimited,   // ★追加：Blade で使用するフラグ
-            'formAction' => route('admin.events.update', $event->id),
-            'formMethod' => 'PUT',
-        ]);
+        return $this->renderForm($event, false, $isLimited);
     }
 
+    // --- イベント複製 ---
+    public function replicate(Event $event)
+    {
+        // 1. 元のイベントを複製（DBには保存しない）
+        $replicatedEvent = $event->replicate();
+        
+        // 2. 複製時のデフォルト値をセット
+        $replicatedEvent->published_at = null; 
+        $replicatedEvent->event_date = now()->addDays(7)->setTime(12, 0); // 1週間後などに仮設定
+        $replicatedEvent->entry_deadline = now()->addDays(6)->setTime(12, 0); // 1週間前
+
+        // 3. 【重要】募集クラスの設定を引き継ぐ準備
+        // 既存の eventClasses から class_name だけを配列で取得
+        $existingClasses = $event->eventClasses->pluck('class_name')->toArray();
+
+        // 4. 複製は「新規作成」扱いなので isLimited は false
+        return $this->renderForm($replicatedEvent, true, false, $existingClasses);
+    }
+
+    /**
+     * フォーム表示用の共通処理
+     */
+    private function renderForm(Event $event, bool $isReplicate, bool $isLimited, array $existingClasses = [])
+    {
+        $admin = auth('admin')->user();
+
+        // 有効なチケット + 現在このイベントが使っているチケットを取得
+        $availableTickets = $admin->tickets()
+            ->with('plan')
+            ->where(function($query) use ($event) {
+                $query->whereNull('event_id')
+                    ->whereNull('used_at')
+                    ->where('expired_at', '>', now())
+                    ->orWhere('id', $event->ticket_id); // 編集/複製元が使っているチケットを含める
+                if (isset($event->ticket_id)) {
+                    $query->orWhere('id', $event->ticket_id);
+                }
+            })
+            ->orderBy('expired_at', 'asc')
+            ->get();
+
+        return view('admin.events.form', [ // ファイル名を form.blade.php にしている場合
+            'event' => $event,
+            'isReplicate' => $isReplicate,
+            'isLimited' => $isLimited,
+            'availableTickets' => $availableTickets,
+            'existingClasses' => $existingClasses,
+            'formAction' => route('admin.events.confirm'),
+            'formMethod' => 'POST',
+            'existingClasses' => $existingClasses,
+        ]);
+    }
 
     // 更新処理
     public function update(Request $request, Event $event)
@@ -225,36 +301,66 @@ class AdminEventController extends Controller
         $isLimited = $isPublished && !$isPast;
 
         if ($isLimited) {
-            // 公開済み → タイトル・説明のみ更新可能
-            $request->validate([
+            $data = $request->validate([
                 'title' => 'required|string|max:100',
                 'description' => 'nullable|string',
+                'classes' => 'required|array|min:1', // ★クラスを追加
             ]);
 
-            $event->update($request->only(['title', 'description']));
+            DB::transaction(function () use ($data, $event) {
+                // 1. 本体更新
+                $event->update([
+                    'title' => $data['title'],
+                    'description' => $data['description'],
+                ]);
+
+                // 2. クラス情報を一旦消して作り直す
+                $event->eventClasses()->delete();
+                foreach ($data['classes'] as $className) {
+                    $event->eventClasses()->create(['class_name' => $className]);
+                }
+            });
 
             return redirect()
                 ->route('admin.events.index')
-                ->with('success', '公開中のイベントのため「イベント名」「内容」だけ更新しました。');
+                ->with('success', '公開中のイベントのため、基本情報と募集クラスを更新しました。');
         }
 
         // 未公開 or 過去 or 複製後 → 全フィールド更新可能
-        $request->validate([
-            'title' => 'required|string|max:100',
-            'description' => 'nullable|string',
-            'event_date' => 'required|date|after_or_equal:now',
-            'entry_deadline' => 'required|date|before:event_date',
-            'published_at' => 'nullable|date',
+        $data = $request->validate([
+            'title'            => 'required|string|max:100',
+            'description'      => 'nullable|string',
+            'event_date'       => 'required|date|after_or_equal:now',
+            'entry_deadline'   => 'required|date|before:event_date',
+            'published_at'     => 'nullable|date',
             'max_participants' => 'required|integer|min:1',
-            'allow_waitlist' => 'required|boolean',
+            'allow_waitlist'   => 'required|boolean',
+            'classes'          => 'required|array', // クラスを追加
+            'classes.*'        => 'string',
+            'instruction_label' => 'nullable|string|max:100', // これも追加
         ]);
 
-        // 制限なし → 全更新
-        $event->update($request->all());
+        DB::transaction(function () use ($event, $data) {
+            // 1. 本体更新（ここが Event::create になっていました）
+            $eventData = collect($data)->except('classes')->toArray();
+            $event->update($eventData); // create ではなく update
 
-        return redirect()
-            ->route('admin.events.index')
-            ->with('success', 'イベントを更新しました');
+            // 2. クラス更新
+            $event->eventClasses()->delete();
+            foreach ($data['classes'] as $className) {
+                $event->eventClasses()->create(['class_name' => $className]);
+            }
+
+            // 3. チケット紐付け（既に紐付いているはずですが念のため）
+            if (isset($data['ticket_id'])) {
+                Ticket::where('id', $data['ticket_id'])->update([
+                    'event_id' => $event->id,
+                    'used_at'  => now()
+                ]);
+            }
+        });
+
+        return redirect()->route('admin.events.index')->with('success', 'イベントを更新しました');
     }
 
 
@@ -294,26 +400,4 @@ class AdminEventController extends Controller
             return back()->with('error', '削除処理に失敗しました。');
         }
     }
-
-    //イベントコピー
-    public function replicate(Event $event)
-    {
-        // 元のイベントを複製（DBにはまだ保存しない）
-        $replicatedEvent = $event->replicate();
-        $replicatedEvent->published_at = null;           // 未公開
-        $replicatedEvent->event_date = now()->addDays(1); // 仮設定
-        $replicatedEvent->entry_deadline = now()->addDays(1);
-
-        $replicatedEvent = $event->replicate();
-        return view('admin.events.form', [
-            'event' => $replicatedEvent,
-            'isReplicate' => true,        // Blade でボタンラベル切替用
-            'isLimited' => false,
-            'formAction' => route('admin.events.store'), // store に送信
-            'formMethod' => 'POST',       // 新規作成なので POST
-        ]);
-        return redirect()->route('admin.events.edit', $newEvent->id)
-                        ->with('success', 'イベントを複製しました。必要に応じて編集してください。');
-    }
-
 }

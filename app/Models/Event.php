@@ -20,6 +20,7 @@ class Event extends Model
         'max_participants',
         'allow_waitlist',
         'admin_id',
+        'ticket_id',
         'instruction_label',
     ];
 
@@ -75,4 +76,9 @@ class Event extends Model
         return $this->userEntries()->where('status', 'entry')->count() >= $this->max_participants;
     }
 
+    public function ticket()
+    {
+        // Eventは1つのTicketに紐づく
+        return $this->belongsTo(Ticket::class, 'ticket_id');
+    }
 }

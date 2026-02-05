@@ -19,7 +19,7 @@
                         ID: {{ $event->id }}
                     </span>
                 </div>
-                <dl class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <dt class="text-sm text-gray-500">開催日時</dt>
                         <dd class="text-base font-bold">{{ $event->event_date->format('Y-m-d H:i') }}</dd>

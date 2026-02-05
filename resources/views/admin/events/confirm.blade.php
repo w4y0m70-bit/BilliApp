@@ -81,7 +81,7 @@
             {{-- キャンセル待ち --}}
             <div>
                 <label class="block text-sm font-medium text-gray-500">キャンセル待ち</label>
-                <div class="mt-1 text-gray-900">{{ ($data['allow_waitlist'] ?? false) ? 1 : 0 }}</div>
+                <div class="mt-1 text-gray-900">{{ ($data['allow_waitlist'] ?? false) == 1 ? '有' : '無' }}</div>
             </div>
 
             {{-- 募集クラス --}}
@@ -114,31 +114,51 @@
 
     {{-- アクションボタン --}}
     <div class="flex items-center space-x-4">
-        <form action="{{ route('admin.events.store') }}" method="POST">
-            @csrf
-            {{-- 全てのデータをhiddenで引き継ぐ --}}
-            @foreach($data as $key => $value)
-                @if(is_array($value))
-                    @foreach($value as $v)
-                        <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
-                    @endforeach
-                @else
-                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-                @endif
-            @endforeach
+        @php
+            // ★修正ポイント：複製フラグがある場合は、IDがあっても Update ではなく Store（新規作成）へ
+            $isReplicate = !empty($data['is_replicate']) && $data['is_replicate'] == 1;
+            $isUpdate = !empty($data['id']) && !$isReplicate;
             
-            <button type="submit" class="bg-admin text-white px-8 py-3 rounded-lg font-bold hover:bg-admin-dark shadow-lg transition">
-                この内容で登録する
+            $formAction = $isUpdate ? route('admin.events.update', $data['id']) : route('admin.events.store');
+        @endphp
+
+        <form action="{{ $formAction }}" method="POST">
+            @csrf
+            
+            @if($isUpdate)
+                @method('PUT')
+                <input type="hidden" name="id" value="{{ $data['id'] }}">
+            @endif
+
+            {{-- 複製フラグを hidden で引き継ぐ（Storeメソッドで必要になる場合があります） --}}
+            @if($isReplicate)
+                <input type="hidden" name="is_replicate" value="1">
+            @endif
+
+            {{-- すべてのデータを hidden で保持 --}}
+            <input type="hidden" name="ticket_id" value="{{ $data['ticket_id'] }}">
+            <input type="hidden" name="title" value="{{ $data['title'] }}">
+            <input type="hidden" name="event_date" value="{{ $data['event_date'] }}">
+            <input type="hidden" name="entry_deadline" value="{{ $data['entry_deadline'] }}">
+            <input type="hidden" name="published_at" value="{{ $data['published_at'] }}">
+            <input type="hidden" name="max_participants" value="{{ $data['max_participants'] }}">
+            <input type="hidden" name="allow_waitlist" value="{{ $data['allow_waitlist'] ?? 0 }}">
+            <input type="hidden" name="description" value="{{ $data['description'] }}">
+            <input type="hidden" name="instruction_label" value="{{ $data['instruction_label'] }}">
+
+            @if(!empty($data['classes']))
+                @foreach($data['classes'] as $class)
+                    <input type="hidden" name="classes[]" value="{{ $class }}">
+                @endforeach
+            @endif
+
+            <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition">
+                {{ $isUpdate ? 'この内容で更新する' : 'この内容で登録する' }}
             </button>
         </form>
 
-        <button
-            type="button"
-            onclick="history.back()"
-            class="bg-gray-300 text-gray-800 px-8 py-3 rounded-lg font-bold hover:bg-gray-400 transition"
-        >
+        <button type="button" onclick="history.back()" class="bg-gray-300 text-gray-800 px-8 py-3 rounded-lg font-bold hover:bg-gray-400 transition">
             修正する
         </button>
     </div>
-</div>
 @endsection

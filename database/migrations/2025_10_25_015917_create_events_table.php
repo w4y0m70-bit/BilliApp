@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->integer('max_participants')->unsigned(); // 最大参加者数
             $table->boolean('allow_waitlist')->default(true); // キャンセル待ちを許可するか
             $table->foreignId('admin_id')->constrained()->onDelete('cascade'); // 管理者ユーザーID
+            $table->unsignedBigInteger('ticket_id')->nullable(); // 使用するチケットID
             $table->string('instruction_label')->nullable(); // 案内ラベル
             $table->timestamps();
         });
@@ -25,5 +26,9 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists('events');
+        Schema::table('events', function (Blueprint $table) {
+            $table->dropForeign(['ticket_id']);
+            $table->dropColumn('ticket_id');
+        });
     }
 };
