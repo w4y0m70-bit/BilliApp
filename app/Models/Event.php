@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\UserEntry;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Event extends Model
 {
@@ -80,5 +82,15 @@ class Event extends Model
     {
         // Eventは1つのTicketに紐づく
         return $this->belongsTo(Ticket::class, 'ticket_id');
+    }
+
+    // ログ
+    use LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title', 'event_date', 'admin_id', 'ticket_id']) // 変更を監視するカラム
+            ->logOnlyDirty(); // 値が変わった時だけ記録
     }
 }

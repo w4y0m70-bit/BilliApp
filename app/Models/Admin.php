@@ -8,6 +8,8 @@ use Illuminate\Support\Str;
 use App\Models\NotificationSetting;
 use App\Notifications\AdminResetPasswordNotification;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Admin extends Authenticatable
 {
@@ -92,6 +94,16 @@ class Admin extends Authenticatable
     {
         // 1人が複数のチケットを持つので「hasMany」
         return $this->hasMany(Ticket::class);
+    }
+
+    // ログ
+    use LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['admin_id', 'name', 'email', 'address', 'phone']) // 変更を監視するカラム
+            ->logOnlyDirty(); // 値が変わった時だけ記録
     }
 
 }

@@ -11,6 +11,8 @@ use App\Events\EventFull;
 use App\Events\WaitlistPromoted;
 use App\Events\WaitlistCancelled;
 use App\Enums\PlayerClass;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class UserEntry extends Model
 {
@@ -75,6 +77,16 @@ class UserEntry extends Model
         return [
             'class' => PlayerClass::class,
         ];
+    }
+
+    // ログ
+    use LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['user_id', 'name', 'event_id', 'status']) // 変更を監視するカラム
+            ->logOnlyDirty(); // 値が変わった時だけ記録
     }
 
 }

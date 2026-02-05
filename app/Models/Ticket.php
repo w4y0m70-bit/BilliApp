@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-// Eventモデルのインポートを追加（エラー防止のため）
 use App\Models\Event; 
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Ticket extends Model
 {
@@ -60,5 +61,15 @@ class Ticket extends Model
             'event_id' => null,
             'used_at'  => null,
         ]);
+    }
+
+        // ログ
+    use LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['admin_id', 'plan_id', 'event_id', 'used_at', 'expired_at']) // 変更を監視するカラム
+            ->logOnlyDirty(); // 値が変わった時だけ記録
     }
 }

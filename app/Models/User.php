@@ -8,6 +8,8 @@ use Illuminate\Notifications\Notifiable;
 use App\Enums\PlayerClass;
 use App\Models\NotificationSetting;
 use App\Models\UserEntry;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class User extends Authenticatable
 {
@@ -61,4 +63,15 @@ class User extends Authenticatable
             'class' => PlayerClass::class,
         ];
     }
+
+            // ログ
+    use LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'email', 'line_id', 'class', 'address', 'phone']) // 変更を監視するカラム
+            ->logOnlyDirty(); // 値が変わった時だけ記録
+    }
+
 }
