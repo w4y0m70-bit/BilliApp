@@ -11,3 +11,6 @@ Schedule::command('userentry:cancel-expired')->everyMinute();
 
 //1日1回行う処理
 // Schedule::command('xxxx:xxxxx')->daily();
+
+// 毎日深夜に古いログを削除する
+Schedule::command('activitylog:clean')->daily();

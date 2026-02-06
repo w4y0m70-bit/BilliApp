@@ -45,6 +45,9 @@
                     <a href="{{ route('master.activity_logs.index') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
                         アクティビティログ
                     </a>
+                    <a href="{{ route('master.password.edit') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+                        パスワード変更
+                    </a>
                 </div>
             </div>
         </div>

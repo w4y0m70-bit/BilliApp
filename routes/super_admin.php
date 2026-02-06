@@ -8,6 +8,7 @@ use App\Http\Controllers\Master\PlanController;
 use App\Http\Controllers\Master\UserManagementController;
 use App\Http\Controllers\Master\EventManagementController;
 use App\Http\Controllers\Master\ActivityLogController;
+use App\Http\Controllers\Master\ProfileController;
 
 Route::middleware(['web', 'auth:admin', 'can:master-only'])
     ->prefix('master') // URLの先頭に /master/ を付与
@@ -34,6 +35,10 @@ Route::middleware(['web', 'auth:admin', 'can:master-only'])
 
         // イベント管理
         Route::resource('events', EventManagementController::class)->only(['index', 'show', 'destroy']);
+
+        // アカウント
+        Route::get('/password', [ProfileController::class, 'editPassword'])->name('password.edit');
+        Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
 
         // アクティビティログ
         Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity_logs.index');
