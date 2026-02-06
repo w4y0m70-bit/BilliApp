@@ -26,6 +26,12 @@ Route::get('/line-push-test', function (LineService $lineService) {
     return $result ? '個別メッセージを送信しました！' : '失敗しました。';
 });
 
+// 利用規約
+Route::view('/terms', 'pages.terms')->name('terms');
+
+// バージョン履歴
+Route::view('/changelog', 'pages.changelog')->name('changelog');
+
 /*デバッグ用ヘルプ表示ページ*/
 Route::get('/_debug/help', function () {
     abort_unless(App::environment('local'), 404);

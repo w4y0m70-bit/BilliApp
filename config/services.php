@@ -36,7 +36,7 @@ return [
     ],
 
     'line' => [
-        'access_token' => env('LINE_CHANNEL_ACCESS_TOKEN'),
+        'url' => env('LINE_OFFICIAL_ACCOUNT_URL'),
     ],
 
 ];

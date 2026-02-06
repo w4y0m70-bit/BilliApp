@@ -34,7 +34,7 @@
             </form>
 
             <div class="mt-6 text-center">
-                <a href="#" class="text-sm text-user hover:underline">パスワードをお忘れの方はこちら</a>
+                <a href="{{ route('user.password.request') }}" class="text-sm text-user hover:underline">パスワードをお忘れの方はこちら</a>
                 <x-help help-key="user.login.password_reset" />
             </div>
 

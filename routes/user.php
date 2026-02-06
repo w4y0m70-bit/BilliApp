@@ -6,6 +6,8 @@ use App\Http\Controllers\User\{
     UserEventController,
     UserEntryController,
     UserProfileController,
+    UserForgotPasswordController,
+    UserResetPasswordController,
     Auth\UserRegisterController
 };
 use App\Http\Controllers\EventParticipantController;
@@ -26,6 +28,18 @@ Route::get('/register/form/{email}', [UserRegisterController::class, 'showRegist
 // 4. プレイヤー新規登録：ステップ3（保存処理）
 // ※名前の重複を避けるため register.post に統一
 Route::post('/register', [UserRegisterController::class, 'register'])->name('register.post');
+
+// パスワードリセット（ユーザー）
+Route::get('forgot-password', [UserForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+// メール送信
+Route::post('forgot-password', [UserForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+// 再設定画面
+Route::get('reset-password/{token}', [UserResetPasswordController::class, 'showResetForm'])
+    ->name('password.reset');
+// 再設定処理
+Route::post('reset-password', [UserResetPasswordController::class, 'reset'])
+        ->name('password.update');
+
 // --- 認証必須ルート ---
 Route::middleware(['auth:web', 'session.lifetime:60'])->group(function () {
 
