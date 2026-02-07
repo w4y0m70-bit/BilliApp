@@ -36,4 +36,13 @@ class AppServiceProvider extends ServiceProvider
 
         Paginator::useBootstrapFive(); // または useBootstrapFour()
     }
+
+    /**
+     * Register any application listeners.
+     */
+    protected $listen = [
+        \Illuminate\Auth\Events\Login::class => [
+            \App\Listeners\SendMasterLoginNotification::class,
+        ],
+    ];
 }
