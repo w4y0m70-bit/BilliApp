@@ -98,6 +98,26 @@
                 </div>
             </div>
 
+            {{-- 参加制限（バッジ） --}}
+            <div>
+                <label class="block text-sm font-medium text-gray-500">参加制限（バッジ限定）</label>
+                <div class="mt-1 flex flex-wrap gap-1">
+                    @if(!empty($data['badges']))
+                        @foreach($data['badges'] as $badgeId)
+                            @php
+                                // IDからバッジ名を取得（コントローラで $allBadges などを渡しておくとスムーズです）
+                                $badge = \App\Models\Badge::find($badgeId);
+                            @endphp
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded border border-blue-200">
+                                {{ $badge->name ?? '不明なバッジ' }}
+                            </span>
+                        @endforeach
+                    @else
+                        <span class="text-gray-500 italic">制限なし（全員に公開）</span>
+                    @endif
+                </div>
+            </div>
+
             {{-- 伝達事項 --}}
             <div>
                 <label class="block text-sm font-medium text-gray-500">ユーザーへの追加質問</label>
@@ -152,6 +172,12 @@
                 @endforeach
             @endif
 
+            {{-- バッジ制限情報を hidden で保持 --}}
+            @if(!empty($data['badges']))
+                @foreach($data['badges'] as $badgeId)
+                    <input type="hidden" name="badges[]" value="{{ $badgeId }}">
+                @endforeach
+            @endif
             <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition">
                 {{ $isUpdate ? 'この内容で更新する' : 'この内容で登録する' }}
             </button>

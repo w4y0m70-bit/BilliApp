@@ -56,7 +56,7 @@
             <button type="submit" class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-700 transition">
                 イベントを完全に削除する
             </button>
-            <p class="text-sm text-gray-600 py-2 mb-4">一度削除したイベントは元に戻せません。（チケットは返却されます）</p>
+            <p class="text-sm text-gray-600 py-2 mb-4">一度削除したイベントは元に戻せません。<br>（未公開イベントのチケットは返却されます）</p>
         </form>
     </div>
 @endif

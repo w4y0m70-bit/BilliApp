@@ -72,7 +72,7 @@
                         <x-help help-key="app.about" />
                     </div>
                     <p>
-                        ©2026 Billents / <span class="font-mono">ver 0.92-beta</span>
+                        ©2026 Billents / <span class="font-mono">ver 0.93-beta</span>
                     </p>
                 </div>
             </div>

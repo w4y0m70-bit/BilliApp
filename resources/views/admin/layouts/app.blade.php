@@ -47,6 +47,11 @@
         <span class="material-icons text-xl">account_circle</span>
         <span class="text-[10px] mt-0.5">アカウント</span>
     </a>
+    <!-- <a href="{{ route('admin.badges.applications') }}"
+       class="flex flex-col items-center min-w-[70px] hover:bg-gray-700 px-2 py-1 rounded transition flex-shrink-0">
+        <span class="material-icons text-xl">badge</span>
+        <span class="text-[10px] mt-0.5">バッジ</span>
+    </a> -->
 
     <form method="POST" action="{{ route('admin.logout') }}" class="ml-auto flex-shrink-0">
         @csrf

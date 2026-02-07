@@ -15,21 +15,33 @@ class UserEventController extends Controller
     public function index()
     {
         $now = now();
-
         $user = Auth::guard('web')->user();
 
-        // 公開中イベント一覧（未来のもの）
-        $events = Event::with(['userEntries' => function ($q) use ($user) {
-            $q->where('user_id', $user->id)
-          ->where('status', '!=', 'cancelled')
-          ->latest();
-        }])
-        ->where('published_at', '<=', $now)
-        ->where('event_date', '>=', $now)
-        ->orderBy('event_date')
-        ->get();
+        // ユーザーが「承認済み」状態で持っているバッジIDのリストを取得
+        $approvedBadgeIds = $user->badges()
+            ->wherePivot('status', 'approved')
+            ->pluck('badges.id')
+            ->toArray();
 
-        // 過去のエントリー
+        // 公開中イベント一覧
+        $events = Event::with(['organizer', 'requiredBadges', 'userEntries' => function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                ->where('status', '!=', 'cancelled')
+                ->latest();
+            }])
+            ->where('published_at', '<=', $now)
+            ->where('event_date', '>=', $now)
+            // ★ バッジ制限のフィルタリングを追加
+            ->where(function ($query) use ($approvedBadgeIds) {
+                $query->whereDoesntHave('requiredBadges') // 制限なしのイベント
+                    ->orWhereHas('requiredBadges', function ($q) use ($approvedBadgeIds) {
+                        $q->whereIn('badges.id', $approvedBadgeIds); // 承認済みバッジが必要なバッジに含まれている
+                    });
+            })
+            ->orderBy('event_date')
+            ->get();
+
+        // 過去のエントリー（こちらは変更なし）
         $pastEntries = UserEntry::with('event')
             ->where('user_id', $user->id)
             ->whereHas('event', fn($q) => $q->where('event_date', '<', $now))

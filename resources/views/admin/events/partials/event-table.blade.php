@@ -32,6 +32,26 @@
                         @endif
                     </div>
                 </div>
+                <!-- バッジ -->
+                @if($event->requiredBadges->isNotEmpty())
+                    <div class="flex flex-wrap gap-1 mb-2">
+                        @foreach($event->requiredBadges as $badge)
+                            <span class="inline-flex items-center text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100 font-bold">
+                                {{ $badge->name }}
+                            </span>
+                        @endforeach
+                    </div>
+                @endif
+                <!-- クラス -->
+                 <div class="mb-2 text-xs">
+                    <div class="flex flex-wrap gap-2">
+                        @forelse($event->eventClasses as $class)
+                            <span class="bg-white border px-2 py-1 rounded shadow-sm">{{ $class->class_name }}</span>
+                        @empty
+                            <span class="text-red-500">クラス設定なし</span>
+                        @endforelse
+                    </div>
+                </div>
                 <div class="text-sm text-gray-700 mb-1">
                     開催日：
                     {{ $event->event_date->isoFormat('YYYY/MM/DD（ddd）HH:mm') }}
@@ -110,6 +130,22 @@
                             <span class="bg-white border px-2 py-1 rounded shadow-sm">{{ $class->class_name }}</span>
                         @empty
                             <span class="text-red-500">クラス設定なし</span>
+                        @endforelse
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 p-3 rounded mb-4 text-sm border border-blue-100">
+                    <p class="font-bold mb-1 text-blue-800 flex items-center">
+                        【参加可能なバッジ］
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        @forelse($event->requiredBadges as $badge)
+                            <div class="bg-white px-2 py-1 rounded shadow-sm border border-blue-200">
+                                <span class="font-bold text-blue-700">{{ $badge->name }}</span>
+                                <span class="text-[10px] text-gray-500 ml-1">({{ $badge->rank_name }})</span>
+                            </div>
+                        @empty
+                            <span class="text-gray-500 italic">制限なし（誰でも参加可能）</span>
                         @endforelse
                     </div>
                 </div>

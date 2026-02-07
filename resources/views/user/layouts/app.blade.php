@@ -42,6 +42,12 @@
                 <span class="text-[10px] mt-0.5">アカウント</span>
             </a>
 
+            <!-- <a href="{{ route('user.badges.index') }}"
+            class="flex flex-col items-center min-w-[70px] hover:bg-gray-700 px-2 py-1 rounded transition flex-shrink-0">
+                <span class="material-icons text-xl">badge</span>
+                <span class="text-[10px] mt-0.5">バッジ</span>
+            </a> -->
+
             <form method="POST" action="{{ route('user.logout') }}" class="ml-auto flex-shrink-0">
                 @csrf
                 <button type="submit"

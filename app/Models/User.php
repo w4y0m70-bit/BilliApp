@@ -99,4 +99,11 @@ class User extends Authenticatable
             ->logOnlyDirty(); // 値が変わった時だけ記録
     }
 
+    public function badges()
+    {
+        return $this->belongsToMany(Badge::class)
+                    ->withPivot('status') // 中間テーブルのstatus列も扱えるようにする
+                    ->withTimestamps();
+    }
+
 }

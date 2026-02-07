@@ -119,6 +119,15 @@ return [
                 TEXT
             ],
         ],
+
+        'badges' => [
+            'index' => [
+                'title' => 'バッジ一覧',
+                'body' => <<<TEXT
+                バッジ一覧が表示されます。
+                TEXT
+            ],
+        ],
     ],
 
     /*
@@ -173,6 +182,7 @@ return [
                     'title' => '未公開のイベント一覧',
                     'body'  => <<<TEXT
                     まだ公開されていないイベントが一覧で表示されます。
+                    各パネルをクリックすると詳細が表示されます。
                     <span>イベントパネルの</span><span
                             class="material-symbols-outlined text-gray-500"
                             style="font-size: 18px;">edit</span><span>アイコンをクリックすると内容を編集できます。</span>
@@ -186,6 +196,15 @@ return [
                     イベントパネルの<span class="material-symbols-outlined text-gray-500" style="font-size: 20px;">content_copy</span>アイコンをクリックすると、同じ内容で新しいイベントを作成することができます。（チケットを消費します）
                     TEXT
                 ],
+            ],
+            'badges' => [
+                'title' => '公開制限',
+                'body'  => <<<TEXT
+                バッジを発行すると選択できます。
+
+                チェックを入れると、そのバッジを保有し、かつ主催者に承認されたユーザーのみがこのイベントを閲覧・エントリーできるようになります。
+                何もチェックしない場合は「全員公開」となります。
+                TEXT
             ],
 
             'title' => [
@@ -305,6 +324,21 @@ return [
                 'body'  => <<<TEXT
                 配布されたチケットコードを入力すると、該当するチケットを受け取れます。
                 コードは一度しか使えません。
+                TEXT,
+            ],
+        ],
+        'badges' => [
+            'index' => [
+                'title' => 'バッジ一覧',
+                'body' => <<<TEXT
+                バッジをユーザーに配布することによってユーザーグループを作成できます。
+                常連様やスクール生など、グループ限定のイベントに利用できます。
+                TEXT,
+            ],
+            'create' => [
+                'title' => 'バッジ作成',
+                'body' => <<<TEXT
+                新しくバッジを作成します。
                 TEXT,
             ],
         ],

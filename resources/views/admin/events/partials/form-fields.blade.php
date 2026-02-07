@@ -108,6 +108,44 @@
     <small class="text-gray-500">ハンディキャップを設定したクラスを選択してください</small>
 </div>
 
+{{-- バッジ制限（コミュニティ限定設定） --}}
+<div class="mb-4">
+    <div class="flex items-center mb-0">
+        <label class="block font-medium mb-1">公開制限（バッジ保有者限定）</label>
+        <x-help help-key="admin.events.badges" />
+    </div>
+    <div class="bg-gray-50 p-4 rounded-lg border">
+        <!-- <p class="text-xs text-gray-500 mb-3">
+            チェックを入れると、そのバッジを保有し、かつ主催者に承認されたユーザーのみがこのイベントを閲覧・エントリーできるようになります。何もチェックしない場合は「全員公開」となります。
+        </p> -->
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            @php
+                // 現在のイベントに紐付いているバッジIDを取得
+                $selectedBadges = old('badges', isset($event) ? $event->requiredBadges->pluck('id')->toArray() : []);
+                
+                // コントローラから渡す必要がありますが、一旦ここで自分が作ったバッジを取得する想定
+                // (本来はControllerで $myBadges として渡すのがベストです)
+                $myBadges = \App\Models\Badge::where('owner_id', Auth::id())->get();
+            @endphp
+
+            @forelse($myBadges as $badge)
+                <label class="flex items-center gap-2 cursor-pointer bg-white p-2 border rounded hover:border-admin transition">
+                    <input type="checkbox" name="badges[]" value="{{ $badge->id }}" 
+                        {{ in_array($badge->id, $selectedBadges) ? 'checked' : '' }}
+                        class="rounded text-admin focus:ring-admin">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-gray-700">{{ $badge->name }}</span>
+                        <span class="text-[10px] text-gray-700">{{ $badge->description }}</span>
+                    </div>
+                </label>
+            @empty
+                <p class="text-sm text-gray-400 italic">作成済みのバッジがありません。</p>
+            @endforelse
+        </div>
+    </div>
+</div>
+
 {{-- 追加質問 --}}
 <div class="mb-6">
     <div class="flex items-center mb-1">

@@ -102,4 +102,10 @@ class Event extends Model
                         'instruction_label',])
             ->logOnlyDirty(); // 値が変わった時だけ記録
     }
+
+    public function requiredBadges()
+    {
+        // badge_event 中間テーブルを介してBadgeモデルと紐付け
+        return $this->belongsToMany(Badge::class, 'badge_event');
+    }
 }

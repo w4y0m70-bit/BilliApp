@@ -41,10 +41,24 @@
 
 <div class="bg-white shadow rounded-lg p-6">
 
-    {{-- 主催者 --}}
-    <p class="text-sm font-bold text-gray-600 mb-1">
-        【{{ $event->organizer->name ?? '主催者不明' }}】
-    </p>
+    {{-- 主催者とバッジ --}}
+    <div class="flex justify-between items-center mb-1">
+        <p class="text-sm font-bold text-gray-600">
+            【{{ $event->organizer->name ?? '主催者不明' }}】
+        </p>
+
+        {{-- ★ 追加：バッジ表示 --}}
+        @if($event->requiredBadges->isNotEmpty())
+            <div class="flex flex-wrap gap-1">
+                @foreach($event->requiredBadges as $badge)
+                    <span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold border border-blue-200 shadow-sm">
+                        <!-- <span class="material-symbols-outlined text-[12px] mr-0.5">verified_user</span> -->
+                        {{ $badge->name }}限定
+                    </span>
+                @endforeach
+            </div>
+        @endif
+    </div>
 
     {{-- タイトル --}}
     <h2 class="text-2xl font-bold mb-4">{{ $event->title }}</h2>

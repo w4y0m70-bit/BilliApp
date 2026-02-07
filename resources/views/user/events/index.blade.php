@@ -34,10 +34,23 @@
 
             {{-- カード部分 --}}
             <div class="block bg-white shadow rounded-xl p-4 border hover:shadow-lg transition">
-
+                <div class="flex justify-between items-center mb-1">
                 <p class="text-sm font-bold text-gray-600">
                     ［{{ $event->organizer->name ?? '主催者不明' }}］
                 </p>
+
+                @if($event->requiredBadges->isNotEmpty())
+                    <div class="flex flex-wrap gap-1 justify-end">
+                        @foreach($event->requiredBadges as $badge)
+                            <span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold border border-blue-200">
+                                {{-- 盾や鍵のアイコンを入れると「限定感」が出ます --}}
+                                <!-- <span class="material-symbols-outlined text-[12px] mr-0.5">verified_user</span> -->
+                                {{ $badge->name }}限定
+                            </span>
+                        @endforeach
+                    </div>
+                @endif
+                </div>
 
                 {{-- タイトルをリンクに --}}
                 <h3 class="text-2xl font-black mb-1 text-user">
