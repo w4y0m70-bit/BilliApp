@@ -8,9 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('badges', function (Blueprint $table) {
+        Schema::create('groups', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // バッジ名（例：スクール生）
+            $table->string('name'); // グループ名（例：スクール生）
             $table->text('description')->nullable(); // 説明文
             $table->integer('rank')->default(1);
             $table->string('rank_name')->default('一般');
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('badges');
+        Schema::dropIfExists('groups');
     }
 };

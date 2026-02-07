@@ -8,9 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('badge_user', function (Blueprint $table) {
+        Schema::create('group_user', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('badge_id')->constrained()->onDelete('cascade');
+            $table->foreignId('group_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             // 状態を管理：'pending'(申請中), 'approved'(承認済み)
             $table->string('status')->default('pending'); 
@@ -23,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('badge_user');
+        Schema::dropIfExists('group_user');
     }
 };

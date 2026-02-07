@@ -39,13 +39,13 @@
                     ［{{ $event->organizer->name ?? '主催者不明' }}］
                 </p>
 
-                @if($event->requiredBadges->isNotEmpty())
+                @if($event->requiredGroups->isNotEmpty())
                     <div class="flex flex-wrap gap-1 justify-end">
-                        @foreach($event->requiredBadges as $badge)
+                        @foreach($event->requiredGroups as $group)
                             <span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold border border-blue-200">
                                 {{-- 盾や鍵のアイコンを入れると「限定感」が出ます --}}
                                 <!-- <span class="material-symbols-outlined text-[12px] mr-0.5">verified_user</span> -->
-                                {{ $badge->name }}限定
+                                {{ $group->name }}限定
                             </span>
                         @endforeach
                     </div>
@@ -104,7 +104,7 @@
                 <x-help help-key="user.events.participants" />
                 </div>
 
-                {{-- 状態バッジ --}}
+                {{-- 状態グループ --}}
                 <div class="mt-3">
                     @if ($status === 'entry')
                             <span class="inline-block bg-user text-white text-sm px-3 py-1 rounded transition">

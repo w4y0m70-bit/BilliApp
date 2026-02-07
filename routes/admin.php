@@ -9,7 +9,7 @@ use App\Http\Controllers\Admin\{
     AdminEventController,
     AdminParticipantController,
     AdminAccountController,
-    AdminBadgeController,
+    AdminGroupController,
     TicketController
 };
 
@@ -95,20 +95,20 @@ Route::middleware(['auth:admin', 'session.lifetime:20'])->group(function () {
         Route::patch('update', [AdminAccountController::class, 'update'])->name('update');
     });
 
-    // バッジ管理の基本（一覧・作成）
-    Route::get('/badges/create', [AdminBadgeController::class, 'create'])->name('badges.create');
-    Route::post('/badges', [AdminBadgeController::class, 'store'])->name('badges.store');
-    Route::get('/badges/applications', [AdminBadgeController::class, 'applications'])->name('badges.applications');
+    // グループ管理の基本（一覧・作成）
+    Route::get('/groups/create', [AdminGroupController::class, 'create'])->name('groups.create');
+    Route::post('/groups', [AdminGroupController::class, 'store'])->name('groups.store');
+    Route::get('/groups/applications', [AdminGroupController::class, 'applications'])->name('groups.applications');
 
     // ★ 修正・追加：編集、更新、削除
     // 編集画面表示
-    Route::get('/badges/{badge}/edit', [AdminBadgeController::class, 'edit'])->name('badges.edit');
+    Route::get('/groups/{group}/edit', [AdminGroupController::class, 'edit'])->name('groups.edit');
     // 更新処理
-    Route::patch('/badges/{badge}', [AdminBadgeController::class, 'update'])->name('badges.update');
+    Route::patch('/groups/{group}', [AdminGroupController::class, 'update'])->name('groups.update');
     // 削除処理
-    Route::delete('/badges/{badge}', [AdminBadgeController::class, 'destroy'])->name('badges.destroy');
+    Route::delete('/groups/{group}', [AdminGroupController::class, 'destroy'])->name('groups.destroy');
 
     // 承認・解除
-    Route::patch('/badges/{badge}/approve/{user}', [AdminBadgeController::class, 'approve'])->name('badges.approve');
-    Route::delete('/badges/{badge}/remove/{user}', [AdminBadgeController::class, 'removeMember'])->name('badges.remove_member');
+    Route::patch('/groups/{group}/approve/{user}', [AdminGroupController::class, 'approve'])->name('groups.approve');
+    Route::delete('/groups/{group}/remove/{user}', [AdminGroupController::class, 'removeMember'])->name('groups.remove_member');
 });

@@ -32,12 +32,12 @@
                         @endif
                     </div>
                 </div>
-                <!-- バッジ -->
-                @if($event->requiredBadges->isNotEmpty())
+                <!-- グループ -->
+                @if($event->requiredGroups->isNotEmpty())
                     <div class="flex flex-wrap gap-1 mb-2">
-                        @foreach($event->requiredBadges as $badge)
+                        @foreach($event->requiredGroups as $group)
                             <span class="inline-flex items-center text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100 font-bold">
-                                {{ $badge->name }}
+                                {{ $group->name }}
                             </span>
                         @endforeach
                     </div>
@@ -136,13 +136,13 @@
 
                 <div class="bg-blue-50 p-3 rounded mb-4 text-sm border border-blue-100">
                     <p class="font-bold mb-1 text-blue-800 flex items-center">
-                        【参加可能なバッジ］
+                        【参加可能なグループ］
                     </p>
                     <div class="flex flex-wrap gap-2">
-                        @forelse($event->requiredBadges as $badge)
+                        @forelse($event->requiredGroups as $group)
                             <div class="bg-white px-2 py-1 rounded shadow-sm border border-blue-200">
-                                <span class="font-bold text-blue-700">{{ $badge->name }}</span>
-                                <span class="text-[10px] text-gray-500 ml-1">({{ $badge->rank_name }})</span>
+                                <span class="font-bold text-blue-700">{{ $group->name }}</span>
+                                <span class="text-[10px] text-gray-500 ml-1">({{ $group->rank_name }})</span>
                             </div>
                         @empty
                             <span class="text-gray-500 italic">制限なし（誰でも参加可能）</span>

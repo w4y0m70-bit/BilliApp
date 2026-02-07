@@ -73,8 +73,8 @@ class AdminEventController extends Controller
             'description'       => 'nullable|string',
             'classes'           => 'required|array|min:1', 
             'instruction_label' => 'nullable|string|max:100',
-            'badges'            => 'nullable|array',
-            'badges.*'          => 'exists:badges,id',
+            'groups'            => 'nullable|array',
+            'groups.*'          => 'exists:groups,id',
         ]);
 
         // バリデーション失敗時は、以前の「入力画面」にエラーを持って戻る
@@ -127,8 +127,8 @@ class AdminEventController extends Controller
         'instruction_label' => 'nullable|string|max:100',
         'classes'           => 'required|array',
         'classes.*'         => 'string',
-        'badges'            => 'nullable|array',
-        'badges.*'          => 'exists:badges,id',
+        'groups'            => 'nullable|array',
+        'groups.*'          => 'exists:groups,id',
     ]);
 
     // ★ ここで定義した $validator を使う
@@ -157,7 +157,7 @@ class AdminEventController extends Controller
             }
 
             // A. イベント作成
-            $eventData = \Illuminate\Support\Arr::except($data, ['classes', 'badges']);
+            $eventData = \Illuminate\Support\Arr::except($data, ['classes', 'groups']);
             $eventData['admin_id'] = auth('admin')->id();
             $event = Event::create($eventData);
 
@@ -166,9 +166,9 @@ class AdminEventController extends Controller
                 $event->eventClasses()->create(['class_name' => $className]);
             }
 
-            // バッジの紐付け（中間テーブル badge_event への保存）
-            if ($request->has('badges')) {
-                $event->requiredBadges()->sync($request->badges);
+            // グループの紐付け（中間テーブル group_event への保存）
+            if ($request->has('groups')) {
+                $event->requiredGroups()->sync($request->groups);
             }
 
             // C. チケット更新（ここで初めて「使用済み」にする）
@@ -315,8 +315,8 @@ class AdminEventController extends Controller
                 'title' => 'required|string|max:100',
                 'description' => 'nullable|string',
                 'classes' => 'required|array|min:1', // ★クラスを追加
-                'badges'            => 'nullable|array',
-                'badges.*'          => 'exists:badges,id',
+                'groups'            => 'nullable|array',
+                'groups.*'          => 'exists:groups,id',
             ]);
 
             DB::transaction(function () use ($data, $event) {
@@ -350,8 +350,8 @@ class AdminEventController extends Controller
             'classes'          => 'required|array', // クラスを追加
             'classes.*'        => 'string',
             'instruction_label' => 'nullable|string|max:100', // これも追加
-            'badges'            => 'nullable|array',
-            'badges.*'          => 'exists:badges,id',
+            'groups'            => 'nullable|array',
+            'groups.*'          => 'exists:groups,id',
         ]);
 
         DB::transaction(function () use ($event, $data) {

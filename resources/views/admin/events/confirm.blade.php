@@ -98,18 +98,18 @@
                 </div>
             </div>
 
-            {{-- 参加制限（バッジ） --}}
+            {{-- 参加制限（グループ） --}}
             <div>
-                <label class="block text-sm font-medium text-gray-500">参加制限（バッジ限定）</label>
+                <label class="block text-sm font-medium text-gray-500">参加制限（グループ限定）</label>
                 <div class="mt-1 flex flex-wrap gap-1">
-                    @if(!empty($data['badges']))
-                        @foreach($data['badges'] as $badgeId)
+                    @if(!empty($data['groups']))
+                        @foreach($data['groups'] as $groupId)
                             @php
-                                // IDからバッジ名を取得（コントローラで $allBadges などを渡しておくとスムーズです）
-                                $badge = \App\Models\Badge::find($badgeId);
+                                // IDからグループ名を取得（コントローラで $allGroups などを渡しておくとスムーズです）
+                                $group = \App\Models\Group::find($groupId);
                             @endphp
                             <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded border border-blue-200">
-                                {{ $badge->name ?? '不明なバッジ' }}
+                                {{ $group->name ?? '不明なグループ' }}
                             </span>
                         @endforeach
                     @else
@@ -172,10 +172,10 @@
                 @endforeach
             @endif
 
-            {{-- バッジ制限情報を hidden で保持 --}}
-            @if(!empty($data['badges']))
-                @foreach($data['badges'] as $badgeId)
-                    <input type="hidden" name="badges[]" value="{{ $badgeId }}">
+            {{-- グループ制限情報を hidden で保持 --}}
+            @if(!empty($data['groups']))
+                @foreach($data['groups'] as $groupId)
+                    <input type="hidden" name="groups[]" value="{{ $groupId }}">
                 @endforeach
             @endif
             <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition">

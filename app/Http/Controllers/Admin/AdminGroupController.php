@@ -3,20 +3,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Badge;
+use App\Models\Group;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class AdminBadgeController extends Controller
+class AdminGroupController extends Controller
 {
-    // バッジ作成画面の表示
+    // グループ作成画面の表示
     public function create()
     {
-        return view('admin.badges.create');
+        return view('admin.groups.create');
     }
 
-    // バッジをデータベースに保存
+    // グループをデータベースに保存
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -26,7 +26,7 @@ class AdminBadgeController extends Controller
             'rank_name' => 'string',
         ]);
 
-        Badge::create([
+        Group::create([
             'name' => $validated['name'],
             'description' => $validated['description'],
             'rank' => $validated['rank'] ?? 1,
@@ -34,17 +34,17 @@ class AdminBadgeController extends Controller
             'owner_id' => Auth::id(),
         ]);
 
-        return redirect()->route('admin.badges.applications')->with('status', 'バッジを作成しました！');
+        return redirect()->route('admin.groups.applications')->with('status', 'グループを作成しました！');
     }
 
     // 編集画面を表示
-    public function edit(Badge $badge)
+    public function edit(Group $group)
     {
-        return view('admin.badges.edit', compact('badge'));
+        return view('admin.groups.edit', compact('group'));
     }
 
     // 文言の更新
-    public function update(Request $request, Badge $badge)
+    public function update(Request $request, Group $group)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:50',
@@ -52,51 +52,51 @@ class AdminBadgeController extends Controller
             // 'rank_name' => 'nullable|string', // 必要であれば
         ]);
 
-        $badge->update($validated);
+        $group->update($validated);
 
-        return redirect()->route('admin.badges.applications')->with('success', 'バッジ情報を更新しました。');
+        return redirect()->route('admin.groups.applications')->with('success', 'グループ情報を更新しました。');
     }
 
-    // バッジの削除
-    public function destroy(Badge $badge)
+    // グループの削除
+    public function destroy(Group $group)
     {
         // 中間テーブルのデータ（申請やメンバー）は、
         // マイグレーションで onDelete('cascade') にしていれば自動で消えます。
-        $badge->delete();
+        $group->delete();
 
-        return redirect()->route('admin.badges.applications')->with('success', 'バッジを削除しました。');
+        return redirect()->route('admin.groups.applications')->with('success', 'グループを削除しました。');
     }
 
     public function applications()
     {
-        // 自分が作成したバッジを取得
+        // 自分が作成したグループを取得
         // 承認・未承認を判別するために status を含めてユーザーを取得
-        $badges = Badge::where('owner_id', Auth::id())
+        $groups = Group::where('owner_id', Auth::id())
             ->with(['users' => function($query) {
                 $query->withPivot('status', 'created_at');
             }])
             ->get();
 
-        return view('admin.badges.applications', compact('badges'));
+        return view('admin.groups.applications', compact('groups'));
     }
 
     // 申請を承認する
-    public function approve(Badge $badge, User $user)
+    public function approve(Group $group, User $user)
     {
-        // 中間テーブル（badge_user）の特定のデータを更新する
+        // 中間テーブル（group_user）の特定のデータを更新する
         // updateExistingPivot は「多対多」のステータス更新に非常に便利です
-        $badge->users()->updateExistingPivot($user->id, [
+        $group->users()->updateExistingPivot($user->id, [
             'status' => 'approved'
         ]);
 
         return back()->with('status', "{$user->name} さんの申請を承認しました！");
     }
 
-    // メンバーをバッジから外す（承認の取り消し・退会処理）
-    public function removeMember(Badge $badge, User $user)
+    // メンバーをグループから外す（承認の取り消し・退会処理）
+    public function removeMember(Group $group, User $user)
     {
         // 中間テーブルのレコードを削除
-        $badge->users()->detach($user->id);
+        $group->users()->detach($user->id);
 
         return back()->with('status', "{$user->name} さんをメンバーから解除しました。");
     }

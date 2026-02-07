@@ -103,9 +103,9 @@ class Event extends Model
             ->logOnlyDirty(); // 値が変わった時だけ記録
     }
 
-    public function requiredBadges()
+    public function requiredGroups()
     {
-        // badge_event 中間テーブルを介してBadgeモデルと紐付け
-        return $this->belongsToMany(Badge::class, 'badge_event');
+        // group_event 中間テーブルを介してGroupモデルと紐付け
+        return $this->belongsToMany(Group::class, 'group_event');
     }
 }

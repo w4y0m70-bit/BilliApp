@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Badge extends Model
+class Group extends Model
 {
     use HasFactory;
 
@@ -27,7 +27,7 @@ class Badge extends Model
 
     public function owner()
     {
-        // このバッジを作った主催者
+        // このグループを作った主催者
         return $this->belongsTo(Admin::class, 'owner_id');
     }
 }

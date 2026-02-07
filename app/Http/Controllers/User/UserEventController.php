@@ -17,25 +17,25 @@ class UserEventController extends Controller
         $now = now();
         $user = Auth::guard('web')->user();
 
-        // ユーザーが「承認済み」状態で持っているバッジIDのリストを取得
-        $approvedBadgeIds = $user->badges()
+        // ユーザーが「承認済み」状態で持っているグループIDのリストを取得
+        $approvedGroupIds = $user->groups()
             ->wherePivot('status', 'approved')
-            ->pluck('badges.id')
+            ->pluck('groups.id')
             ->toArray();
 
         // 公開中イベント一覧
-        $events = Event::with(['organizer', 'requiredBadges', 'userEntries' => function ($q) use ($user) {
+        $events = Event::with(['organizer', 'requiredGroups', 'userEntries' => function ($q) use ($user) {
                 $q->where('user_id', $user->id)
                 ->where('status', '!=', 'cancelled')
                 ->latest();
             }])
             ->where('published_at', '<=', $now)
             ->where('event_date', '>=', $now)
-            // ★ バッジ制限のフィルタリングを追加
-            ->where(function ($query) use ($approvedBadgeIds) {
-                $query->whereDoesntHave('requiredBadges') // 制限なしのイベント
-                    ->orWhereHas('requiredBadges', function ($q) use ($approvedBadgeIds) {
-                        $q->whereIn('badges.id', $approvedBadgeIds); // 承認済みバッジが必要なバッジに含まれている
+            // ★ グループ制限のフィルタリングを追加
+            ->where(function ($query) use ($approvedGroupIds) {
+                $query->whereDoesntHave('requiredGroups') // 制限なしのイベント
+                    ->orWhereHas('requiredGroups', function ($q) use ($approvedGroupIds) {
+                        $q->whereIn('groups.id', $approvedGroupIds); // 承認済みグループが必要なグループに含まれている
                     });
             })
             ->orderBy('event_date')

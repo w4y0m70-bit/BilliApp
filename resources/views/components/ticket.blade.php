@@ -36,7 +36,7 @@
 
 <div class="relative flex flex-col bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden {{ $tab === 'used' ? 'opacity-70' : '' }} transition-transform active:scale-95">
     
-    {{-- 枚数バッジ --}}
+    {{-- 枚数グループ --}}
     @if($tab === 'ready' && $count > 1)
         <div class="absolute top-0 right-0 z-10">
             <div class="bg-gray-500 text-white text-[16px] font-normal px-2 py-0.5 rounded-bl-lg">

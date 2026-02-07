@@ -38,8 +38,13 @@
             <section class="bg-blue-50 p-5 rounded-xl border border-blue-100">
                 <h2 class="text-lg font-bold mb-2 text-blue-800">ぜひご意見をください！</h2>
                 <p class="text-sm text-blue-700 leading-relaxed">
-                    「ここが使いにくい」「こんな機能がほしい」といったお声が、開発の何よりの励みになります。不具合を見つけた際も、お気軽にLINEなどでお知らせください。
+                    「ここが使いにくい」「こんな機能がほしい」といったお声が、
+                    開発の何よりの励みになります。不具合を見つけた際も、
+                    お気軽にLINEなどでお知らせください。
                 </p>
+                <a href="{{ config('services.line.url') }}" class="text-green-600 font-bold hover:underline">
+                    → Billents（公式LINE）を友だち追加する
+                </a>
             </section>
         </div>
 

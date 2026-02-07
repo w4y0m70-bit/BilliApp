@@ -8,7 +8,7 @@ use App\Http\Controllers\User\{
     UserProfileController,
     UserForgotPasswordController,
     UserResetPasswordController,
-    UserBadgeController,
+    UserGroupController,
     Auth\UserRegisterController
 };
 use App\Http\Controllers\EventParticipantController;
@@ -76,9 +76,9 @@ Route::middleware(['auth:web', 'session.lifetime:60'])->group(function () {
     Route::get('account/edit', [UserProfileController::class, 'edit'])->name('account.edit');
     Route::patch('account/update', [UserProfileController::class, 'update'])->name('account.update');
 
-    // バッジ一覧
-    Route::get('/badges', [UserBadgeController::class, 'index'])->name('badges.index');
+    // グループ一覧
+    Route::get('/groups', [UserGroupController::class, 'index'])->name('groups.index');
     
-    // バッジへの申請処理
-    Route::post('/badges/{badge}/apply', [UserBadgeController::class, 'apply'])->name('badges.apply');
+    // グループへの申請処理
+    Route::post('/groups/{group}/apply', [UserGroupController::class, 'apply'])->name('groups.apply');
 });

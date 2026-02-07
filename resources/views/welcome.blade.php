@@ -52,8 +52,8 @@
                     {{-- 利用規約へのリンク --}}
                     <a href="{{ route('terms') }}" class="hover:text-blue-600 transition underline-offset-4 hover:underline">利用規約</a>
                     
-                    {{-- バージョン履歴へのリンク --}}
-                    <a href="{{ route('changelog') }}" class="hover:text-blue-600 transition underline-offset-4 hover:underline">バージョン履歴</a>
+                    {{-- アップデート履歴へのリンク --}}
+                    <a href="{{ route('changelog') }}" class="hover:text-blue-600 transition underline-offset-4 hover:underline">アップデート履歴</a>
                     
                     {{-- お問い合わせ等（将来用） --}}
                     {{-- <a href="#" class="hover:text-blue-600 transition">お問い合わせ</a> --}}
