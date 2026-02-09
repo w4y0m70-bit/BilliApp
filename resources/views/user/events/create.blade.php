@@ -11,16 +11,49 @@
         @csrf
 
         {{-- 1. クラス選択（主催者が選んだものだけを表示） --}}
+        @php
+        // すでにEnumオブジェクトである可能性が高いので、直接代入
+        $userClass = auth()->user()->class;
+
+        // もしEnumオブジェクトでなければ（文字列なら）変換を試みる
+        if (!$userClass instanceof \App\Enums\PlayerClass) {
+            $userClass = \App\Enums\PlayerClass::tryFrom($userClass);
+        }
+        
+        $defaultClass = null;
+        if ($userClass && $event->eventClasses->isNotEmpty()) {
+            $userRank = $userClass->rank();
+            
+            $bestMatch = $event->eventClasses->map(function($item) use ($userRank) {
+                // ここも同様に、取得した値が文字列であることを前提に変換
+                $classEnum = \App\Enums\PlayerClass::tryFrom($item->class_name);
+                $rank = $classEnum ? $classEnum->rank() : 0;
+                return [
+                    'class_name' => $item->class_name,
+                    'distance' => abs($rank - $userRank),
+                    'rank' => $rank
+                ];
+            })
+            ->sortBy([
+                ['distance', 'asc'],
+                ['rank', 'desc']
+            ])
+            ->first();
+
+            $defaultClass = $bestMatch['class_name'] ?? null;
+        }
+    @endphp
+
         <div>
             <div class="flex items-center mb-2">
-            <label class="block font-bold mb-2">クラスの申告</label>
+                <label class="block font-bold mb-2">クラスの申告</label>
                 <x-help help-key="user.entries.class" />
             </div>
             <div class="grid grid-cols-4 gap-3">
                 @foreach($event->eventClasses as $class)
                     <label class="flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50 has-[:checked]:border-user has-[:checked]:bg-user/5">
                         <input type="radio" name="class" value="{{ $class->class_name }}" required
-                            {{ old('class', auth()->user()->class) == $class->class_name ? 'checked' : '' }}>
+                            {{ old('class', $defaultClass) == $class->class_name ? 'checked' : '' }}>
                         <span class="font-medium">{{ $class->class_name }}</span>
                     </label>
                 @endforeach

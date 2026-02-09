@@ -12,6 +12,20 @@ enum PlayerClass: string
     case SA = 'SA';
     case Pro = 'Pro';
 
+    // クラスの強さを数値で定義
+    public function rank(): int
+    {
+        return match($this) {
+            self::Beginner => 1,
+            self::C        => 2,
+            self::B        => 3,
+            self::SB       => 4,
+            self::A        => 5,
+            self::SA       => 6,
+            self::Pro      => 7,
+        };
+    }
+    
     // 表示用のラベルを返すメソッド
     public function label(): string
     {

@@ -14,8 +14,9 @@
             <div class="relative pl-10">
                 <div class="absolute left-0 top-1.5 w-6 h-6 bg-blue-500 rounded-full border-4 border-white shadow"></div>
                 <div class="flex items-center gap-3 mb-2">
-                    <span class="font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-sm"><v0 class="93"></v0>v0.93-beta</span>
-                    <span class="text-sm text-gray-400">2026.02.08</span>
+                    <span class="font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-sm">
+                        <v0 class="93"></v0>v0.94-beta</span>
+                    <span class="text-sm text-gray-400">2026.02.10</span>
                 </div>
                 <h3 class="font-bold text-gray-800 mb-2">ベータ版公開</h3>
                 <!-- <ul class="list-disc ml-5 space-y-1 text-sm leading-relaxed text-gray-600"> -->
