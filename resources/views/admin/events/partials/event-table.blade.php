@@ -45,10 +45,11 @@
                 <!-- クラス -->
                  <div class="mb-2 text-xs">
                     <div class="flex flex-wrap gap-2">
+                        <strong class="text-sm text-gray-700 mb-1">募集クラス：</strong>
                         @forelse($event->eventClasses as $class)
                             <span class="bg-white border px-2 py-1 rounded shadow-sm">{{ $class->class_name }}</span>
                         @empty
-                            <span class="text-red-500">クラス設定なし</span>
+                            <span class="text-red-500">ー</span>
                         @endforelse
                     </div>
                 </div>

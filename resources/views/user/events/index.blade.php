@@ -130,6 +130,26 @@
                     <x-help help-key="user.events.show" />
                 </h3>
 
+                {{-- 募集クラス (追加部分) --}}
+                <div class="mt-2 flex items-start gap-1">
+                    <strong class="text-sm text-gray-700">参加資格：</strong>
+                    <div class="flex flex-wrap gap-1">
+                        @php
+                            $eventClasses = $event->eventClasses;
+                        @endphp
+
+                        @forelse($eventClasses as $eventClass)
+                            @php
+                                $classEnum = App\Enums\PlayerClass::tryFrom($eventClass->class_name);
+                            @endphp
+                            <span class="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-300 font-medium">
+                                {{ $classEnum ? $classEnum->shortLabel() : $eventClass->class_name }}
+                            </span>
+                        @empty
+                            <span class="text-xs text-gray-400">制限なし</span>
+                        @endforelse
+                    </div>
+                </div>
                 <p class="text-sm text-gray-700">
                     <strong>開催日時：</strong><span class="text-lg font-bold">
                     {{ format_event_date($event->event_date) }}

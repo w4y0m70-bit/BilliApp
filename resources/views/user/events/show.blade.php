@@ -141,7 +141,7 @@
             <div class="mt-4">
                 <p class="text-gray-700 break-words border-t pt-4">
                     <strong class="text-sm">《イベント詳細》</strong><br>
-                    {{ $event->description }}
+                    {!! nl2br(e($event->description)) !!}
                 </p>
             </div>
         @endif

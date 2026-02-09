@@ -11,11 +11,23 @@
 
 {{-- イベント内容 --}}
 <div class="mb-4">
-    <div class="flex items-center mb-1">
+    <div class="flex items-center mb-1 gap-2"> {{-- gap-2で要素間に隙間を作ります --}}
         <label class="block font-medium mb-1">イベント内容・詳細</label>
         <x-help help-key="admin.events.description" />
+        
+        {{-- デフォルト挿入ボタン --}}
+        <button type="button" 
+                onclick="fillDefaultDescription()" 
+                class="ml-auto text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded">
+            入力例
+        </button>
     </div>
-    <textarea name="description" rows="4" class="w-full border p-2 rounded">{{ old('description', $event->description ?? '') }}</textarea>
+
+    {{-- ID "event-description" を追加してJavaScriptから操作しやすくします --}}
+    <textarea id="event-description" 
+              name="description" 
+              rows="4" 
+              class="w-full border p-2 rounded">{{ old('description', $event->description ?? '') }}</textarea>
 </div>
 
 {{-- 開催日時 --}}
@@ -55,10 +67,10 @@
         id="published_at" class="border w-full p-2 rounded">
 </div>
 
-{{-- 最大人数 --}}
+{{-- 募集人数 --}}
 <div class="mb-4">
     <div class="flex items-center mb-1">
-        <label class="font-medium">最大人数</label>
+        <label class="font-medium">募集人数</label>
         <x-help help-key="admin.events.max_participants" />
     </div>
     <input type="number" name="max_participants" id="max_participants" 
@@ -88,20 +100,27 @@
     </div>
     <div class="bg-gray-50 p-4 rounded-lg border grid grid-cols-4 gap-2">
         @php
+            // 選択済みの値を配列として取得
             if (is_array(old('classes'))) {
                 $selectedClasses = old('classes');
             } elseif (!empty($existingClasses)) {
                 $selectedClasses = $existingClasses;
             } else {
-                // 通常編集時にリレーションから直接取得
-                $selectedClasses = isset($event) ? $event->eventClasses->pluck('class_name')->toArray() : [];
+                // モデルから取得。Enumにキャストされている場合は value を取得するように調整
+                $selectedClasses = isset($event) 
+                    ? $event->eventClasses->pluck('class_name')->toArray() 
+                    : [];
             }
         @endphp
-        @foreach(['P','SA', 'A', 'SB', 'B', 'C', 'Bg','L'] as $cls)
+
+        @foreach(App\Enums\PlayerClass::cases() as $class)
         <label class="flex items-center gap-2 cursor-pointer bg-white p-2 border rounded">
-            <input type="checkbox" name="classes[]" value="{{ $cls }}" 
-                {{ in_array($cls, $selectedClasses) ? 'checked' : '' }}>
-            <span>{{ $cls }}</span>
+            <input type="checkbox" name="classes[]" value="{{ $class->value }}" 
+                class="class-checkbox"
+                {{-- 指定なしかどうかをJavaScriptで判定するための属性 --}}
+                data-is-none="{{ $class === App\Enums\PlayerClass::none ? 'true' : 'false' }}"
+                {{ in_array($class->value, $selectedClasses) ? 'checked' : '' }}>
+            <span>{{ $class->shortLabel() }}</span>
         </label>
         @endforeach
     </div>
@@ -109,15 +128,13 @@
 </div>
 
 {{-- グループ制限（コミュニティ限定設定） --}}
-<div class="mb-4">
+{{--
+<!-- <div class="mb-4">
     <div class="flex items-center mb-0">
         <label class="block font-medium mb-1">公開制限（グループ保有者限定）</label>
         <x-help help-key="admin.events.groups" />
     </div>
     <div class="bg-gray-50 p-4 rounded-lg border">
-        <!-- <p class="text-xs text-gray-500 mb-3">
-            チェックを入れると、そのグループを保有し、かつ主催者に承認されたユーザーのみがこのイベントを閲覧・エントリーできるようになります。何もチェックしない場合は「全員公開」となります。
-        </p> -->
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
             @php
@@ -144,8 +161,8 @@
             @endforelse
         </div>
     </div>
-</div>
-
+</div> -->
+--}}
 {{-- 追加質問 --}}
 <div class="mb-6">
     <div class="flex items-center mb-1">
@@ -187,3 +204,53 @@
         </select>
     @endif
 </div>
+
+<script>
+function fillDefaultDescription() {
+    const textarea = document.getElementById('event-description');
+    const defaultText = `【種目】ナインボール（セットマッチ）
+【試合形式】予選：ダブルイリミネーション／決勝（ベスト８）：シングルイリミネーション
+【ルール】ランダムラック／勝者ブレイク／スリーポイントルール採用／プッシュアウトあり／ダブルヒットなし
+【ショットクロック】採用：◯分・時間切れ＞1ショット40秒・エクステンション（1ラック1回40秒）
+【ハンデ】P=6／A=5／B=4／C=3
+【参加費】◯円
+【賞典】◯円分の商品券
+【注意事項】時間厳守（遅れる場合は事前に店舗までご連絡お願いいたします）
+【お店より】和気あいあいと楽しく行うトーナメントです。奮ってご参加ください！
+エントリー入力画面から所属店舗の入力をお願いいたします`;
+
+    // テキストエリアに既に値があるか確認
+    if (textarea.value.trim() !== "") {
+        const result = confirm("既にテキストが入力されています。上書きしてもよろしいですか？");
+        if (!result) {
+            return; // キャンセルした場合は何もしない
+        }
+    }
+
+    // テキストをセット
+    textarea.value = defaultText;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const checkboxes = document.querySelectorAll('.class-checkbox');
+    const noneCheckbox = document.querySelector('.class-checkbox[data-is-none="true"]');
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.dataset.isNone === 'true') {
+                // 「指定なし」がチェックされた場合、他の全てを外す
+                if (this.checked) {
+                    checkboxes.forEach(cb => {
+                        if (cb !== noneCheckbox) cb.checked = false;
+                    });
+                }
+            } else {
+                // 「指定なし」以外がチェックされた場合、「指定なし」を外す
+                if (this.checked) {
+                    noneCheckbox.checked = false;
+                }
+            }
+        });
+    });
+});
+</script>

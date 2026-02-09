@@ -4,18 +4,20 @@ namespace App\Enums;
 
 enum PlayerClass: string
 {
-    case Beginner = 'Beginner';
-    case C = 'C';
-    case B = 'B';
-    case SB = 'SB';
-    case A = 'A';
-    case SA = 'SA';
     case Pro = 'Pro';
+    case SA = 'SA';
+    case A = 'A';
+    case SB = 'SB';
+    case B = 'B';
+    case C = 'C';
+    case Beginner = 'Beginner';
+    case none = 'なし';
 
     // クラスの強さを数値で定義
     public function rank(): int
     {
         return match($this) {
+            self::none  => 0,
             self::Beginner => 1,
             self::C        => 2,
             self::B        => 3,
