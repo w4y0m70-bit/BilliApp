@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('notification_settings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable(); // 管理者は admin_id でも可
-            $table->foreignId('admin_id')->nullable();
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('admin_id')->nullable()->constrained()->onDelete('cascade');;
             $table->string('type'); // イベントタイプ (event_published, waitlist_promoted, waitlist_cancelled, event_full)
             $table->string('via')->default('mail'); // メール、LINE など
             $table->boolean('enabled')->default(true); // ON/OFF

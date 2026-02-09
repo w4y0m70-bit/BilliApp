@@ -14,7 +14,10 @@ return new class extends Migration {
             $table->string('manager_name')->nullable();
             $table->string('email')->unique();
             $table->string('password');
-            $table->string('address')->nullable();
+            $table->string('zip_code', 7)->nullable();
+            $table->string('prefecture')->nullable();
+            $table->string('city')->nullable();
+            $table->string('address_line')->nullable();
             $table->string('phone')->nullable();
             $table->date('subscription_until')->nullable(); // サブスク期限
             $table->integer('tickets')->default(0);         // 所持チケット

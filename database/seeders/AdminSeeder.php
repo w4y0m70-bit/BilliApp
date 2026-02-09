@@ -26,6 +26,10 @@ class AdminSeeder extends Seeder
             'password' => Hash::make('00000000'),
             'admin_id' => '000',
             'role'     => 'admin',
+            'zip_code' => '5550023',
+            'prefecture' => '大阪府',
+            'city' => '大阪市',
+            'address_line' => '',
         ]);
     }
 }

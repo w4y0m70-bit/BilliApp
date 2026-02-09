@@ -19,7 +19,7 @@
             <thead>
                 <tr class="bg-gray-100 border-b">
                     <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">No.</th>
-                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">氏名（アカウント名）</th>
+                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">アカウント名</th>
                     <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">性別</th>
                     <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">クラス</th>
                 </tr>

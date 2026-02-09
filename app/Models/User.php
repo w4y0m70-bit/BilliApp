@@ -24,7 +24,10 @@ class User extends Authenticatable
         'line_id',
         'gender',
         'birthday',
-        'address',
+        'zip_code',
+        'prefecture',
+        'city',
+        'address_line',
         'phone',
         'account_name',
         'class',
@@ -38,6 +41,7 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
+        'class' => \App\Enums\PlayerClass::class,
         'birthday' => 'date',
     ];
 

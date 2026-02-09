@@ -20,11 +20,21 @@ return new class extends Migration {
 
             $table->string('gender', 10)->nullable();
             $table->date('birthday')->nullable();
-            $table->string('address')->nullable();
+
+            // --- 住所情報の細分化 ---
+            $table->string('zip_code', 7)->nullable();      // 郵便番号（ハイフンなし7桁想定）
+            $table->string('prefecture')->nullable();       // 都道府県（検索用）
+            $table->string('city')->nullable();             // 市区町村（検索用）
+            $table->string('address_line')->nullable();     // 番地・建物名など
+            // -----------------------
+
             $table->string('phone')->nullable();
             $table->string('account_name')->nullable();
             $table->string('class')->nullable();
-            // $table->string('notification_type')->nullable();
+            
+            // 通知設定用（複数選択されるため、JSON形式で保存できるようにしておくと便利です）
+            // $table->json('notification_via')->nullable();
+
             $table->dateTime('last_login_at')->nullable();
             $table->boolean('is_guest')->default(false);
             $table->softDeletes();

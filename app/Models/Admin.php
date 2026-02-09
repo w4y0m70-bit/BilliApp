@@ -33,7 +33,10 @@ class Admin extends Authenticatable
         'manager_name',
         'email',
         'password',
-        'address',
+        'zip_code',
+        'prefecture',
+        'city',
+        'address_line',
         'phone',
         'notification_type',
         'subscription_until',
@@ -42,6 +45,10 @@ class Admin extends Authenticatable
         'role',
     ];
 
+    public function events()
+    {
+        return $this->hasMany(Event::class, 'admin_id');
+    }
     protected static function boot()
     {
         parent::boot();
