@@ -30,7 +30,7 @@ class UserLoginController extends Controller
         )) {
             $request->session()->regenerate();
 
-            return redirect()->intended(route('user.events.index'))
+            return redirect()->route('user.events.index')
                 ->with('success', 'ログインしました！');
         }
 

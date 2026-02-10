@@ -9,25 +9,31 @@ use App\Http\Controllers\User\{
     UserForgotPasswordController,
     UserResetPasswordController,
     UserGroupController,
+    LineLoginController,
     Auth\UserRegisterController
 };
 use App\Http\Controllers\EventParticipantController;
+// LINEログイン
+Route::get('login/line/callback', [LineLoginController::class, 'handleLineCallback'])->name('line.callback');
+
+// LINE連携
+// 連携を開始するルート（ボタンのリンク先）
+Route::get('/login/line', [LineLoginController::class, 'redirectToLine'])->name('line.login');
+// LINEからのコールバックを受けるルート
+// ※外部から叩かれるため、ここにも名前をつけておくと管理しやすいです
+// Route::get('/login/line/callback', [LineLoginController::class, 'handleLineCallback']);
 
 Route::get('/login', [UserLoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [UserLoginController::class, 'login'])->name('login.post');
 
 // 2. プレイヤー新規登録：ステップ1（メールアドレス入力画面）
-// ※これが抜けていたので追加しました
 Route::get('/register/email', [UserRegisterController::class, 'showEmailForm'])->name('register.email');
 Route::post('/register/email', [UserRegisterController::class, 'sendVerificationEmail'])->name('register.email.post');
 
 // 3. プレイヤー新規登録：ステップ2（メールのリンクをクリックして表示される本登録画面）
-// ※{email} を受け取る専用のルート名にします
 Route::get('/register/form/{email}', [UserRegisterController::class, 'showRegistrationForm'])->name('register');
-// ->middleware('signed');
 
 // 4. プレイヤー新規登録：ステップ3（保存処理）
-// ※名前の重複を避けるため register.post に統一
 Route::post('/register', [UserRegisterController::class, 'register'])->name('register.post');
 
 // パスワードリセット（ユーザー）
@@ -81,4 +87,8 @@ Route::middleware(['auth:web', 'session.lifetime:60'])->group(function () {
     
     // グループへの申請処理
     Route::post('/groups/{group}/apply', [UserGroupController::class, 'apply'])->name('groups.apply');
+
+    // LINE連携解除
+    Route::post('/login/line/disconnect', [LineLoginController::class, 'disconnect'])->name('line.disconnect');
+
 });

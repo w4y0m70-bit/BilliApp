@@ -12,7 +12,7 @@
             </h2>
         </div>
 
-        <div class="p-6 space-y-6">
+        <div class="p-6 space-y-2">
             <div class="grid grid-cols-1 gap-y-4">
                 {{-- 氏名・アカウント名 --}}
                 <div class="flex flex-col sm:flex-row sm:justify-between border-b pb-2">
@@ -65,6 +65,38 @@
                 </div>
             </div>
 
+            {{-- LINE連携セクション (コンパクト版) --}}
+            <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                <div class="flex items-center space-x-2">
+                    <span class="text-gray-600 text-sm font-medium">LINE連携</span>
+                    @if($user->line_id)
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                            <span class="material-symbols-outlined text-xs mr-1">check_circle</span>
+                            連携済み
+                        </span>
+                    @else
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">
+                            未連携
+                        </span>
+                    @endif
+                </div>
+
+                <div>
+                    @if($user->line_id)
+                        {{-- 連携済みの場合：解除をシンプルに --}}
+                        <form action="{{ route('user.line.disconnect') }}" method="POST" onsubmit="return confirm('LINE連携を解除しますか？');">
+                            @csrf
+                            <button type="submit" class="text-xs text-red-400 hover:text-red-600 underline">連携解除</button>
+                        </form>
+                    @else
+                        {{-- 未連携の場合：小さいボタン --}}
+                        <a href="{{ route('user.line.login') }}" class="inline-flex items-center bg-[#06C755] hover:bg-[#05b34c] text-white text-xs font-bold py-1.5 px-3 rounded shadow-sm transition">
+                            <span class="material-symbols-outlined text-sm mr-1.5">chat</span>
+                            連携する
+                        </a>
+                    @endif
+                </div>
+            </div>
             {{-- 通知設定セクション --}}
             <div class="mt-8 bg-gray-50 p-4 rounded-lg border border-gray-100">
                 <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center">
@@ -105,6 +137,11 @@
                             </div>
                         </div>
                     @endforeach
+                    @if(!$user->line_id)
+                        <p class="text-[10px] text-red-500 mt-2">
+                            ※LINE通知を有効にするには、上記の「LINEと連携する」ボタンから連携を行ってください。
+                        </p>
+                    @endif
                 </div>
             </div>
 
