@@ -9,7 +9,14 @@ return new class extends Migration {
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            
+            // --- 氏名の分割 ---
+            $table->string('last_name')->comment('姓');
+            $table->string('first_name')->comment('名');
+            $table->string('last_name_kana')->comment('セイ');
+            $table->string('first_name_kana')->comment('メイ');
+            // ------------------
+
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('line_id')->nullable();
@@ -22,18 +29,15 @@ return new class extends Migration {
             $table->date('birthday')->nullable();
 
             // --- 住所情報の細分化 ---
-            $table->string('zip_code', 7)->nullable();      // 郵便番号（ハイフンなし7桁想定）
-            $table->string('prefecture')->nullable();       // 都道府県（検索用）
-            $table->string('city')->nullable();             // 市区町村（検索用）
-            $table->string('address_line')->nullable();     // 番地・建物名など
+            $table->string('zip_code', 7)->nullable();
+            $table->string('prefecture')->nullable();
+            $table->string('city')->nullable();
+            $table->string('address_line')->nullable();
             // -----------------------
 
             $table->string('phone')->nullable();
             $table->string('account_name')->nullable();
             $table->string('class')->nullable();
-            
-            // 通知設定用（複数選択されるため、JSON形式で保存できるようにしておくと便利です）
-            // $table->json('notification_via')->nullable();
 
             $table->dateTime('last_login_at')->nullable();
             $table->boolean('is_guest')->default(false);

@@ -28,15 +28,36 @@
             @csrf
             @method('PATCH')
             
-            {{-- yubinbango用 --}}
             <span class="p-country-name" style="display:none;">Japan</span>
 
             <div class="space-y-6">
-                {{-- アカウント名 --}}
+                {{-- 氏名セクション (追加) --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1 text-gray-700">氏名</label>
+                        <div class="flex gap-2">
+                            <input type="text" name="last_name" value="{{ old('last_name', $user->last_name) }}" 
+                                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-user/50 focus:outline-none" placeholder="姓" required>
+                            <input type="text" name="first_name" value="{{ old('first_name', $user->first_name) }}" 
+                                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-user/50 focus:outline-none" placeholder="名" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1 text-gray-700">フリガナ</label>
+                        <div class="flex gap-2">
+                            <input type="text" name="last_name_kana" value="{{ old('last_name_kana', $user->last_name_kana) }}" 
+                                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-user/50 focus:outline-none" placeholder="セイ" required pattern="^[ァ-ヶー]+$">
+                            <input type="text" name="first_name_kana" value="{{ old('first_name_kana', $user->first_name_kana) }}" 
+                                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-user/50 focus:outline-none" placeholder="メイ" required pattern="^[ァ-ヶー]+$">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- アカウント名 (username -> account_name に修正) --}}
                 <div>
                     <label class="block text-sm font-semibold mb-1 text-gray-700">アカウント名</label>
-                    <input type="text" name="username" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-user/50 focus:outline-none"
-                           value="{{ old('username', $user->username) }}" placeholder="アプリ内での表示名">
+                    <input type="text" name="account_name" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-user/50 focus:outline-none"
+                            value="{{ old('account_name', $user->account_name) }}" placeholder="アプリ内での表示名">
                 </div>
 
                 {{-- メールアドレス --}}

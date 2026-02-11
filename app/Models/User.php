@@ -12,13 +12,18 @@ use App\Models\UserEntry;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 use App\Notifications\UserResetPasswordNotification;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, LogsActivity;
 
     protected $fillable = [
-        'name',
+        // 'name' を削除し、以下4つを追加
+        'last_name',
+        'first_name',
+        'last_name_kana',
+        'first_name_kana',
         'email',
         'password',
         'line_id',
@@ -45,18 +50,27 @@ class User extends Authenticatable
         'birthday' => 'date',
     ];
 
+    // --- アクセサ: フルネームを簡単に取得できるようにする ---
+    // これにより $user->full_name で「佐藤 太郎」が取得できます
+    protected function fullName(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => "{$this->last_name} {$this->first_name}",
+        );
+    }
+
+    // $user->full_name_kana で「サトウ タロウ」が取得できます
+    protected function fullNameKana(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => "{$this->last_name_kana} {$this->first_name_kana}",
+        );
+    }
+    // --------------------------------------------------
+
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new UserResetPasswordNotification($token));
-        // 通知クラスの static メソッドを使って、URLの生成ロジックを上書きします
-        // ResetPassword::createUrlUsing(function ($user, string $token) {
-        //     return route('user.password.reset', [
-        //         'token' => $token,
-        //         'email' => $user->getEmailForPasswordReset(),
-        //     ]);
-        // });
-
-        // $this->notify(new ResetPassword($token));
     }
 
     public function notificationSettings()
@@ -77,36 +91,35 @@ class User extends Authenticatable
         return $this->hasMany(UserEntry::class);
     }
 
-    protected function casts(): array
-    {
-        return [
-            'class' => PlayerClass::class,
-        ];
-    }
-
-            // ログ
-    use LogsActivity;
-
+    // ログ設定
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name',
-                        'email',
-                        'line_id',
-                        'gender',
-                        'birthday',
-                        'address',
-                        'phone',
-                        'account_name',
-                        'class',
-                        'notification_type',])
-            ->logOnlyDirty(); // 値が変わった時だけ記録
+            ->logOnly([
+                'last_name',
+                'first_name',
+                'last_name_kana',
+                'first_name_kana',
+                'email',
+                'line_id',
+                'gender',
+                'birthday',
+                'zip_code', // addressからこちらへ修正
+                'prefecture',
+                'city',
+                'address_line',
+                'phone',
+                'account_name',
+                'class',
+                'notification_type',
+            ])
+            ->logOnlyDirty();
     }
 
     public function groups()
     {
         return $this->belongsToMany(Group::class)
-                    ->withPivot('status') // 中間テーブルのstatus列も扱えるようにする
+                    ->withPivot('status')
                     ->withTimestamps();
     }
 

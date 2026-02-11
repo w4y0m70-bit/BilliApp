@@ -16,8 +16,14 @@
             <div class="grid grid-cols-1 gap-y-4">
                 {{-- 氏名・アカウント名 --}}
                 <div class="flex flex-col sm:flex-row sm:justify-between border-b pb-2">
-                    <span class="text-gray-500 text-sm font-semibold">氏名 / アカウント名</span>
-                    <span class="font-bold">{{ $user->name }} <span class="text-gray-400 font-normal">({{ $user->username ?? '未設定' }})</span></span>
+                    <div class="flex flex-col">
+                        <span class="text-gray-500 text-sm font-semibold">氏名 / アカウント名</span>
+                        <span class="text-xs text-gray-400">{{ $user->full_name_kana }}</span> {{-- フリガナを表示 --}}
+                    </div>
+                    <div class="text-right sm:text-right">
+                        <span class="font-bold text-lg">{{ $user->full_name }}</span> {{-- アクセサを使用 --}}
+                        <span class="text-gray-400 font-normal text-sm ml-1">({{ $user->account_name ?? '未設定' }})</span>
+                    </div>
                 </div>
 
                 {{-- 基本属性 --}}

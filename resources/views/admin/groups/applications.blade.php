@@ -53,7 +53,7 @@
                             @foreach($pendingUsers as $user)
                                 <div class="flex items-center justify-between py-3 px-2">
                                     <div class="flex items-center space-x-3">
-                                        <p class="text-gray-800 font-bold">{{ $user->name }}</p>
+                                        <p class="text-gray-800 font-bold">{{ $user->full_name }}</p>
                                         <p class="text-xs text-gray-400">申請日: {{ $user->pivot->created_at->format('m/d H:i') }}</p>
                                     </div>
                                     <form action="{{ route('admin.groups.approve', [$group->id, $user->id]) }}" method="POST">
@@ -85,17 +85,17 @@
                                 <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
                                     <div class="flex items-center overflow-hidden">
                                         <!-- <div class="w-8 h-8 bg-admin text-white rounded-full flex items-center justify-center mr-3 text-xs font-bold flex-shrink-0">
-                                            {{ mb_substr($user->name, 0, 1) }}
+                                            {{ mb_substr($user->full_name, 0, 1) }}
                                         </div> -->
                                         <div class="overflow-hidden">
-                                            <p class="text-gray-800 font-bold text-sm truncate">{{ $user->name }}</p>
+                                            <p class="text-gray-800 font-bold text-sm truncate">{{ $user->full_name }}</p>
                                             <!-- <p class="text-[10px] text-gray-400">承認済み</p> -->
                                         </div>
                                     </div>
 
                                     {{-- 解除ボタン --}}
                                     <form action="{{ route('admin.groups.remove_member', [$group->id, $user->id]) }}" method="POST" 
-                                        onsubmit="return confirm('本当に「{{ $user->name }}」を解除しますか？（再度参加するには申請が必要になります）')">
+                                        onsubmit="return confirm('本当に「{{ $user->full_name }}」を解除しますか？（再度参加するには申請が必要になります）')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-gray-400 hover:text-red-500 transition p-1">

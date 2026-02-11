@@ -52,7 +52,13 @@ class UserRegisterController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            // --- 氏名関連のバリデーションを追加 ---
+            'last_name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name_kana' => 'required|string|max:255|regex:/^[ァ-ヶー]+$/u', // カタカナのみを許可
+            'first_name_kana' => 'required|string|max:255|regex:/^[ァ-ヶー]+$/u',
+            // ------------------------------------
+            
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'gender' => 'nullable|string',
@@ -66,11 +72,20 @@ class UserRegisterController extends Controller
             'class' => ['required', new Enum(PlayerClass::class)],
             'notification_via' => 'required|array',
             'notification_via.*' => 'in:mail,line',
+        ], [
+            // 日本語のカスタムエラーメッセージが必要な場合はここに追加
+            'last_name_kana.regex' => 'セイは全角カタカナで入力してください。',
+            'first_name_kana.regex' => 'メイは全角カタカナで入力してください。',
         ]);
 
         // ユーザー作成
         $user = User::create([
-            'name' => $request->name,
+            // カラム名に合わせて代入
+            'last_name' => $request->last_name,
+            'first_name' => $request->first_name,
+            'last_name_kana' => $request->last_name_kana,
+            'first_name_kana' => $request->first_name_kana,
+            
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'gender' => $request->gender,
@@ -85,7 +100,7 @@ class UserRegisterController extends Controller
             'role' => 'player',
         ]);
 
-        // 通知設定の初期保存
+        // 通知設定の初期保存（変更なし）
         $types = ['event_published', 'waitlist_promoted', 'waitlist_cancelled'];
         $vias = $request->input('notification_via', []);
 

@@ -3,7 +3,7 @@
     <script src="https://yubinbango.github.io/yubinbango/yubinbango.js" charset="UTF-8"></script>
 
     <div class="min-h-screen flex flex-col items-center justify-center bg-gray-100 py-10">
-        <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
+        <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-lg">
 
             <h2 class="text-2xl font-bold mb-6 text-center">新規登録</h2>
 
@@ -24,23 +24,33 @@
                 <span class="p-country-name" style="display:none;">Japan</span>
 
                 {{-- 基本情報 --}}
-                <div class="mb-3">
+                <div class="mb-4">
                     <label class="block mb-1 text-sm font-medium">氏名</label>
-                    <input type="text" name="name" value="{{ old('name') }}" class="w-full border rounded px-3 py-2" required>
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <input type="text" name="last_name" value="{{ old('last_name') }}" 
+                                class="w-full border rounded px-3 py-2" placeholder="姓" required>
+                        </div>
+                        <div class="flex-1">
+                            <input type="text" name="first_name" value="{{ old('first_name') }}" 
+                                class="w-full border rounded px-3 py-2" placeholder="名" required>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="flex gap-4 mb-3">
-                    <div class="flex-1">
-                        <label class="block mb-1 text-sm font-medium">性別</label>
-                        <select name="gender" class="w-full border rounded px-3 py-2">
-                            <option value="">選択</option>
-                            <option value="男性" @selected(old('gender') == '男性')>男性</option>
-                            <option value="女性" @selected(old('gender') == '女性')>女性</option>
-                        </select>
-                    </div>
-                    <div class="flex-1">
-                        <label class="block mb-1 text-sm font-medium">誕生日</label>
-                        <input type="date" name="birthday" value="{{ old('birthday') }}" class="w-full border rounded px-3 py-2">
+                <div class="mb-4">
+                    <label class="block mb-1 text-sm font-medium">フリガナ（カタカナ）</label>
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <input type="text" name="last_name_kana" value="{{ old('last_name_kana') }}" 
+                                class="w-full border rounded px-3 py-2" placeholder="セイ" required 
+                                pattern="^[ァ-ヶー]+$">
+                        </div>
+                        <div class="flex-1">
+                            <input type="text" name="first_name_kana" value="{{ old('first_name_kana') }}" 
+                                class="w-full border rounded px-3 py-2" placeholder="メイ" required 
+                                pattern="^[ァ-ヶー]+$">
+                        </div>
                     </div>
                 </div>
 

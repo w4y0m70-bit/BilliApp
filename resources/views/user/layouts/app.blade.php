@@ -24,7 +24,7 @@
                 <span class="material-icons">home</span>
             </a>
             <h1 class="text-xl font-bold ml-2">
-                {{ Auth::user()->name ?? 'プレイヤー' }} <span class="text-lg p-1">の</span>イベント管理
+                {{ Auth::user()->full_name ?? 'プレイヤー' }} <span class="text-lg p-1">さんの</span>イベント管理
             </h1>
         </div>
 

@@ -23,7 +23,7 @@
                                 @foreach($users as $user)
                                 <tr>
                                     <td class="px-6 py-4 text-sm">{{ $user->id }}</td>
-                                    <td class="px-6 py-4 text-sm font-bold">{{ $user->name }}
+                                    <td class="px-6 py-4 text-sm font-bold">{{ $user->full_name }}
                                          >> {{ $user->email }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ $user->created_at->format('Y-m-d H:i') }}</td>
                                     <td class="px-6 py-4 text-sm text-right">

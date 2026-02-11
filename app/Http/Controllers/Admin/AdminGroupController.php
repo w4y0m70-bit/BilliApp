@@ -89,7 +89,7 @@ class AdminGroupController extends Controller
             'status' => 'approved'
         ]);
 
-        return back()->with('status', "{$user->name} さんの申請を承認しました！");
+        return back()->with('status', "{$user->full_name} さんの申請を承認しました！");
     }
 
     // メンバーをグループから外す（承認の取り消し・退会処理）
@@ -98,6 +98,6 @@ class AdminGroupController extends Controller
         // 中間テーブルのレコードを削除
         $group->users()->detach($user->id);
 
-        return back()->with('status', "{$user->name} さんをメンバーから解除しました。");
+        return back()->with('status', "{$user->full_name} さんをメンバーから解除しました。");
     }
 }

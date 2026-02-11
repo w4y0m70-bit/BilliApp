@@ -28,9 +28,16 @@ class UserProfileController extends Controller
     {
         $user = Auth::user();
 
-        // 住所細分化に伴うバリデーションの更新
+        // バリデーションの更新
         $validated = $request->validate([
-            'username'     => 'nullable|string|max:50',
+            // --- 氏名・フリガナの追加 ---
+            'last_name'       => 'required|string|max:255',
+            'first_name'      => 'required|string|max:255',
+            'last_name_kana'  => 'required|string|max:255|regex:/^[ァ-ヶー]+$/u',
+            'first_name_kana' => 'required|string|max:255|regex:/^[ァ-ヶー]+$/u',
+            // --------------------------
+            
+            'account_name' => 'nullable|string|max:50', // usernameから変更
             'zip_code'     => 'nullable|string|max:7',
             'prefecture'   => 'nullable|string|max:255',
             'city'         => 'nullable|string|max:255',
@@ -41,12 +48,16 @@ class UserProfileController extends Controller
             'birthday'     => 'nullable|date',
             'notifications'=> 'nullable|array',
             'class'        => ['nullable', Rule::enum(PlayerClass::class)],
+        ], [
+            'last_name_kana.regex' => 'セイは全角カタカナで入力してください。',
+            'first_name_kana.regex' => 'メイは全角カタカナで入力してください。',
         ]);
 
         // トランザクションで一括更新
         DB::transaction(function () use ($request, $user, $validated) {
             
             // 1. ユーザー基本情報の更新
+            // $validatedには氏名4項目とaccount_nameが含まれているのでそのまま渡せます
             $user->update($validated);
 
             // 2. 通知設定の更新
@@ -59,10 +70,8 @@ class UserProfileController extends Controller
 
             foreach ($notificationTypes as $type) {
                 foreach ($notificationVias as $via) {
-                    // チェックが入っていればenabledをtrue、なければfalseにする
                     $isEnabled = isset($request->notifications[$type][$via]);
 
-                    // updateOrCreate でスマートに更新
                     $user->notificationSettings()->updateOrCreate(
                         [
                             'type' => $type,

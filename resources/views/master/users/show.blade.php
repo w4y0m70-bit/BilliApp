@@ -1,7 +1,7 @@
 <x-master-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200">
-            ユーザー詳細: {{ $user->name }}
+            ユーザー詳細: {{ $user->full_name }}
         </h2>
     </x-slot>
 
@@ -13,7 +13,7 @@
                 <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <dt class="text-sm text-gray-500">名前</dt>
-                        <dd class="text-master font-bold">{{ $user->name }}</dd>
+                        <dd class="text-master font-bold">{{ $user->full_name }}</dd>
                     </div>
                     <div>
                         <dt class="text-sm text-gray-500">メールアドレス</dt>

@@ -29,7 +29,7 @@ class LineNotificationController extends Controller
         }
 
         // 3. LineServiceを使って送信
-        $message = "{$user->name}様、いつもご利用ありがとうございます！";
+        $message = "{$user->full_name}様、いつもご利用ありがとうございます！";
         $result = $this->lineService->push($user->line_id, $message);
 
         return $result ? "送信成功" : "送信失敗";
