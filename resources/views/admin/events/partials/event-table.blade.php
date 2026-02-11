@@ -43,7 +43,7 @@
                     </div>
                 @endif
                 <!-- クラス -->
-                 <div class="mb-2 text-xs">
+                <div class="mb-2 text-xs">
                     <div class="flex flex-wrap gap-2">
                         <strong class="text-sm text-gray-700 mb-1">募集クラス：</strong>
                         @forelse($event->eventClasses as $class)

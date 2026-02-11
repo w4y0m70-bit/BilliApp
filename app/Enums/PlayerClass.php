@@ -11,13 +11,11 @@ enum PlayerClass: string
     case B = 'B';
     case C = 'C';
     case Beginner = 'Beginner';
-    case none = 'なし';
 
     // クラスの強さを数値で定義
     public function rank(): int
     {
         return match($this) {
-            self::none  => 0,
             self::Beginner => 1,
             self::C        => 2,
             self::B        => 3,

@@ -94,19 +94,26 @@
 
 {{-- 募集クラス --}}
 <div class="mb-4">
-    <div class="flex items-center mb-0">
-        <label class="block font-medium mb-1">募集クラスの設定</label>
-        <x-help help-key="admin.events.classes" />
+    <div class="flex items-center justify-between mb-1"> {{-- justify-betweenで左右に配置 --}}
+        <div class="flex items-center">
+            <label class="block font-medium">募集クラスの設定</label>
+            <x-help help-key="admin.events.classes" />
+        </div>
+        {{-- 一括操作ボタン --}}
+        <div class="flex gap-3 text-xs">
+            <button type="button" onclick="selectAllClasses(true)" class="text-blue-600 hover:underline">すべて選択</button>
+            <span class="text-gray-300">|</span>
+            <button type="button" onclick="selectAllClasses(false)" class="text-red-600 hover:underline">すべて解除</button>
+        </div>
     </div>
+    
     <div class="bg-gray-50 p-4 rounded-lg border grid grid-cols-4 gap-2">
         @php
-            // 選択済みの値を配列として取得
             if (is_array(old('classes'))) {
                 $selectedClasses = old('classes');
             } elseif (!empty($existingClasses)) {
                 $selectedClasses = $existingClasses;
             } else {
-                // モデルから取得。Enumにキャストされている場合は value を取得するように調整
                 $selectedClasses = isset($event) 
                     ? $event->eventClasses->pluck('class_name')->toArray() 
                     : [];
@@ -114,20 +121,18 @@
         @endphp
 
         @foreach(App\Enums\PlayerClass::cases() as $class)
-        <label class="flex items-center gap-2 cursor-pointer bg-white p-2 border rounded">
+        <label class="flex items-center gap-2 cursor-pointer bg-white p-2 border rounded hover:bg-gray-50 transition">
             <input type="checkbox" name="classes[]" value="{{ $class->value }}" 
-                class="class-checkbox"
-                {{-- 指定なしかどうかをJavaScriptで判定するための属性 --}}
-                data-is-none="{{ $class === App\Enums\PlayerClass::none ? 'true' : 'false' }}"
+                class="class-checkbox" {{-- このクラス名を使ってJSで制御します --}}
                 {{ in_array($class->value, $selectedClasses) ? 'checked' : '' }}>
-            <span>{{ $class->shortLabel() }}</span>
+            <span class="text-sm">{{ $class->shortLabel() }}</span>
         </label>
         @endforeach
     </div>
     <small class="text-gray-500">ハンディキャップを設定したクラスを選択してください</small>
 </div>
 
-{{-- グループ制限（コミュニティ限定設定） --}}
+{{-- グループ制限（コミュニティ限定設定） 完成しているが未公開--}}
 {{--
 <!-- <div class="mb-4">
     <div class="flex items-center mb-0">
@@ -253,4 +258,16 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+/**
+ * クラスのチェックボックスを一括操作する
+ * @param {boolean} checked - trueなら全選択、falseなら全解除
+ */
+function selectAllClasses(checked) {
+    // class-checkboxというクラスを持つ全てのinput要素を取得
+    const checkboxes = document.querySelectorAll('.class-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = checked;
+    });
+}
 </script>
