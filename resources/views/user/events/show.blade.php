@@ -42,22 +42,23 @@
 <div class="bg-white shadow rounded-lg p-6">
 
     {{-- 主催者とグループ --}}
-    <div class="flex justify-between items-center mb-1">
-        <p class="text-sm font-bold text-gray-600">
-            【{{ $event->organizer->name ?? '主催者不明' }}】
-        </p>
-
-        {{-- ★ 追加：グループ表示 --}}
-        @if($event->requiredGroups->isNotEmpty())
-            <div class="flex flex-wrap gap-1">
-                @foreach($event->requiredGroups as $group)
-                    <span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold border border-blue-200 shadow-sm">
-                        <!-- <span class="material-symbols-outlined text-[12px] mr-0.5">verified_user</span> -->
-                        {{ $group->name }}限定
-                    </span>
-                @endforeach
+    <div x-data="{ showOrganizer: false }">
+        <div class="flex justify-between items-start mb-1">
+            <div class="flex flex-col">
+                    【{{ $event->organizer->name ?? '主催者不明' }}】
             </div>
-        @endif
+
+            {{-- グループ表示 --}}
+            @if($event->requiredGroups->isNotEmpty())
+                <div class="flex flex-wrap gap-1">
+                    @foreach($event->requiredGroups as $group)
+                        <span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold border border-blue-200 shadow-sm">
+                            {{ $group->name }}限定
+                        </span>
+                    @endforeach
+                </div>
+            @endif
+        </div>
     </div>
 
     {{-- タイトル --}}

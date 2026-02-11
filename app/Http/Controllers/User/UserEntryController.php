@@ -97,7 +97,7 @@ class UserEntryController extends Controller
             // 修正ポイント：ユーザー情報からではなく、フォームからの入力を優先
             'class'   => $request->input('class'),
             'user_answer' => $request->input('user_answer'), // 新しく追加したカラム
-            'gender'  => $user->gender ?? '未設定',
+            'gender'  => $user->gender ?? '―',
         ];
 
         $service = new \App\Services\EventEntryService();

@@ -104,22 +104,51 @@
 
             {{-- カード部分 --}}
             <div class="block bg-white shadow rounded-xl p-4 border hover:shadow-lg transition">
-                <div class="flex justify-between items-center mb-1">
-                <p class="text-sm font-bold text-gray-600">
-                    ［{{ $event->organizer->name ?? '主催者不明' }}］
-                </p>
+                {{-- ★ 主催者・グループ表示セクション (Alpine.js導入) --}}
+                <div x-data="{ showOrganizer: false }" class="mb-1">
+                    <div class="flex justify-between items-start gap-2">
+                        <button 
+                            @click="showOrganizer = !showOrganizer" 
+                            type="button"
+                            class="text-xs font-bold text-gray-600 hover:text-user flex items-center transition text-left"
+                        >
+                            <!-- <span class="material-symbols-outlined text-[14px] mr-0.5">storefront</span> -->
+                            ［{{ $event->organizer->name ?? '主催者不明' }}］
+                            <span class="material-symbols-outlined text-[14px] transition-transform" :class="showOrganizer ? 'rotate-180' : ''">expand_more</span>
+                        </button>
 
-                @if($event->requiredGroups->isNotEmpty())
-                    <div class="flex flex-wrap gap-1 justify-end">
-                        @foreach($event->requiredGroups as $group)
-                            <span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold border border-blue-200">
-                                {{-- 盾や鍵のアイコンを入れると「限定感」が出ます --}}
-                                <!-- <span class="material-symbols-outlined text-[12px] mr-0.5">verified_user</span> -->
-                                {{ $group->name }}限定
-                            </span>
-                        @endforeach
+                        @if($event->requiredGroups->isNotEmpty())
+                            <div class="flex flex-wrap gap-1 justify-end">
+                                @foreach($event->requiredGroups as $group)
+                                    <span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold border border-blue-200">
+                                        {{ $group->name }}限定
+                                    </span>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
-                @endif
+
+                    {{-- ★ 主催者連絡先の簡易パネル --}}
+                    @if($event->organizer)
+                        <div 
+                            x-show="showOrganizer" 
+                            x-transition
+                            class="mt-2 p-2 bg-gray-50 border border-gray-100 rounded text-[11px] text-gray-600 space-y-1 shadow-inner"
+                        >
+                            <div class="flex">
+                                <span class="w-12 font-semibold">所在地</span>
+                                <span class="text-sm flex-1">{{ $event->organizer->prefecture }}{{ $event->organizer->city }}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-12 font-semibold">TEL</span>
+                                <a href="tel:{{ $event->organizer->phone }}" class="text-sm text-blue-600 hover:underline">{{ $event->organizer->phone ?? '－' }}</a>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-12 font-semibold">Email</span>
+                                <a href="mailto:{{ $event->organizer->email }}" class="text-sm text-blue-600 hover:underline truncate">{{ $event->organizer->email }}</a>
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
                 {{-- タイトルをリンクに --}}
@@ -129,7 +158,6 @@
                     </a>
                     <x-help help-key="user.events.show" />
                 </h3>
-
                 {{-- 募集クラス (追加部分) --}}
                 <div class="mt-2 flex items-start gap-1">
                     <strong class="text-sm text-gray-700">参加資格：</strong>

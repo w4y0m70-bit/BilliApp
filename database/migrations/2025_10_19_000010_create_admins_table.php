@@ -11,6 +11,7 @@ return new class extends Migration {
             $table->id();
             $table->string('admin_id')->unique();
             $table->string('name');               // 店舗名
+            $table->string('name_kana')->nullable();
             $table->string('manager_name')->nullable();
             $table->string('email')->unique();
             $table->string('password');
