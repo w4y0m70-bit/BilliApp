@@ -54,6 +54,28 @@
                     </div>
                 </div>
 
+                {{-- 追加：性別と生年月日 --}}
+                <div class="mb-4 flex gap-4">
+                    <div class="flex-1">
+                        <label class="block mb-1 text-sm font-medium">性別</label>
+                        <div class="flex gap-3 mt-2">
+                            @foreach(['男性', '女性', '回答しない'] as $gender)
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="gender" value="{{ $gender }}" 
+                                        @checked(old('gender') === $gender) 
+                                        class="rounded-full border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500" required>
+                                    <span class="ml-1 text-sm">{{ $gender }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block mb-1 text-sm font-medium">生年月日</label>
+                    <input type="date" name="birthday" value="{{ old('birthday') }}" 
+                        class="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
                 {{-- 住所情報（ここを細分化） --}}
                 <div class="mb-3 border-l-4 border-blue-500 pl-3 py-1 bg-blue-50">
                     <label class="block mb-1 text-sm font-bold">住所（郵便番号から自動入力）</label>
