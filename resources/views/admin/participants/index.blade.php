@@ -63,7 +63,8 @@
                         </td>
                         <td class="px-1 py-2 border-b font-bold">
                             <span :class="entry.gender === '女性' ? 'text-pink-500' : ''" 
-                                  x-text="entry.full_name || (entry.last_name + ' ' + entry.first_name)"></span>
+                                x-text="entry.last_name ? (entry.last_name + ' ' + entry.first_name) : entry.full_name">
+                            </span>
                         </td>
                         <td class="px-1 py-2 border-b text-center text-gray-600">
                             <span x-text="entry.class ? (classShortLabels[entry.class] || entry.class) : '??'"></span>
@@ -99,6 +100,16 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block mb-1 font-medium text-sm">セイ（カナ）</label>
+                        <input type="text" x-model="guest.last_name_kana" class="border rounded w-full px-3 py-2" placeholder="ヤマダ">
+                    </div>
+                    <div>
+                        <label class="block mb-1 font-medium text-sm">メイ（カナ）</label>
+                        <input type="text" x-model="guest.first_name_kana" class="border rounded w-full px-3 py-2" placeholder="タロウ">
+                    </div>
+                </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">性別</label>
                     <div class="flex gap-4">
@@ -107,7 +118,7 @@
                                 <input type="radio" 
                                     name="guest_gender" 
                                     :value="value" 
-                                    x-model="newGuest.gender" 
+                                    x-model="guest.gender" 
                                     class="text-blue-600 focus:ring-blue-500">
                                 <span class="ml-2 text-sm text-gray-600" x-text="label"></span>
                             </label>
@@ -156,7 +167,11 @@
             get sortedParticipants() { return this.participants; },
 
             async addGuest() {
-                if (!this.guest.last_name || !this.guest.first_name) return;
+                // 入力チェック
+                if (!this.guest.last_name || !this.guest.first_name || !this.guest.gender) {
+                    alert('未入力の項目があります');
+                    return;
+                }
 
                 const currentEntryCount = this.participants.filter(e => e.status === 'entry').length;
                 const status = currentEntryCount < maxParticipants ? 'entry' : 'waitlist';

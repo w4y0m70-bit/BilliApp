@@ -35,15 +35,17 @@ class UserEntry extends Model
     {
         return Attribute::make(
             get: function () {
-                // 1. UserEntry自体に姓名が保存されている場合（ゲストやスナップショット）
-                if ($this->last_name) {
+                // 1. ゲスト（last_name が保存されている）ならそれを返す
+                if (!empty($this->last_name)) {
                     return "{$this->last_name} {$this->first_name}";
                 }
-                // 2. 保存されていないが、リレーション先のUserが存在する場合
-                if ($this->user) {
-                    return $this->user->full_name;
+
+                // 2. 会員（user_id がある）の場合
+                if ($this->user_id) {
+                    // 会員データが生きていれば名前を、なければ「退会済み」を返す
+                    return $this->user ? $this->user->full_name : '退会済みユーザー';
                 }
-                // 3. どちらもない場合
+
                 return '不明なユーザー';
             }
         );
@@ -56,11 +58,7 @@ class UserEntry extends Model
      * ===================== */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class)->withDefault([
-            'last_name' => '退会済み',
-            'first_name' => 'ユーザー',
-            'email' => '-'
-        ]);
+        return $this->belongsTo(User::class);
     }
 
     public function event(): BelongsTo
