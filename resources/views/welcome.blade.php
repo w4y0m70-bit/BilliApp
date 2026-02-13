@@ -55,22 +55,22 @@
                     </div>
                 @endif
                 
-                {{-- 管理者 --}}
-                @if(auth('admin')->check())
+                {{-- 管理者セクション --}}
                 <div class="flex items-center justify-center">
-                    <a href="{{ route('admin.home') }}" class="bg-admin text-white px-6 py-3 w-60 rounded-lg hover:bg-admin-dark">
-                        管理者ページへ</a>
-                    <x-help help-key="admin.home" />
+                    @if(auth('admin')->check())
+                        {{-- ログイン済み（一般管理者でもマスターでも「管理者ページへ」と表示） --}}
+                        <a href="{{ route('admin.events.index') }}" class="bg-admin text-white px-6 py-3 w-60 rounded-lg hover:bg-admin-dark text-center">
+                            管理者ページへ
+                        </a>
+                        <x-help help-key="admin.events.index" />
+                    @else
+                        {{-- 未ログイン --}}
+                        <a href="{{ route('admin.login') }}" class="bg-admin text-white px-6 py-3 w-60 rounded-lg hover:bg-admin-dark text-center">
+                            管理者ログイン
+                        </a>
+                        <x-help help-key="admin.login" />
+                    @endif
                 </div>
-                @else
-                <div class="flex items-center justify-center">
-                    <a href="{{ route('admin.login') }}" 
-                    class="bg-admin text-white px-6 py-3 w-60 rounded-lg hover:bg-admin-dark">
-                        管理者ログイン
-                    </a>
-                    <x-help help-key="admin.login" />
-                </div>
-                @endif
                 <!-- スコアボード（準備中） -->
                 <!-- <a href=""
                    class="bg-yellow-400 text-black px-6 py-3 rounded-lg hover:bg-yellow-500 mt-6">

@@ -11,9 +11,16 @@ class AdminLoginController extends Controller
 {
     public function showLoginForm()
     {
-        // if (Auth::guard('admin')->check()) {
-        // return redirect()->route('admin.events.index');
-        // }
+        if (Auth::guard('admin')->check()) {
+            $admin = Auth::guard('admin')->user();
+            
+            // マスターなら一般ログイン画面は見せず、マスターダッシュボードへ戻す
+            if ($admin->isSuperAdmin()) {
+                return redirect()->route('master.dashboard');
+            }
+            
+            return redirect()->route('admin.events.index');
+        }
 
         return view('admin.auth.login');
     }
@@ -25,26 +32,18 @@ class AdminLoginController extends Controller
             'password' => 'required'
         ]);
 
-        if (Auth::guard('admin')->attempt(
-            $request->only('admin_id', 'password'),
-            $request->filled('remember')
-        )) {
-            // --- ここで $admin 変数を定義します ---
+        if (Auth::guard('admin')->attempt($request->only('admin_id', 'password'), $request->filled('remember'))) {
             $admin = Auth::guard('admin')->user();
 
-            // 最終ログイン更新（定義した $admin を使う）
-            $admin->update([
-                'last_login_at' => now(),
-            ]);
-
-            // マスター判定
+            // ログインした人がマスターだった場合、即ログアウトさせてエラーを出す
             if ($admin->isSuperAdmin()) {
-                return redirect()->route('master.dashboard')
-                    ->with('success', 'システムマスターとしてログインしました');
+                Auth::guard('admin')->logout();
+                return back()->withErrors(['admin_id' => 'マスター権限ではここからログインできません。専用URLを使用してください。']);
             }
 
-            return redirect()->route('admin.events.index')
-                ->with('success', 'ログインしました!');
+            // 一般管理者なら通常通り
+            $admin->update(['last_login_at' => now()]);
+            return redirect()->route('admin.events.index');
         }
 
         return back()

@@ -48,13 +48,14 @@ Route::middleware('guest:admin')->group(function () {
 });
 
 // ===== ログイン必須エリア =====
-Route::middleware(['auth:admin', 'session.lifetime:20'])->group(function () {
+Route::middleware(['auth:admin', 'role:admin', 'session.lifetime:20'])->group(function () {
 
     // ログアウト
     Route::post('logout', [AdminLoginController::class, 'logout'])->name('logout');
 
     // ホームリダイレクト
-    Route::redirect('/', '/admin/events')->name('home');
+    // Route::redirect('/', '/admin/events')->name('home');
+    Route::get('events', [AdminEventController::class, 'index'])->name('home');
 
     // イベント管理
     Route::prefix('events')->name('events.')->group(function () {

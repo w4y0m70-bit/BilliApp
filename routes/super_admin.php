@@ -10,6 +10,13 @@ use App\Http\Controllers\Master\EventManagementController;
 use App\Http\Controllers\Master\ActivityLogController;
 use App\Http\Controllers\Master\ProfileController;
 use App\Http\Controllers\Admin\SiteMessageController;
+use App\Http\Controllers\Master\MasterLoginController;
+
+// ログインしていない時だけアクセス可能
+Route::middleware('guest:admin')->group(function () {
+    Route::get('master/login', [MasterLoginController::class, 'showLoginForm'])->name('master.login');
+    Route::post('master/login', [MasterLoginController::class, 'login'])->name('master.login.post');
+});
 
 Route::middleware(['web', 'auth:admin', 'can:master-only'])
     ->prefix('master') // URLの先頭に /master/ を付与
@@ -47,4 +54,7 @@ Route::middleware(['web', 'auth:admin', 'can:master-only'])
 
         // アクティビティログ
         Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity_logs.index');
-    });
+
+        // ログアウト
+        Route::post('logout', [MasterLoginController::class, 'logout'])->name('logout');
+        });

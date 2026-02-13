@@ -11,20 +11,21 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
-            // 管理者用設定
+            // 1. マスタ（最優先）
             Route::middleware('web')
-                ->prefix('admin')
+                ->group(base_path('routes/super_admin.php')); // prefixはファイル側にあるのでここでは指定しない
+
+            // 2. 管理者用
+            Route::middleware('web')
+                ->prefix('admin') // URL: /admin/...
                 ->name('admin.')
                 ->group(base_path('routes/admin.php'));
 
-            // 一般ユーザー用設定
+            // 3. 一般ユーザー用
             Route::middleware('web')
                 ->prefix('user')
                 ->name('user.')
                 ->group(base_path('routes/user.php'));
-            // マスタ用設定
-            Route::middleware('web')
-                ->group(base_path('routes/super_admin.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

@@ -57,7 +57,7 @@
         </div>
 </div>
             <div class="flex items-center">
-                <form method="POST" action="{{ route('admin.logout') }}">
+                <form method="POST" action="{{ route('master.logout') }}">
                     @csrf
                     <button type="submit" class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400">
                         ログアウト
