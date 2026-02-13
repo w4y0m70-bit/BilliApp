@@ -219,20 +219,29 @@ class AdminEventController extends Controller
 
     public function participants(Event $event)
     {
-        // エントリー済またはキャンセル待ちプレイヤー
         $participants = $event->userEntries()
             ->whereIn('status', ['entry', 'waitlist'])
-            ->with('user')
+            ->with('user') // Userテーブルの名前を取得するために必須
             ->get()
-            ->unique('user_id');
+            ->map(function ($entry, $index) {
+                // Userがいる場合はUserテーブルの名前、いなければUserEntryテーブルのゲスト名
+                $lastName = $entry->user ? $entry->user->last_name : $entry->last_name;
+                $firstName = $entry->user ? $entry->user->first_name : $entry->first_name;
 
-        // 集計を更新（キャンセルは含めない）
-        $event->loadCount([
-            'entries as entry_count' => fn($q) => $q->where('status', 'entry'),
-            'entries as waitlist_count' => fn($q) => $q->where('status', 'waitlist'),
-        ]);
+                return [
+                    'id'         => $entry->id,
+                    'status'     => $entry->status,
+                    'last_name'  => $lastName,
+                    'first_name' => $firstName,
+                    'full_name'  => "{$lastName} {$firstName}",
+                    'gender'     => $entry->gender,
+                    'class'      => $entry->class,
+                    // 表示順序用の番号
+                    'order'      => $index + 1,
+                ];
+            });
 
-        return view('admin.events.partials.index', compact('event', 'participants'));
+        return response()->json($participants);
     }
 
     // --- 編集画面表示 ---

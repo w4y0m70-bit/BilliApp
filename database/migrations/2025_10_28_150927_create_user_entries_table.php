@@ -15,7 +15,10 @@ return new class extends Migration {
             $table->foreignId('event_id')->constrained('events')->onDelete('cascade');
 
             // ゲスト用の名前・性別・クラス
-            $table->string('name')->nullable();
+            $table->string('last_name')->nullable();  // 姓
+            $table->string('first_name')->nullable(); // 名
+            $table->string('last_name_kana')->nullable();
+            $table->string('first_name_kana')->nullable();
             $table->string('gender', 10)->nullable();
             $table->string('class', 20)->nullable();
             $table->text('user_answer')->nullable(); // ユーザー回答

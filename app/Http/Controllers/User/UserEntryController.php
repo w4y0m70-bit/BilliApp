@@ -129,17 +129,6 @@ class UserEntryController extends Controller
             ->with('message', 'エントリーをキャンセルしました。');
     }
 
-    // public function cancel(Event $event, $entryId)
-    // {
-    //     // エントリー取得（必ずそのイベント内）
-    //     $entry = $event->userEntries()->findOrFail($entryId);
-
-    //     // モデル側のキャンセルメソッドを呼び出す
-    //     $name = $entry->cancelAndPromoteWaitlist();
-
-    //     return redirect()->back()->with('success', "$name さんのエントリーをキャンセルしました");
-    // }
-
     public function update(Request $request, Event $event, UserEntry $entry)
     {
         // 自分のエントリーであることを保証

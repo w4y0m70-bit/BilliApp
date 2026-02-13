@@ -67,15 +67,23 @@ class Event extends Model
     public function organizer()
     {
         return $this->belongsTo(Admin::class, 'admin_id')->withDefault([
-        'name' => '不明（削除済み）',
+            'name' => '不明（削除済み）',
+            'name_kana' => 'フメイ', // ★ 追加：フリガナのデフォルトも設定
         ]);
     }
 
-    // 定員に達しているかを判定
+    // 便利なメソッド：キャンセル待ちを含めてエントリー可能か
+    public function canAcceptEntry()
+    {
+        // 定員未満、または（定員以上でもキャンセル待ちが許可されている）
+        return !$this->isFull() || ($this->isFull() && $this->allow_waitlist);
+    }
+
+    // 定員に達しているかを判定（少し効率化）
     public function isFull()
     {
-        // return $this->entries()->count() >= $this->capacity;
-        return $this->userEntries()->where('status', 'entry')->count() >= $this->max_participants;
+        // 既に定義したアクセサ（getEntryCountAttribute）を利用するとコードがスッキリします
+        return $this->entry_count >= $this->max_participants;
     }
 
     public function ticket()

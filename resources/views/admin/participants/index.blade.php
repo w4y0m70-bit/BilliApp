@@ -10,27 +10,23 @@
     class="space-y-3"
 >
     <div>
-        <!-- 1行目：戻る -->
         <a href="{{ route('admin.events.index') }}" class="text-admin hover:text-gray-800 flex items-center">
             <span class="material-icons">arrow_back</span>
             <span>戻る</span>
         </a>
 
-        <!-- 2行目：タイトル -->
         <div class="flex justify-between items-center mb-1">
             <h2 class="text-2xl font-bold">{{ $event->title }} の参加者一覧</h2>
             <div class="flex flex-wrap gap-1">
                 @foreach($event->requiredGroups as $group)
                     <span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold border border-blue-200 shadow-sm">
-                        <!-- <span class="material-symbols-outlined text-[12px] mr-0.5">verified_user</span> -->
                         {{ $group->name }}限定
                     </span>
                 @endforeach
             </div>
         </div>
         
-        <!-- 3行目：参加人数 -->
-         <div class="flex justify-between items-center">
+        <div class="flex justify-between items-center">
             <p class="text-gray-700">
                 エントリー：
                 <span x-text="participants.filter(e => e.status === 'entry').length"></span>
@@ -40,51 +36,40 @@
                 <span x-text="participants.filter(e => e.status === 'waitlist').length"></span>
                 ）
             </p>
-            <!-- ゲスト追加ボタン -->
             <div class="flex items-center gap-1">
                 <x-help help-key="admin.participants.add_guest" />
-
-                <button
-                    type="button"
-                    @click="openModal = true"
-                    class="bg-admin text-white px-3 py-1 rounded hover:bg-admin-dark
-                        flex items-center justify-center"
-                >
+                <button type="button" @click="openModal = true" class="bg-admin text-white px-3 py-1 rounded hover:bg-admin-dark flex items-center justify-center">
                     <span class="material-icons text-lg">add</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- 参加者表 -->
     <div class="overflow-x-auto">
         <table class="min-w-full border border-gray-300">
             <thead class="bg-gray-300">
                 <tr>
-                    <th class="px-4 border-b w-2/12">No.</th>
-                    <th class="px-4 border-b w-4/12">名　前</th>
+                    <th class="px-4 border-b w-1/12">No.</th>
+                    <th class="px-4 border-b w-5/12">名　前</th>
                     <th class="px-4 border-b w-4/12">クラス</th>
                     <th class="px-4 border-b w-2/12">削除</th>
                 </tr>
             </thead>
             <tbody>
-                <template x-for="entry in sortedParticipants" :key="entry.id">
+                <template x-for="(entry, index) in sortedParticipants" :key="entry.id">
                     <tr :class="entry.status === 'waitlist' ? 'bg-yellow-100' : 'bg-white'">
                         <td class="px-1 py-2 border-b text-center font-medium">
-                            <span x-text="entry.status === 'entry' ? entry.order : ('WL-' + entry.order)"></span>
+                            <span x-text="entry.status === 'entry' ? (index + 1) : ('WL-' + (index + 1))"></span>
                         </td>
                         <td class="px-1 py-2 border-b font-bold">
-                            <span :class="entry.gender === '女性' ? 'text-pink-500' : ''" x-text="entry.name"></span>
+                            <span :class="entry.gender === '女性' ? 'text-pink-500' : ''" 
+                                  x-text="entry.full_name || (entry.last_name + ' ' + entry.first_name)"></span>
                         </td>
                         <td class="px-1 py-2 border-b text-center text-gray-600">
                             <span x-text="entry.class ? (classShortLabels[entry.class] || entry.class) : '??'"></span>
                         </td>
                         <td class="px-1 py-2 border-b text-center">
-                            <button 
-                                @click="cancelEntry(entry.id)" 
-                                class="text-red-500 hover:text-red-700 text-xs"
-                                title="キャンセル"
-                            >✕</button>
+                            <button @click="cancelEntry(entry.id)" class="text-red-500 hover:text-red-700 text-xs">✕</button>
                         </td>
                     </tr>
                 </template>
@@ -98,19 +83,24 @@
         </table>
     </div>
 
-    <!-- ゲスト追加モーダル -->
     <div x-show="openModal" x-cloak class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
         <div @click.away="openModal = false" class="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
             <h3 class="text-xl font-bold mb-4">ゲストエントリー登録</h3>
 
             <form @submit.prevent="addGuest">
-                <div class="mb-4">
-                    <label class="block mb-1 font-medium">名前</label>
-                    <input type="text" x-model="guest.name" class="border rounded w-full px-3 py-2" required>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block mb-1 font-medium text-sm">姓</label>
+                        <input type="text" x-model="guest.last_name" class="border rounded w-full px-3 py-2" placeholder="例: 山田" required>
+                    </div>
+                    <div>
+                        <label class="block mb-1 font-medium text-sm">名</label>
+                        <input type="text" x-model="guest.first_name" class="border rounded w-full px-3 py-2" placeholder="例: 太郎" required>
+                    </div>
                 </div>
 
                 <div class="mb-4">
-                    <label class="block mb-1 font-medium">性別</label>
+                    <label class="block mb-1 font-medium text-sm">性別</label>
                     <select x-model="guest.gender" class="border rounded w-full px-3 py-2">
                         <option value="">選択してください</option>
                         <option value="男性">男性</option>
@@ -119,13 +109,11 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block mb-1 font-medium">クラス</label>
+                    <label class="block mb-1 font-medium text-sm">クラス</label>
                     <select x-model="guest.class" class="border rounded w-full px-3 py-2">
                         <option value="">選択してください</option>
                         @foreach(\App\Enums\PlayerClass::cases() as $classOption)
-                            <option value="{{ $classOption->value }}">
-                                {{ $classOption->label() }}
-                            </option>
+                            <option value="{{ $classOption->value }}">{{ $classOption->label() }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -141,36 +129,37 @@
 
 <script>
     const classShortLabels = {{ Js::from(
-            collect(App\Enums\PlayerClass::cases())
-                ->mapWithKeys(fn($case) => [$case->value => $case->shortLabel()])
-        ) }};
-        function participantManager(eventId, maxParticipants) {
+        collect(App\Enums\PlayerClass::cases())
+            ->mapWithKeys(fn($case) => [$case->value => $case->shortLabel()])
+    ) }};
+
+    function participantManager(eventId, maxParticipants) {
         return {
             openModal: false,
             participants: [],
-            guest: { name: '', gender: '', class: '' },
+            guest: { last_name: '', first_name: '', gender: '', class: '' },
 
             async loadParticipants() {
                 const res = await fetch(`/admin/events/${eventId}/participants/json`);
                 const list = await res.json();
-
-                const sorted = list.sort((a, b) => a.status === b.status ? 0 : (a.status === 'entry' ? -1 : 1));
-                this.participants = sorted;
+                // ステータス順にソート（entryが先、waitlistが後）
+                this.participants = list.sort((a, b) => a.status === b.status ? 0 : (a.status === 'entry' ? -1 : 1));
             },
 
             get sortedParticipants() { return this.participants; },
 
             async addGuest() {
-                if (!this.guest.name) return;
+                if (!this.guest.last_name || !this.guest.first_name) return;
 
                 const currentEntryCount = this.participants.filter(e => e.status === 'entry').length;
                 const status = currentEntryCount < maxParticipants ? 'entry' : 'waitlist';
 
                 const payload = { 
-                    name: this.guest.name, 
+                    last_name: this.guest.last_name, 
+                    first_name: this.guest.first_name,
                     gender: this.guest.gender,
                     class: this.guest.class,
-                    status
+                    status: status
                 };
 
                 const res = await fetch(`/admin/events/${eventId}/participants`, {
@@ -184,29 +173,19 @@
                 });
 
                 if (res.ok) {
-                    this.guest = { name: '', gender: '', class: '' };
+                    this.guest = { last_name: '', first_name: '', gender: '', class: '' };
                     this.openModal = false;
                     await this.loadParticipants();
                 }
             },
 
             async cancelEntry(entryId) {
-                if (!confirm('この参加者をキャンセルしますか？\n【注意】　この操作は取り消せません')) return;
-
+                if (!confirm('この参加者をキャンセルしますか？')) return;
                 const res = await fetch(`/admin/events/${eventId}/participants/${entryId}/cancel`, {
                     method: 'PATCH',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                 });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    alert(data.message);
-                    await this.loadParticipants();
-                } else {
-                    alert('キャンセルに失敗しました');
-                }
+                if (res.ok) { await this.loadParticipants(); }
             }
         }
     }

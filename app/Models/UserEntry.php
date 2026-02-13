@@ -4,41 +4,50 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Casts\Attribute; // 追加
 use App\Models\User;
 use App\Models\Event;
-use App\Events\EventFull;
-use App\Events\WaitlistPromoted;
-use App\Events\WaitlistCancelled;
 use App\Enums\PlayerClass;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
 class UserEntry extends Model
 {
-    public readonly UserEntry $entry;
-
+    use LogsActivity;
+    
     protected $fillable = [
         'user_id',
         'event_id',
-        'name',
+        'last_name',       // name から分割
+        'first_name',      // name から分割
+        'last_name_kana',  // フリガナも保存しておくと名簿順ソートが楽になります
+        'first_name_kana', // フリガナも保存
         'gender',
         'status',
         'waitlist_until',
         'class',
-    ];
-
-    protected $casts = [
-        'waitlist_until' => 'datetime',
-    ];
-
+        ];
+        
+    /* =====================
+    * アクセサ：フルネーム
+    * ===================== */
+    protected function fullName(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => "{$this->last_name} {$this->first_name}",
+            );
+    }
+    
+    protected $appends = ['full_name'];
+    
     /* =====================
      * リレーション
      * ===================== */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withDefault([
-            'name' => '退会済みユーザー',
+            'last_name' => '退会済み',
+            'first_name' => 'ユーザー',
             'email' => '-'
         ]);
     }
@@ -75,24 +84,25 @@ class UserEntry extends Model
     protected function casts(): array
     {
         return [
+            'waitlist_until' => 'datetime',
             'class' => PlayerClass::class,
         ];
     }
 
-    // ログ
-    use LogsActivity;
-
+    // ログ設定
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['user_id',
-                        'event_id',
-                        'name',
-                        'gender',
-                        'status',
-                        'waitlist_until',
-                        'class',])
-            ->logOnlyDirty(); // 値が変わった時だけ記録
+            ->logOnly([
+                'user_id',
+                'event_id',
+                'last_name',
+                'first_name',
+                'gender',
+                'status',
+                'waitlist_until',
+                'class',
+            ])
+            ->logOnlyDirty();
     }
-
 }

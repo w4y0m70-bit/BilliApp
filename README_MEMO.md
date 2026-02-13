@@ -25,3 +25,11 @@ php artisan up
 15分で終わる軽微な修正なら： php artisan down --refresh=900 （900秒 = 15分） → 画面には 「約 15 分程度」 と表示されます。
 1時間かかる大規模メンテなら： php artisan down --refresh=3600 （3600秒 = 60分） → 画面には 「約 60 分程度」 と表示されます。
 時間が読めない緊急事態なら： php artisan down （秒数指定なし） → 画面には 「しばらく経ってから」 と表示されます。
+
+-----　パスワード設定　-----
+// ユーザーを探す
+$a = App\Models\Admin::where('email', 'あなたのメールアドレス')->first();
+
+// パスワードを強制上書き（Hash::makeを忘れずに！）
+$a->password = Hash::make('password123');
+$a->save();

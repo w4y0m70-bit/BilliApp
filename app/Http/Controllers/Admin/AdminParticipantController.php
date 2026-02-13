@@ -4,148 +4,129 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
-use App\Models\User;
 use App\Models\UserEntry;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use App\Services\WaitlistService;
 
 class AdminParticipantController extends Controller
 {
-    // サービスを保持する変数
     protected $waitlistService;
 
-    // コンストラクタでWaitlistServiceを注入
     public function __construct(WaitlistService $waitlistService)
     {
         $this->waitlistService = $waitlistService;
     }
 
     /**
-     * 参加者一覧
+     * 参加者一覧 (通常表示用)
      */
     public function index(Event $event)
-{
-    $participants = $event->userEntries()
-        ->whereIn('status', ['entry', 'waitlist'])
-        ->with('user:id,name')
-        ->orderByRaw("FIELD(status, 'entry', 'waitlist')")
-        ->orderBy('created_at')
-        ->get();
+    {
+        $participants = $event->userEntries()
+            ->whereIn('status', ['entry', 'waitlist'])
+            ->with('user:id,last_name,first_name')
+            ->orderByRaw("FIELD(status, 'entry', 'waitlist')")
+            ->orderBy('created_at')
+            ->get();
 
-    // 通常・待機の順番をそれぞれ付与
-    $entryOrder = 0;
-    $waitlistOrder = 0;
-    foreach ($participants as $p) {
-        if ($p->status === 'entry') {
-            $p->order = ++$entryOrder;
-        } elseif ($p->status === 'waitlist') {
-            $p->order = ++$waitlistOrder;
+        $entryOrder = 0;
+        $waitlistOrder = 0;
+        foreach ($participants as $p) {
+            if ($p->status === 'entry') {
+                $p->order = ++$entryOrder;
+            } elseif ($p->status === 'waitlist') {
+                $p->order = ++$waitlistOrder;
+            }
         }
+
+        return view('admin.participants.index', compact('event', 'participants'));
     }
 
-    $event->loadCount([
-        'userEntries as entry_count' => fn($q) => $q->where('status', 'entry'),
-        'userEntries as waitlist_count' => fn($q) => $q->where('status', 'waitlist'),
-    ]);
-
-    return view('admin.participants.index', compact('event', 'participants'));
-}
-
-
     /**
-     * ゲスト登録
+     * ゲスト登録 (名前を姓・名に分けて保存)
      */
     public function store(Request $request, Event $event)
-{
-    $data = $request->json()->all();
+    {
+        $data = $request->json()->all();
 
-    Validator::make($data, [
-        'name' => 'required|string|max:100',
-        'gender' => 'nullable|string|max:10',
-        'class' => 'nullable|string|max:20',
-    ])->validate();
+        // 1. バリデーションを分割後の名前に合わせる
+        Validator::make($data, [
+            'last_name'  => 'required|string|max:50',
+            'first_name' => 'required|string|max:50',
+            'gender'     => 'nullable|string|max:10',
+            'class'      => 'nullable|string|max:20',
+        ])->validate();
 
-    $currentEntryCount = $event->userEntries()->where('status', 'entry')->count();
-    $status = $currentEntryCount < $event->max_participants ? 'entry' : 'waitlist';
+        $currentEntryCount = $event->userEntries()->where('status', 'entry')->count();
+        $status = $currentEntryCount < $event->max_participants ? 'entry' : 'waitlist';
 
-    $event->userEntries()->create([
-        'user_id' => null,
-        'name' => $data['name'],
-        'gender' => $data['gender'] ?? null,
-        'class' => $data['class'] ?? null,
-        'status' => $status,
-    ]);
+        // 2. 保存処理を分割カラムに合わせる
+        $entry = $event->userEntries()->create([
+            'user_id'    => null,
+            'last_name'  => $data['last_name'],
+            'first_name' => $data['first_name'],
+            'gender'     => $data['gender'] ?? null,
+            'class'      => $data['class'] ?? null,
+            'status'     => $status,
+        ]);
 
-    // カウント更新
-    $event->loadCount([
-        'userEntries as entry_count' => fn($q) => $q->where('status', 'entry'),
-        'userEntries as waitlist_count' => fn($q) => $q->where('status', 'waitlist'),
-    ]);
-    $event->save();
+        return response()->json([
+            'message' => "ゲスト「{$entry->last_name} {$entry->first_name}」を登録しました"
+        ]);
+    }
 
-    return response()->json([
-        'message' => "ゲスト「{$data['name']}」を登録しました"
-    ]);
-}
+    /**
+     * JSON出力 (Alpine.js用)
+     */
+    public function json(Event $event)
+    {
+        $participants = $event->userEntries()
+            ->whereIn('status', ['entry', 'waitlist'])
+            ->with('user') 
+            ->get();
 
+        // 番号付けのためのカウント
+        $entryCount = 0;
+        $waitlistCount = 0;
+
+        $results = $participants->map(function ($entry) use (&$entryCount, &$waitlistCount) {
+            // 会員なら User から、ゲストなら UserEntry から取得
+            $lastName = $entry->user ? $entry->user->last_name : $entry->last_name;
+            $firstName = $entry->user ? $entry->user->first_name : $entry->first_name;
+            
+            // 番号の決定
+            $order = ($entry->status === 'entry') ? ++$entryCount : ++$waitlistCount;
+
+            return [
+                'id'         => $entry->id,
+                'status'     => $entry->status,
+                'last_name'  => $lastName,
+                'first_name' => $firstName,
+                'full_name'  => "{$lastName} {$firstName}",
+                'gender'     => $entry->gender,
+                'class'      => $entry->class,
+                'order'      => $order, // これで画面の No. が正しく出る
+            ];
+        });
+
+        return response()->json($results);
+    }
 
     /**
      * キャンセル処理
      */
     public function cancel(Event $event, UserEntry $entry)
     {
-        // 以前の名前を保存（削除後に名前を取得できなくなるのを防ぐため）
-        $name = $entry->name ?? ($entry->user->name ?? 'ゲスト');
-            
-        // サービス側で繰り上げロジック（$this->delete() など）が実装されている前提です
+        // 名前の取得を会員/ゲスト両対応に
+        $name = $entry->user 
+            ? "{$entry->user->last_name} {$entry->user->first_name}" 
+            : "{$entry->last_name} {$entry->first_name}";
+
         $this->waitlistService->cancelAndPromote($entry);
-            return response()->json([
-                'message' => "{$name} のエントリーをキャンセルしました",
-            ]);
+
+        return response()->json([
+            'message' => "{$name} のエントリーをキャンセルしました",
+        ]);
     }
-
-    /**
-     * JSON出力（APIなどで使う用）
-     */
-    public function json(Event $event)
-{
-    $entries = $event->userEntries()
-        ->whereIn('status', ['entry', 'waitlist'])
-        ->with('user:id,name,gender,class')
-        ->orderByRaw("FIELD(status, 'entry', 'waitlist')")
-        ->orderBy('created_at')
-        ->get();
-
-    // 順番を1からスタートする
-    $entryOrder = 0;
-    $waitlistOrder = 0;
-
-    $result = $entries->map(function ($entry) use (&$entryOrder, &$waitlistOrder) {
-        if ($entry->status === 'entry') {
-            $entryOrder++;
-            $order = $entryOrder;
-        } elseif ($entry->status === 'waitlist') {
-            $waitlistOrder++;
-            $order = $waitlistOrder;
-        } else {
-            $order = null;
-        }
-
-        return [
-            'id' => $entry->id,
-            'user_id' => $entry->user_id,
-            'name' => $entry->name ?? ($entry->user->name ?? 'ゲスト'),
-            'gender' => $entry->gender ?? $entry->user?->gender,
-            'class' => $entry->class ?? $entry->user?->class,
-            'status' => $entry->status,
-            'order' => $order,
-        ];
-    })->values();
-
-    return response()->json($result);
-}
-
-
 }
