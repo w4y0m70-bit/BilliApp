@@ -9,6 +9,7 @@ use App\Http\Controllers\Master\UserManagementController;
 use App\Http\Controllers\Master\EventManagementController;
 use App\Http\Controllers\Master\ActivityLogController;
 use App\Http\Controllers\Master\ProfileController;
+use App\Http\Controllers\Admin\SiteMessageController;
 
 Route::middleware(['web', 'auth:admin', 'can:master-only'])
     ->prefix('master') // URLの先頭に /master/ を付与
@@ -39,6 +40,10 @@ Route::middleware(['web', 'auth:admin', 'can:master-only'])
         // アカウント
         Route::get('/password', [ProfileController::class, 'editPassword'])->name('password.edit');
         Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
+
+        // お知らせ設定
+        Route::get('/site-message', [SiteMessageController::class, 'edit'])->name('site-message.edit');
+        Route::put('/site-message', [SiteMessageController::class, 'update'])->name('site-message.update');
 
         // アクティビティログ
         Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity_logs.index');

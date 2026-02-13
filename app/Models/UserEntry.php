@@ -34,8 +34,19 @@ class UserEntry extends Model
     protected function fullName(): Attribute
     {
         return Attribute::make(
-            get: fn () => "{$this->last_name} {$this->first_name}",
-            );
+            get: function () {
+                // 1. UserEntry自体に姓名が保存されている場合（ゲストやスナップショット）
+                if ($this->last_name) {
+                    return "{$this->last_name} {$this->first_name}";
+                }
+                // 2. 保存されていないが、リレーション先のUserが存在する場合
+                if ($this->user) {
+                    return $this->user->full_name;
+                }
+                // 3. どちらもない場合
+                return '不明なユーザー';
+            }
+        );
     }
     
     protected $appends = ['full_name'];

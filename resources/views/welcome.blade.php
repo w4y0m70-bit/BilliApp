@@ -6,6 +6,36 @@
                 イベントの管理・エントリーを24時間おまかせ
             </p>
 
+            {{-- お知らせメッセージ表示欄 --}}
+            @php
+                $siteMessage = \App\Models\SiteMessage::find(1);
+            @endphp
+
+            @if($siteMessage && $siteMessage->is_active && $siteMessage->content)
+                {{-- 
+                    bg-gray-50: ごく薄いグレー
+                    border-gray-200: 控えめな境界線
+                    text-gray-600: 柔らかい文字色
+                    w-96: 幅を約384pxに固定（max-w-smと同じくらいのサイズ）
+                    max-w-full: スマホなどの画面幅が狭い時ははみ出さないように調整
+                --}}
+                <div class="mb-8 px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 mx-auto max-w-sm max-w-full text-left shadow-sm">
+                    <div class="flex items-center mb-1.5 font-semibold text-gray-500">
+                        <svg class="w-3.5 h-3.5 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        お知らせ
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 opacity-80">
+                        @foreach(explode("\n", str_replace("\r", "", $siteMessage->content)) as $line)
+                            @if(trim($line))
+                                <li>{{ $line }}</li>
+                            @endif
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="flex flex-col gap-8 mb-6">
                 {{-- ユーザー --}}
                 @if(auth('web')->check())

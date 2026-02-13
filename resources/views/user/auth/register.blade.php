@@ -81,7 +81,7 @@
                     <label class="block mb-1 text-sm font-bold">住所（郵便番号から自動入力）</label>
                     
                     <div class="mb-2">
-                        <label class="text-xs text-gray-500">郵便番号 (ハイフンなし)</label>
+                        <label class="text-xs text-gray-500">郵便番号（ハイフンなし）</label>
                         <input type="text" name="zip_code" value="{{ old('zip_code') }}" 
                             class="p-postal-code w-full border rounded px-3 py-2" placeholder="1234567">
                     </div>

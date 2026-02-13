@@ -84,9 +84,9 @@
                                 {{-- 3. 名前（ゲストは青色） --}}
                                 <td class="px-4 py-4 text-sm font-bold">
                                     @if(!$entry->user_id)
-                                        <span class="text-blue-600 dark:text-blue-400">{{ $entry->name }}</span>
+                                        <span class="text-blue-600 dark:text-blue-400">{{ $entry->full_name }}</span>
                                     @else
-                                        <span class="text-gray-900 dark:text-white">{{ $entry->name ?: $entry->user->name }}</span>
+                                        <span class="text-gray-900 dark:text-white">{{ $entry->full_name }}</span>
                                     @endif
                                 </td>
 

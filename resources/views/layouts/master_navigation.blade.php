@@ -9,7 +9,7 @@
         </a>
 
         <a href="{{ route('master.tickets.index') }}" 
-           class="text-sm font-medium leading-5 {{ request()->routeIs('master.tickets.*') ? 'text-blue-600 border-b-2 border-blue-400' : 'text-gray-500' }}">
+           class="text-sm font-medium leading-5 {{ request()->routeIs('master.tickets.*', 'master.site-message.*') ? 'text-blue-600 border-b-2 border-blue-400' : 'text-gray-500' }}">
             チケット発行
         </a>
 
@@ -44,6 +44,9 @@
                     </a>
                     <a href="{{ route('master.activity_logs.index') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
                         アクティビティログ
+                    </a>
+                    <a href="{{ route('master.site-message.edit') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 {{ request()->routeIs('master.site-message.*') ? 'bg-gray-100' : '' }}">
+                        お知らせ管理
                     </a>
                     <a href="{{ route('master.password.edit') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
                         パスワード変更
