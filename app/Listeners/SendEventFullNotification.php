@@ -13,16 +13,22 @@ class SendEventFullNotification implements ShouldQueue
 
     public function handle(EventFull $event)
     {
-        $admin = $event->event->organizer;
+        $eventModel = $event->event;
+        $admin = $eventModel->organizer;
 
-        if (!$admin) {
-            \Log::warning('[EventFull] 管理者が見つかりません');
+        if (!$admin || !$admin->shouldNotify('event_full')) {
             return;
         }
         
-        // 管理者が通知を ON にしている場合のみ送信
-        if ($admin->shouldNotify('event_full')) {
-            $admin->notify(new EventFullNotification($event->event));
+        // もし管理者が「1回目だけで良い」と設定しており、かつ既に通知済みなら送らない
+        if ($admin->prefers_only_first_notification && $eventModel->notified_at !== null) {
+            return;
         }
+
+        // 通知実行
+        $admin->notify(new EventFullNotification($eventModel));
+
+        // 通知した日時を記録（これで2回目以降の判定が可能になる）
+        $eventModel->update(['notified_at' => now()]);
     }
 }

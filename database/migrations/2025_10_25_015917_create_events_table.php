@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->foreignId('admin_id')->constrained()->onDelete('cascade'); // 管理者ユーザーID
             $table->unsignedBigInteger('ticket_id')->nullable(); // 使用するチケットID
             $table->string('instruction_label')->nullable(); // 案内ラベル
+            $table->timestamp('notified_at')->nullable();
             $table->timestamps();
         });
     }

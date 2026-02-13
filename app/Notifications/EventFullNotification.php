@@ -21,6 +21,7 @@ class EventFullNotification extends Notification
 
     public function toMail($notifiable)
     {
+        \Log::info('Notification sending to: ' . $notifiable->email);
         return (new MailMessage)
             ->subject('イベントが満員になりました')
             ->line('あなたが公開したイベントが満員に達しました。')
