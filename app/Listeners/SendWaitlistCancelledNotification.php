@@ -2,8 +2,8 @@
 
 namespace App\Listeners;
 
-use App\Events\WaitlistCancelled;
-use App\Notifications\WaitlistCancelledNotification;
+use App\Events\WaitlistExpired;
+use App\Notifications\WaitlistExpiredNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
@@ -11,20 +11,20 @@ class SendWaitlistCancelledNotification
 {
     use InteractsWithQueue;
 
-    public function handle(WaitlistCancelled $event)
+    public function handle(WaitlistExpired $event)
     {
-        \Log::info('★リスナーが開始されました'); // 追加
+        \Log::info('★リスナーが開始されました');
 
         $user = $event->entry->user;
 
         if (!$user) {
-            \Log::info('★ユーザーが見つかりませんでした'); // 追加
+            \Log::info('★ユーザーが見つかりませんでした');
             return;
         }
         // ユーザー設定で通知ONのときのみ送信
         // if ($user->shouldNotify('waitlist_cancelled')) {
-            $user->notify(new WaitlistCancelledNotification($event->entry));
-            \Log::info('★通知を投げました'); // 追加
+            $user->notify(new WaitlistExpiredNotification($event->entry));
+            \Log::info('★通知を投げました');
         // }
     }
 }

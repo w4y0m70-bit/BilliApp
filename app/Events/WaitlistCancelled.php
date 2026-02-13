@@ -6,7 +6,7 @@ use App\Models\UserEntry;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class WaitlistCancelled
+class WaitlistExpired
 {
     use Dispatchable, SerializesModels;
 

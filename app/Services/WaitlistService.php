@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Event;
 use App\Models\UserEntry;
-use App\Events\WaitlistCancelled;
+use App\Events\WaitlistExpired;
 use App\Events\WaitlistPromoted;
 use App\Events\EventFull;
 use Illuminate\Support\Facades\DB;
@@ -12,25 +12,27 @@ use Illuminate\Support\Facades\DB;
 class WaitlistService
 {
     /**
-     * 特定の参加者をキャンセルし、必要であれば繰り上げを行う（★今回追加）
+     * キャンセル処理の本体
+     * $reason: 'user' (自己都合), 'expired' (期限切れ), 'admin' (管理者) など
      */
-    public function cancelAndPromote(UserEntry $entry): void
+    public function cancelAndPromote(UserEntry $entry, string $reason = 'user'): void
     {
-        DB::transaction(function () use ($entry) {
-            // 1. ステータスをキャンセルに変更（または delete()）
+        DB::transaction(function () use ($entry, $reason) {
             $entry->update(['status' => 'cancelled']);
             
-            // 2. キャンセル通知イベント（既存のものを流用）
-            event(new WaitlistCancelled($entry));
+            // 期限切れの時だけ通知イベントを発生させる
+            if ($reason === 'expired') {
+                // 今はこのイベントを「期限切れ用」として使います
+                event(new \App\Events\WaitlistExpired($entry));
+                \Log::info("期限切れ通知イベントを発行: Entry ID {$entry->id}");
+            } else {
+                \Log::info("自己キャンセルのため通知はスキップ: Entry ID {$entry->id}");
+            }
 
-            // 3. 空いた枠に次の人を繰り上げる（既存のプライベートメソッドを活用！）
             $this->promoteNext($entry->event_id);
         });
     }
     
-    /**
-     * 期限切れのキャンセル待ちを処理する（既存メソッドを整理）
-     */
     public function handleExpiredWaitlist(): void
     {
         $expiredEntries = UserEntry::where('status', 'waitlist')
@@ -39,11 +41,11 @@ class WaitlistService
             ->get();
 
         foreach ($expiredEntries as $entry) {
-            // 上で作った共通メソッドを呼び出すだけで済むようになる
-            $this->cancelAndPromote($entry);
+            // 第2引数に理由を渡す
+            $this->cancelAndPromote($entry, 'expired');
         }
     }
-
+    
     /**
      * 空き枠がある場合に次の方を繰り上げる
      */
