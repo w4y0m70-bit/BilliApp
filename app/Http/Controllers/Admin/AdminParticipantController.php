@@ -54,7 +54,7 @@ class AdminParticipantController extends Controller
         Validator::make($data, [
             'last_name'  => 'required|string|max:50',
             'first_name' => 'required|string|max:50',
-            'gender'     => 'nullable|string|max:10',
+            'gender'     => 'nullable|string|in:男性,女性,未回答',
             'class'      => 'nullable|string|max:20',
         ])->validate();
 

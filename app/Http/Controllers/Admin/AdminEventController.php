@@ -189,28 +189,34 @@ class AdminEventController extends Controller
 }
 
         // イベント一覧
+    // イベント一覧
     public function index()
     {
         $now = now();
+        // ログイン中の管理者IDを取得
+        $adminId = auth('admin')->id();
 
-        // 公開中イベント（公開日時 <= 現在 && 開催日 >= 現在）
-        $publishedEvents = Event::whereNotNull('published_at')
+        // 1. 公開中イベント（自分のもの ＆ 公開日時 <= 現在 && 開催日 >= 現在）
+        $publishedEvents = Event::where('admin_id', $adminId) // 追加
+                                ->whereNotNull('published_at')
                                 ->where('published_at', '<=', $now)
                                 ->where('event_date', '>=', $now)
                                 ->orderBy('event_date')
                                 ->get();
 
-        // 未公開イベント（公開日時が未来）
-        $unpublishedEvents = Event::where(function($q) use ($now) {
+        // 2. 未公開イベント（自分のもの ＆ 公開日時が未来 or Null）
+        $unpublishedEvents = Event::where('admin_id', $adminId) // 追加
+                                ->where(function($q) use ($now) {
                                     $q->whereNull('published_at')
-                                    ->orWhere('published_at', '>', $now);
+                                      ->orWhere('published_at', '>', $now);
                                 })
                                 ->where('event_date', '>=', $now)
                                 ->orderBy('event_date')
                                 ->get();
 
-        // 過去のイベント（開催日時 < 現在）
-        $pastEvents = Event::where('event_date', '<', $now)
+        // 3. 過去のイベント（自分のもの ＆ 開催日時 < 現在）
+        $pastEvents = Event::where('admin_id', $adminId) // 追加
+                            ->where('event_date', '<', $now)
                             ->orderByDesc('event_date')
                             ->get();
 
@@ -247,6 +253,10 @@ class AdminEventController extends Controller
     // --- 編集画面表示 ---
     public function edit(Event $event)
     {
+        // もしイベントの作成者が自分でなければ、エラーを出す
+        if ($event->admin_id !== auth('admin')->id()) {
+            abort(403, '権限がありません。');
+        }
         $now = now();
         $isPast = $event->event_date < $now;
         $isPublished = $event->published_at && $event->published_at <= $now;

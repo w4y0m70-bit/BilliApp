@@ -100,12 +100,19 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block mb-1 font-medium text-sm">性別</label>
-                    <select x-model="guest.gender" class="border rounded w-full px-3 py-2">
-                        <option value="">選択してください</option>
-                        <option value="男性">男性</option>
-                        <option value="女性">女性</option>
-                    </select>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">性別</label>
+                    <div class="flex gap-4">
+                        <template x-for="(label, value) in {'男性':'男性', '女性':'女性', '未回答':'回答しない'}" :key="value">
+                            <label class="inline-flex items-center">
+                                <input type="radio" 
+                                    name="guest_gender" 
+                                    :value="value" 
+                                    x-model="newGuest.gender" 
+                                    class="text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2 text-sm text-gray-600" x-text="label"></span>
+                            </label>
+                        </template>
+                    </div>
                 </div>
 
                 <div class="mb-4">

@@ -59,12 +59,12 @@
                     <div class="flex-1">
                         <label class="block mb-1 text-sm font-medium">性別</label>
                         <div class="flex gap-3 mt-2">
-                            @foreach(['男性', '女性', '回答しない'] as $gender)
+                            @foreach(['男性' => '男性', '女性' => '女性', '未回答' => '回答しない'] as $value => $label)
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="gender" value="{{ $gender }}" 
-                                        @checked(old('gender') === $gender) 
+                                    <input type="radio" name="gender" value="{{ $value }}" 
+                                        @checked(old('gender') === $value) 
                                         class="rounded-full border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500" required>
-                                    <span class="ml-1 text-sm">{{ $gender }}</span>
+                                    <span class="ml-1 text-sm">{{ $label }}</span>
                                 </label>
                             @endforeach
                         </div>

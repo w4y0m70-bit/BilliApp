@@ -61,7 +61,7 @@ class UserRegisterController extends Controller
             
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'gender' => 'nullable|string',
+            'gender' => 'required|string|in:男性,女性,未回答',
             'birthday' => 'nullable|date',
             'zip_code' => 'nullable|string|max:7',
             'prefecture' => 'nullable|string|max:255',
