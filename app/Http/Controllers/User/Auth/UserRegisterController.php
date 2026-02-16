@@ -101,7 +101,7 @@ class UserRegisterController extends Controller
         ]);
 
         // 通知設定の初期保存（変更なし）
-        $types = ['event_published', 'waitlist_promoted', 'waitlist_expired'];
+        $types = ['event_published', 'waitlist_updates', 'waitlist_updates'];
         $vias = $request->input('notification_via', []);
 
         foreach ($types as $type) {

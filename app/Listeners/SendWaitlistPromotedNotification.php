@@ -22,7 +22,7 @@ class SendWaitlistPromotedNotification implements ShouldQueue
 
             // 1. LINE送信設定の確認
             $isLineEnabled = $user->notificationSettings()
-                ->where('type', 'waitlist_promoted')
+                ->where('type', 'waitlist_updates')
                 ->where('via', 'line')
                 ->where('enabled', true)
                 ->exists();

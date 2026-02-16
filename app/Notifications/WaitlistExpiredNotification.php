@@ -36,7 +36,7 @@ class WaitlistExpiredNotification extends Notification
 
         // メール設定がONかチェック
         if ($notifiable->notificationSettings()
-            ->where('type', 'waitlist_expired')
+            ->where('type', 'waitlist_updates')
             ->where('via', 'mail')
             ->where('enabled', true)
             ->exists()) {

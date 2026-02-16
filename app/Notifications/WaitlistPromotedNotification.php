@@ -23,7 +23,7 @@ class WaitlistPromotedNotification extends Notification
 
         // メール設定がONの場合のみ、mailチャンネルを追加
         $isMailEnabled = $notifiable->notificationSettings()
-            ->where('type', 'waitlist_promoted')
+            ->where('type', 'waitlist_updates')
             ->where('via', 'mail')
             ->where('enabled', true)
             ->exists();

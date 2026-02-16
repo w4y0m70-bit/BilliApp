@@ -113,8 +113,8 @@
                     @php
                         $notificationTypes = [
                             'event_published' => '新規イベント公開',
-                            'waitlist_promoted' => 'キャンセル待ち繰り上げ',
-                            'waitlist_expired' => 'キャンセル待ち期限切れ',
+                            'waitlist_updates' => 'キャンセル待ち繰り上げ',
+                            'waitlist_updates' => 'キャンセル待ち期限切れ',
                         ];
                         $viaLabels = ['mail' => 'メール', 'line' => 'LINE'];
                     @endphp

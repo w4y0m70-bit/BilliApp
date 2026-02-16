@@ -63,8 +63,8 @@ class UserProfileController extends Controller
             // 2. 通知設定の更新
             $notificationTypes = [
                 'event_published', 
-                'waitlist_promoted', 
-                'waitlist_expired'
+                'waitlist_updates', 
+                'waitlist_updates'
             ];
             $notificationVias = ['mail', 'line'];
 

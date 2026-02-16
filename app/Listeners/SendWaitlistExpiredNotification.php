@@ -27,7 +27,7 @@ class SendWaitlistExpiredNotification
 
             // 1. LINE送信設定の確認
             $isLineEnabled = $user->notificationSettings()
-                ->where('type', 'waitlist_expired')
+                ->where('type', 'waitlist_updates')
                 ->where('via', 'line')
                 ->where('enabled', true)
                 ->exists();
