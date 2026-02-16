@@ -126,8 +126,7 @@
                     @php
                         $notificationTypes = [
                             'event_published' => '新規イベント公開',
-                            'waitlist_updates' => 'キャンセル待ち繰り上げ',
-                            'waitlist_updates' => 'キャンセル待ち期限切れ',
+                            'waitlist_updates' => 'キャンセル待ち（繰り上げ・自動終了）',
                         ];
                         $notificationVias = ['mail' => 'メール', 'line' => 'LINE'];
                     @endphp

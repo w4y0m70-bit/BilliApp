@@ -7,9 +7,9 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * キャンセル待ち期限切れの場合に発火
+ * キャンセル待ち状態のまま、エントリー期限が訪れた時に発火
  */
-class WaitlistExpired
+class WaitlistDeadlineReached
 {
     use Dispatchable, SerializesModels;
 

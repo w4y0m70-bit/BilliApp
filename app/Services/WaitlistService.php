@@ -34,14 +34,44 @@ class WaitlistService
     
     public function handleExpiredWaitlist(): void
     {
+        // A. ユーザー個別の期限切れ（既存の処理）
         $expiredEntries = UserEntry::where('status', 'waitlist')
             ->whereNotNull('waitlist_until')
             ->where('waitlist_until', '<=', now())
             ->get();
 
         foreach ($expiredEntries as $entry) {
-            // 第2引数に理由を渡す
             $this->cancelAndPromote($entry, 'expired');
+        }
+
+        // B. 【新規追加】イベント自体のエントリー期限が過ぎた場合の一括処理
+        $this->handleEventDeadlineReached();
+    }
+
+    /**
+     * イベントのエントリー期限が過ぎたキャンセル待ちを処理
+     */
+    private function handleEventDeadlineReached(): void
+    {
+        // ステータスが waitlist かつ、紐づくイベントの entry_deadline（または event_date）を過ぎているものを取得
+        // ※ カラム名は DB 設計に合わせて調整してください（例: entry_limit_date など）
+        $entriesWithReachedDeadline = UserEntry::where('status', 'waitlist')
+            ->whereHas('event', function ($query) {
+                $query->where('entry_deadline', '<=', now()); 
+            })
+            ->get();
+
+        foreach ($entriesWithReachedDeadline as $entry) {
+            DB::transaction(function () use ($entry) {
+                // ステータスをキャンセルに更新
+                $entry->update(['status' => 'cancelled']);
+
+                // 今回作成した「期限終了」のイベントを発行
+                // これにより SendWaitlistDeadlineNotification リスナーが起動します
+                event(new \App\Events\WaitlistDeadlineReached($entry));
+
+                \Log::info("イベント期限到達による自動キャンセル: Entry ID {$entry->id}");
+            });
         }
     }
     
