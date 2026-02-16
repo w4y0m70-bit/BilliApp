@@ -15,11 +15,30 @@ class EventPublishedNotification extends Notification
         $this->event = $event;
     }
 
+    /**
+     * 送信チャンネルの指定
+     */
     public function via($notifiable)
     {
-        return ['mail']; // 将来的に 'line' など追加可能
+        $channels = [];
+
+        // メール設定がONの場合のみ、mailチャンネルを返す
+        $isMailEnabled = $notifiable->notificationSettings()
+            ->where('type', 'event_published')
+            ->where('via', 'mail')
+            ->where('enabled', true)
+            ->exists();
+
+        if ($isMailEnabled && $notifiable->email) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
+    /**
+     * メール送信
+     */
     public function toMail($notifiable)
     {
         return (new MailMessage)

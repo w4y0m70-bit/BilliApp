@@ -18,17 +18,16 @@ class WaitlistService
     public function cancelAndPromote(UserEntry $entry, string $reason = 'user'): void
     {
         DB::transaction(function () use ($entry, $reason) {
+            // 先にログを出さないよう、イベント発行順序を整理
             $entry->update(['status' => 'cancelled']);
             
-            // 期限切れの時だけ通知イベントを発生させる
             if ($reason === 'expired') {
-                // 今はこのイベントを「期限切れ用」として使います
-                event(new \App\Events\WaitlistExpired($entry));
-                \Log::info("期限切れ通知イベントを発行: Entry ID {$entry->id}");
-            } else {
-                \Log::info("自己キャンセルのため通知はスキップ: Entry ID {$entry->id}");
+                // ログを「イベント発行前」に移動
+                \Log::info("--- 期限切れイベント発行準備: ID {$entry->id} ---");
+                event(new WaitlistExpired($entry));
             }
 
+            // ここで繰り上げ処理
             $this->promoteNext($entry->event_id);
         });
     }
@@ -54,7 +53,6 @@ class WaitlistService
         $event = Event::find($eventId);
         if (!$event) return;
 
-        // 現在の参加確定人数を数える
         $currentCount = UserEntry::where('event_id', $eventId)
             ->where('status', 'entry')
             ->count();
@@ -62,9 +60,13 @@ class WaitlistService
         $availableSlots = $event->max_participants - $currentCount;
 
         if ($availableSlots > 0) {
-            // 次に並んでいる人を1名（または空き枠分）取得
             $nextEntries = UserEntry::where('event_id', $eventId)
                 ->where('status', 'waitlist')
+                // ★追加：期限が切れていない人だけを繰り上げ対象にする
+                ->where(function($query) {
+                    $query->whereNull('waitlist_until')
+                          ->orWhere('waitlist_until', '>', now());
+                })
                 ->orderBy('created_at')
                 ->limit($availableSlots)
                 ->get();
@@ -74,7 +76,6 @@ class WaitlistService
                     'status' => 'entry',
                     'waitlist_until' => null,
                 ]);
-                // 繰り上げ通知を送る
                 event(new WaitlistPromoted($entry));
             }
         }

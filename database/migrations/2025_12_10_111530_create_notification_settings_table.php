@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignId('admin_id')->nullable()->constrained()->onDelete('cascade');;
-            $table->string('type'); // イベントタイプ (event_published, waitlist_promoted, waitlist_cancelled, event_full)
+            $table->string('type'); // イベントタイプ (event_published, waitlist_promoted, waitlist_expired, event_full)
             $table->string('via')->default('mail'); // メール、LINE など
             $table->boolean('enabled')->default(true); // ON/OFF
             $table->timestamps();

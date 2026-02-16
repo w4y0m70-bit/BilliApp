@@ -64,7 +64,7 @@ class UserProfileController extends Controller
             $notificationTypes = [
                 'event_published', 
                 'waitlist_promoted', 
-                'waitlist_cancelled'
+                'waitlist_expired'
             ];
             $notificationVias = ['mail', 'line'];
 

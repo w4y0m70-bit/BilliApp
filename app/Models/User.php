@@ -51,7 +51,6 @@ class User extends Authenticatable
     ];
 
     // --- アクセサ: フルネームを簡単に取得できるようにする ---
-    // これにより $user->full_name で「佐藤 太郎」が取得できます
     protected function fullName(): Attribute
     {
         return Attribute::make(
@@ -68,6 +67,16 @@ class User extends Authenticatable
     }
     // --------------------------------------------------
 
+    /**
+     * LINE通知用のルートを定義する
+     */
+    public function routeNotificationForLine($notification)
+    {
+        // Notificationクラスが 'line' チャンネルを使おうとした時、
+        // 自動的にこの line_id が宛先として使われます。
+        return $this->line_id;
+    }
+    
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new UserResetPasswordNotification($token));

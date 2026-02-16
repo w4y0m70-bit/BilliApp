@@ -8,21 +8,22 @@ use App\Listeners\SendEventPublishedNotification;
 use App\Events\WaitlistPromoted;
 use App\Listeners\SendWaitlistPromotedNotification;
 use App\Events\WaitlistExpired;
-use App\Listeners\SendWaitlistCancelledNotification;
+use App\Listeners\SendWaitlistExpiredNotification;
 use App\Events\EventFull;
 use App\Listeners\SendEventFullNotification;
 
 class EventServiceProvider extends ServiceProvider
 {
     protected $listen = [
-        EventPublished::class => [
-            SendEventPublishedNotification::class,
-        ],
+        // イベント公開通知
+        // EventPublished::class => [
+        //     SendEventPublishedNotification::class,
+        // ],
         // WaitlistPromoted::class => [
         //     SendWaitlistPromotedNotification::class,
         // ],
         // WaitlistExpired::class => [
-        //     SendWaitlistCancelledNotification::class,
+        //     SendWaitlistExpiredNotification::class,
         // ],
         // キャンセル待ち期限切れの通知は自動送信されるのでここでは不要
         // EventFull::class => [

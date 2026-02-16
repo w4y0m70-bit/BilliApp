@@ -2,18 +2,23 @@
 
 namespace App\Listeners;
 
-use App\Events\WaitlistPromoted;
+use App\Events\WaitlistExpired;
 use App\Services\LineService;
-use App\Notifications\WaitlistPromotedNotification;
+use App\Notifications\WaitlistExpiredNotification;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 
-class SendWaitlistPromotedNotification implements ShouldQueue
+class SendWaitlistExpiredNotification
 {
     use InteractsWithQueue;
 
-    public function handle(WaitlistPromoted $event)
+    /**
+     * イベントの処理
+     *
+     * @param  WaitlistExpired  $event
+     * @return void
+     */
+    public function handle(WaitlistExpired $event)
     {
         try {
             $entry = $event->entry;
@@ -22,7 +27,7 @@ class SendWaitlistPromotedNotification implements ShouldQueue
 
             // 1. LINE送信設定の確認
             $isLineEnabled = $user->notificationSettings()
-                ->where('type', 'waitlist_promoted')
+                ->where('type', 'waitlist_expired')
                 ->where('via', 'line')
                 ->where('enabled', true)
                 ->exists();
@@ -32,21 +37,21 @@ class SendWaitlistPromotedNotification implements ShouldQueue
                 $eventName = $eventData->title;
                 $eventDate = $eventData->event_date ? $eventData->event_date->format('Y/m/d H:i') : '未定';
 
-                $lineMessage = "【繰り上げ参加確定】\n\n"
-                             . "キャンセル待ちのイベントで空きが出たため、参加が確定しました！\n\n"
+                $lineMessage = "【キャンセル待ち期限切れ】\n\n"
                              . "［{$organizerName}］\n"
                              . "■{$eventName}\n"
                              . "■{$eventDate}\n\n"
-                             . "詳細はこちら：\n" . url('/user/events/' . $eventData->id);
+                             . "期限が過ぎたため、自動キャンセルとなりました。アプリから再度空き状況をご確認いただけます。";
 
                 app(LineService::class)->push($user->line_id, $lineMessage);
+                Log::info("LINE送信成功（期限切れ通知）: User ID {$user->id}");
             }
 
-            // 2. 通知（メール）の実行（viaで判定）
-            $user->notify(new WaitlistPromotedNotification($entry));
+            // 2. 通知（メール）の実行
+            $user->notify(new WaitlistExpiredNotification($entry));
 
         } catch (\Throwable $e) {
-            Log::error("WaitlistPromotedリスナーでエラー: " . $e->getMessage());
+            Log::error("WaitlistExpiredリスナーでエラー発生: " . $e->getMessage());
         }
     }
 }

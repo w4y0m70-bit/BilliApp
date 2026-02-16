@@ -13,17 +13,24 @@ Route::get('/', function () {
 Route::view('/scoreboard', 'scoreboard.index')->name('scoreboard');
 
 // LINEメッセージ送信テスト用ルート
-Route::get('/line-broadcast-test', function (LineService $lineService) {
-    $result = $lineService->broadcast('Laravelからのテスト送信です！成功しました！');
+// Route::get('/line-broadcast-test', function (LineService $lineService) {
+//     $result = $lineService->broadcast('Laravelからのテスト送信です！成功しました！');
     
-    return $result ? 'LINEにメッセージを送りました！確認してください。' : '送信に失敗しました。ログを確認してください。';
-});
-Route::get('/line-push-test', function (LineService $lineService) {
-    $userId = 'U8e87cb76a5ab6380dc076259970644a7';
+//     return $result ? 'LINEにメッセージを送りました！確認してください。' : '送信に失敗しました。ログを確認してください。';
+// });
+// Route::get('/line-push-test', function (LineService $lineService) {
+//     $userId = 'U8e87cb76a5ab6380dc076259970644a7';
     
-    $result = $lineService->push($userId, 'これはあなただけに向けた個別メッセージです！');
+//     $result = $lineService->push($userId, 'これはあなただけに向けた個別メッセージです！');
     
-    return $result ? '個別メッセージを送信しました！' : '失敗しました。';
+//     return $result ? '個別メッセージを送信しました！' : '失敗しました。';
+// });
+Route::get('/line-debug-test', function (LineService $lineService) {
+    $userId = 'U8e87cb76a5ab6380dc076259970644a7'; 
+    
+    $result = $lineService->push($userId, 'テスト再開です！このメッセージが届いたら成功です。');
+    
+    return $result ? 'LINE送信成功！' : '送信失敗。ログ（storage/logs/laravel.log）を確認してください。';
 });
 
 // 利用規約
