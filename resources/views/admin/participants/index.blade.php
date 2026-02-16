@@ -59,10 +59,13 @@
                 <template x-for="(entry, index) in sortedParticipants" :key="entry.id">
                     <tr :class="entry.status === 'waitlist' ? 'bg-yellow-100' : 'bg-white'">
                         <td class="px-1 py-2 border-b text-center font-medium">
-                            <span x-text="entry.status === 'entry' ? (index + 1) : ('WL-' + (index + 1))"></span>
+                            <span x-text="entry.status === 'entry' 
+                                ? (participants.filter(p => p.status === 'entry').indexOf(entry) + 1) 
+                                : ('WL-' + (participants.filter(p => p.status === 'waitlist').indexOf(entry) + 1))">
+                            </span>
                         </td>
                         <td class="px-1 py-2 border-b font-bold">
-                            <span :class="entry.gender === '女性' ? 'text-pink-500' : ''" 
+                            <span :class="entry.gender === '女性' ? 'text-pink-700' : ''" 
                                 x-text="entry.last_name ? (entry.last_name + ' ' + entry.first_name) : entry.full_name">
                             </span>
                         </td>
@@ -161,7 +164,12 @@
                 const res = await fetch(`/admin/events/${eventId}/participants/json`);
                 const list = await res.json();
                 // ステータス順にソート（entryが先、waitlistが後）
-                this.participants = list.sort((a, b) => a.status === b.status ? 0 : (a.status === 'entry' ? -1 : 1));
+                this.participants = list.sort((a, b) => {
+                    if (a.status !== b.status) {
+                        return a.status === 'entry' ? -1 : 1;
+                    }
+                    return a.id - b.id; // 同じステータスなら申込順
+                });
             },
 
             get sortedParticipants() { return this.participants; },

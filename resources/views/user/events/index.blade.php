@@ -100,6 +100,7 @@
 
                 $status = $userEntry->status ?? null;
                 $isFull = $event->entry_count >= $event->max_participants;
+                $isDeadlinePast = $event->entry_deadline->isPast();
             @endphp
 
             {{-- カード部分 --}}
@@ -133,19 +134,55 @@
                         <div 
                             x-show="showOrganizer" 
                             x-transition
-                            class="mt-2 p-2 bg-gray-50 border border-gray-100 rounded text-[11px] text-gray-600 space-y-1 shadow-inner"
+                            class="mt-2 p-3 bg-gray-50 border border-gray-100 rounded text-[11px] text-gray-600 space-y-2 shadow-inner"
                         >
-                            <div class="flex">
-                                <span class="w-12 font-semibold">所在地</span>
-                                <span class="text-sm flex-1">{{ $event->organizer->prefecture }}{{ $event->organizer->city }}</span>
+                            <div class="flex flex-col space-y-0.5">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold text-gray-500 underline underline-offset-2 decoration-gray-300">所在地</span>
+                                    {{-- マップを開くアイコンリンク --}}
+                                    <a 
+                                        href="https://www.google.com/maps/search/?api=1&query={{ urlencode($event->organizer->prefecture . $event->organizer->city . $event->organizer->address_line) }}" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        class="flex items-center text-blue-600 hover:text-blue-800 transition"
+                                    >
+                                        <span class="material-symbols-outlined text-[16px] mr-0.5">map</span>
+                                        <span>マップで開く</span>
+                                    </a>
+                                </div>
+
+                                <div class="text-sm text-gray-800 leading-relaxed">
+                                    {{-- 郵便番号 --}}
+                                    @if($event->organizer->zip_code)
+                                        <span class="block">〒{{ $event->organizer->zip_code }}</span>
+                                    @endif
+                                    {{-- 住所をリンクにする場合（住所全体をクリックしてマップへ飛ばす） --}}
+                                    <a 
+                                        href="https://www.google.com/maps/search/?api=1&query={{ urlencode($event->organizer->prefecture . $event->organizer->city . $event->organizer->address_line) }}" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        class="hover:underline decoration-blue-400 group"
+                                    >
+                                        <span class="group-hover:text-blue-600 transition">
+                                            {{ $event->organizer->prefecture }}{{ $event->organizer->city }}{{ $event->organizer->address_line }}
+                                        </span>
+                                    </a>
+                                </div>
                             </div>
-                            <div class="flex items-center">
-                                <span class="w-12 font-semibold">TEL</span>
-                                <a href="tel:{{ $event->organizer->phone }}" class="text-sm text-blue-600 hover:underline">{{ $event->organizer->phone ?? '－' }}</a>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="w-12 font-semibold">Email</span>
-                                <a href="mailto:{{ $event->organizer->email }}" class="text-sm text-blue-600 hover:underline truncate">{{ $event->organizer->email }}</a>
+
+                            <div class="grid grid-cols-2 gap-2 border-t border-gray-200 pt-2">
+                                <div class="flex flex-col">
+                                    <span class="font-semibold text-gray-500">TEL</span>
+                                    <a href="tel:{{ $event->organizer->phone }}" class="text-sm text-blue-600 hover:underline font-medium">
+                                        {{ $event->organizer->phone ?? '－' }}
+                                    </a>
+                                </div>
+                                <div class="flex flex-col overflow-hidden">
+                                    <span class="font-semibold text-gray-500">Email</span>
+                                    <a href="mailto:{{ $event->organizer->email }}" class="text-sm text-blue-600 hover:underline truncate font-medium">
+                                        {{ $event->organizer->email }}
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     @endif
@@ -231,6 +268,10 @@
                         @elseif ($status === 'waitlist')
                             <span class="inline-block bg-orange-500 text-white text-sm px-3 py-1 rounded transition">
                                 キャンセル待ち（{{ $userEntry->waitlist_position ?? '' }}番目）
+                            </span>
+                        @elseif ($isDeadlinePast)
+                            <span class="inline-block bg-gray-500 text-white text-sm px-3 py-1 rounded transition">
+                                エントリー締切
                             </span>
                         @else
                             <span class="inline-block bg-gray-400 text-white text-sm px-3 py-1 rounded transition">

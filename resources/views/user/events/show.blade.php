@@ -17,7 +17,10 @@
 
     $isFull = $event->entry_count >= $event->max_participants;
     $canWaitlist = $event->allow_waitlist;
-    $canEntry = !$isFull || ($isFull && $canWaitlist);
+    $isDeadlinePast = $event->entry_deadline->isPast();
+    $canEntry = !$isDeadlinePast && (!$isFull || ($isFull && $canWaitlist));
+    
+    $status = $userEntry->status ?? null;
 @endphp
 
 {{-- セッションメッセージ用モーダル（自動オープン） --}}
@@ -150,27 +153,27 @@
         {{-- ■ エントリーボタン --}}
         <div class="flex justify-end items-center gap-3 pt-4 border-t">
             @if(!$userEntry)
-            <span help-key="user.events.entry" class="inline-block">
-                <x-help help-key="user.events.entry" />
-            </span>
-            <button 
-                    type="submit"
-                    class="px-4 py-2 rounded text-white transition
-                        {{ $canEntry ? 'bg-user hover:bg-user-dark' : 'bg-gray-400 cursor-not-allowed' }}"
-                    {{ $canEntry ? '' : 'disabled' }}
-                >
-                    @if(!$userEntry)
-                        <a href="{{ route('user.entries.create', $event->id) }}"
-                        class="px-4 py-2 rounded text-white transition text-center
-                                {{ $canEntry ? 'bg-user hover:bg-user-dark' : 'bg-gray-400 pointer-events-none' }}">
-                            @if(!$canEntry)
-                                満員のためエントリー不可
-                            @else
-                                エントリー入力画面へ
-                            @endif
-                        </a>
-                    @endif
-                </button>
+                <span help-key="user.events.entry" class="inline-block">
+                    <x-help help-key="user.events.entry" />
+                </span>
+                
+                @if($isDeadlinePast)
+                    {{-- 期限切れの場合 --}}
+                    <button type="button" disabled class="px-4 py-2 rounded text-white bg-gray-500 cursor-not-allowed">
+                        エントリー締切
+                    </button>
+                @else
+                    {{-- 期限内の場合 --}}
+                    <a href="{{ $canEntry ? route('user.entries.create', $event->id) : '#' }}"
+                       class="px-4 py-2 rounded text-white transition text-center
+                              {{ $canEntry ? 'bg-user hover:bg-user-dark' : 'bg-gray-400 pointer-events-none' }}">
+                        @if(!$canEntry && $isFull)
+                            満員のためエントリー不可
+                        @else
+                            エントリー入力画面へ
+                        @endif
+                    </a>
+                @endif
             @endif
 
             <a href="{{ route('user.events.index') }}"

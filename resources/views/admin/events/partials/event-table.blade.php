@@ -84,6 +84,7 @@
                     @else
                         <a 
                             href="{{ route('admin.events.participants.index', $event->id) }}" 
+                            @click.stop
                             class="text-blue-600 underline hover:text-blue-800"
                         >
                             {{ $event->entry_count }} / {{ $event->max_participants }}

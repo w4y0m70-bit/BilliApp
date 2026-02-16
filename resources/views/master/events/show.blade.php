@@ -59,45 +59,67 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            @forelse($event->userEntries as $entry)
+                            @php
+                                // 1. エントリー（確定）とキャンセル待ちを分離して並び替える
+                                $entries = $event->userEntries->where('status', 'entry')->sortBy('id');
+                                $waitlists = $event->userEntries->where('status', 'waitlist')->sortBy('id');
+                                
+                                // 2. 確定枠 -> キャンセル待ちの順で結合
+                                $sortedEntries = $entries->concat($waitlists);
+
+                                // 番号カウント用
+                                $entryNo = 1;
+                                $wlNo = 1;
+                            @endphp
+
+                            @forelse($sortedEntries as $entry)
                             <tr class="{{ $entry->status === 'waitlist' ? 'bg-orange-50/50 dark:bg-orange-900/10' : '' }}">
-                                {{-- 1. エントリー順番号 or WL順位 --}}
+                                {{-- 1. 番号表示 --}}
                                 <td class="px-4 py-4 text-sm font-mono">
                                     @if($entry->status === 'entry')
-                                        <span class="text-gray-400">#</span>{{ $loop->iteration }}
+                                        <span class="text-gray-400">#</span>{{ $entryNo++ }}
                                     @else
-                                        <span class="text-orange-600 font-bold">WL{{ $entry->waitlist_position }}</span>
+                                        <span class="text-orange-600 font-bold">WL-{{ $wlNo++ }}</span>
                                     @endif
                                 </td>
 
-                                {{-- 2. クラス表示（Enumの短縮形を使用） --}}
+                                {{-- 2. クラス表示 --}}
                                 <td class="px-4 py-4 text-sm text-center">
                                     <span class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-[10px] font-bold border border-gray-200 dark:border-gray-600">
-                                        {{-- 
-                                            Enumに shortLabel() や value など、短縮形を返すメソッドがある想定です。
-                                            例: $entry->class->shortLabel() もしくは $entry->class->value
-                                        --}}
                                         {{ method_exists($entry->class, 'shortLabel') ? $entry->class->shortLabel() : $entry->class->value }}
                                     </span>
                                 </td>
 
-                                {{-- 3. 名前（ゲストは青色） --}}
+                                {{-- 3. 名前（女性なら text-pink-700 / ゲストは青色を維持） --}}
                                 <td class="px-4 py-4 text-sm font-bold">
-                                    @if(!$entry->user_id)
-                                        <span class="text-blue-600 dark:text-blue-400">{{ $entry->full_name }}</span>
+                                    @php
+                                        // 性別による色分けクラスの決定
+                                        $genderColorClass = $entry->gender === '女性' ? 'text-pink-700' : '';
+                                        // ゲストかどうかの判定
+                                        $isGuest = !$entry->user_id;
+                                    @endphp
+
+                                    @if($isGuest)
+                                        {{-- ゲスト：元の仕様（青色）に女性判定を追加 --}}
+                                        <span class="{{ $genderColorClass ?: 'text-blue-600 dark:text-blue-400' }}">
+                                            {{ $entry->full_name }}
+                                        </span>
                                     @else
-                                        <span class="text-gray-900 dark:text-white">{{ $entry->full_name }}</span>
+                                        {{-- 会員：女性判定を追加 --}}
+                                        <span class="{{ $genderColorClass ?: 'text-gray-900 dark:text-white' }}">
+                                            {{ $entry->full_name }}
+                                        </span>
                                     @endif
                                 </td>
 
-                                {{-- 4. 申込日時（秒を省いてスリムに） --}}
+                                {{-- 4. 申込日時 --}}
                                 <td class="px-4 py-4 text-sm text-gray-500 whitespace-nowrap">
                                     {{ $entry->created_at->format('m/d H:i') }}
                                 </td>
 
                                 {{-- 5. 操作 --}}
                                 <td class="px-4 py-4 text-sm text-right whitespace-nowrap">
-                                    @if($entry->user_id && $entry->user->id !== null)
+                                    @if($entry->user_id)
                                         <a href="{{ route('master.users.show', $entry->user_id) }}" class="text-indigo-600 hover:underline">詳細</a>
                                     @else
                                         <span class="text-gray-400 text-[10px]">GUEST</span>
