@@ -19,7 +19,6 @@ class User extends Authenticatable
     use HasFactory, Notifiable, LogsActivity;
 
     protected $fillable = [
-        // 'name' を削除し、以下4つを追加
         'last_name',
         'first_name',
         'last_name_kana',

@@ -32,7 +32,7 @@ class ProcessWaitlist extends Command
             if ($availableSlots > 0) {
                 $nextEntries = $event->userEntries()
                     ->where('status','waitlist')
-                    ->orderBy('created_at')
+                    ->orderBy('updated_at')
                     ->limit($availableSlots)
                     ->get();
 

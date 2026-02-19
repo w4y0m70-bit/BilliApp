@@ -97,7 +97,7 @@ class WaitlistService
                     $query->whereNull('waitlist_until')
                           ->orWhere('waitlist_until', '>', now());
                 })
-                ->orderBy('created_at')
+                ->orderBy('updated_at')
                 ->limit($availableSlots)
                 ->get();
 

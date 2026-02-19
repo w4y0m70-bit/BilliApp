@@ -25,6 +25,7 @@ class UserEntry extends Model
         'gender',
         'status',
         'waitlist_until',
+        'user_answer',
         'class',
         ];
         
@@ -66,6 +67,69 @@ class UserEntry extends Model
         return $this->belongsTo(Event::class);
     }
 
+    /**
+     * 名前表示の出し分け
+     */
+    public function getDisplayNameByFormat(string $format): string
+    {
+        // 1. 本名（実名）の取得
+        $real = trim($this->last_name . ' ' . $this->first_name);
+
+        // 2. 会員（user_idがある）なら、原則に基づき直接DBから最新情報を取得する
+        $account = '―'; // デフォルト（ゲスト用）
+        
+        if (!empty($this->user_id)) {
+            // 原則：IDを使ってDBから直接Userデータを取得（リレーションのキャッシュを回避）
+            $user = \App\Models\User::find($this->user_id);
+
+            if ($user) {
+                // もしUserEntry側に名前がなければ、取得したUserの氏名を使う
+                if (empty($real)) {
+                    $real = trim($user->last_name . ' ' . $user->first_name);
+                }
+                // アカウント名を取得（空なら「未設定」）
+                $account = !empty($user->account_name) ? $user->account_name : '未設定';
+            } else {
+                $account = '退会済み';
+            }
+        }
+
+        // 本名がどうしても取れなかった場合の予備
+        if (empty($real)) $real = '名前未登録';
+
+        // 3. 指定されたフォーマットで返却
+        return match ($format) {
+            'admin'  => "{$real} ({$account})",
+            'public' => $account,
+            'real'   => $real,
+            default  => $account,
+        };
+    }
+
+    /**
+     * 2. 表示順（No.）の取得
+     * ※ステータスごとの連番を返す
+     */
+    public function getOrderAttribute(): int
+    {
+        return $this->event->userEntries()
+            ->where('status', $this->status)
+            // 自分の更新日時より前に、同じステータスになった人の数を数える
+            ->where('updated_at', '<=', $this->updated_at)
+            ->count();
+    }
+
+    /**
+     * システム共通の参加者並び替えルール
+     * 1. ステータス順（entry が先）
+     * 2. ステータスが確定した順（updated_at）
+     */
+    public function scopeSortedList($query)
+    {
+        return $query->orderByRaw("FIELD(status, 'entry', 'waitlist', 'cancelled') ASC")
+            ->orderBy('updated_at', 'asc');
+    }
+
     /* =====================
      * キャンセル待ち順位
      * ===================== */
@@ -81,7 +145,7 @@ class UserEntry extends Model
                 $q->whereNull('waitlist_until')
                   ->orWhere('waitlist_until', '>', now());
             })
-            ->orderBy('created_at')
+            ->orderBy('updated_at')
             ->pluck('id')
             ->toArray();
 

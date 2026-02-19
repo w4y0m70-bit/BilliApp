@@ -26,7 +26,7 @@ class UserEntryController extends Controller
     {
         $entries = UserEntry::with('event')
             ->where('user_id', auth()->id())
-            ->orderByDesc('created_at')
+            ->orderByDesc('updated_at')
             ->latest()
             ->get();
 
@@ -93,11 +93,10 @@ class UserEntryController extends Controller
             'event_id'=> $event->id,
             'status'  => $status,
             'waitlist_until' => $waitlistUntil,
-
-            // 修正ポイント：ユーザー情報からではなく、フォームからの入力を優先
             'class'   => $request->input('class'),
-            'user_answer' => $request->input('user_answer'), // 新しく追加したカラム
+            'user_answer' => $request->input('user_answer'),
             'gender'  => $user->gender ?? '―',
+            'updated_at' => now(), 
         ];
 
         $service = new \App\Services\EventEntryService();

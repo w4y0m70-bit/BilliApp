@@ -23,11 +23,15 @@ class AdminParticipantController extends Controller
      */
     public function index(Event $event)
     {
+        $entryCount = $event->userEntries()->where('status', 'entry')->count();
+        $waitlistCount = $event->userEntries()->where('status', 'waitlist')->count();
         $participants = $event->userEntries()
+            ->with('user')
+            ->sortedList()
             ->whereIn('status', ['entry', 'waitlist'])
             ->with('user:id,last_name,first_name')
             ->orderByRaw("FIELD(status, 'entry', 'waitlist')")
-            ->orderBy('created_at')
+            ->orderBy('updated_at', 'asc')
             ->get();
 
         $entryOrder = 0;
@@ -40,7 +44,12 @@ class AdminParticipantController extends Controller
             }
         }
 
-        return view('admin.participants.index', compact('event', 'participants'));
+        return view('admin.participants.index', compact(
+            'event',
+            'participants',
+            'entryCount',
+            'waitlistCount'
+        ));
     }
 
     /**
@@ -84,18 +93,23 @@ class AdminParticipantController extends Controller
         $participants = $event->userEntries()
             ->whereIn('status', ['entry', 'waitlist'])
             ->with('user') 
+            ->sortedList()
             ->get();
 
-        // 番号付けのためのカウント
         $entryCount = 0;
         $waitlistCount = 0;
 
         $results = $participants->map(function ($entry) use (&$entryCount, &$waitlistCount) {
-            // 会員なら User から、ゲストなら UserEntry から取得
+            // ★ ここでモデルのメソッドと同じ判定ロジックを適用
+            if ($entry->user_id) {
+                $accountName = $entry->user?->account_name ?: '（未設定）';
+            } else {
+                $accountName = '―';
+            }
+
             $lastName = $entry->user ? $entry->user->last_name : $entry->last_name;
             $firstName = $entry->user ? $entry->user->first_name : $entry->first_name;
             
-            // 番号の決定
             $order = ($entry->status === 'entry') ? ++$entryCount : ++$waitlistCount;
 
             return [
@@ -104,9 +118,11 @@ class AdminParticipantController extends Controller
                 'last_name'  => $lastName,
                 'first_name' => $firstName,
                 'full_name'  => "{$lastName} {$firstName}",
+                'account_name' => $accountName,
                 'gender'     => $entry->gender,
                 'class'      => $entry->class,
-                'order'      => $order, // これで画面の No. が正しく出る
+                'order'      => $order,
+                'user_id'    => $entry->user_id,
             ];
         });
 

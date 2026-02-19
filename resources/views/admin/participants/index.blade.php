@@ -6,7 +6,6 @@
 <div class="px-4">
 <div 
     x-data="participantManager({{ $event->id }}, {{ $event->max_participants }})"
-    x-init="loadParticipants()"
     class="space-y-3"
 >
     <div>
@@ -29,11 +28,12 @@
         <div class="flex justify-between items-center">
             <p class="text-gray-700">
                 エントリー：
-                <span x-text="participants.filter(e => e.status === 'entry').length"></span>
+                {{-- JavaScriptを使わず、PHP側で直接カウントします --}}
+                <span class="font-bold text-lg">{{ $participants->where('status', 'entry')->count() }}</span>
                 /
                 {{ $event->max_participants }}
                 （キャンセル待ち：
-                <span x-text="participants.filter(e => e.status === 'waitlist').length"></span>
+                <span class="font-bold">{{ $participants->where('status', 'waitlist')->count() }}</span>
                 ）
             </p>
             <div class="flex items-center gap-1">
@@ -46,45 +46,13 @@
     </div>
 
     <div class="overflow-x-auto">
-        <table class="min-w-full border border-gray-300">
-            <thead class="bg-gray-300">
-                <tr>
-                    <th class="px-4 border-b w-1/12">No.</th>
-                    <th class="px-4 border-b w-5/12">名　前</th>
-                    <th class="px-4 border-b w-4/12">クラス</th>
-                    <th class="px-4 border-b w-2/12">削除</th>
-                </tr>
-            </thead>
-            <tbody>
-                <template x-for="(entry, index) in sortedParticipants" :key="entry.id">
-                    <tr :class="entry.status === 'waitlist' ? 'bg-yellow-100' : 'bg-white'">
-                        <td class="px-1 py-2 border-b text-center font-medium">
-                            <span x-text="entry.status === 'entry' 
-                                ? (participants.filter(p => p.status === 'entry').indexOf(entry) + 1) 
-                                : ('WL-' + (participants.filter(p => p.status === 'waitlist').indexOf(entry) + 1))">
-                            </span>
-                        </td>
-                        <td class="px-1 py-2 border-b font-bold">
-                            <span :class="entry.gender === '女性' ? 'text-pink-700' : ''" 
-                                x-text="entry.last_name ? (entry.last_name + ' ' + entry.first_name) : entry.full_name">
-                            </span>
-                        </td>
-                        <td class="px-1 py-2 border-b text-center text-gray-600">
-                            <span x-text="entry.class ? (classShortLabels[entry.class] || entry.class) : '??'"></span>
-                        </td>
-                        <td class="px-1 py-2 border-b text-center">
-                            <button @click="cancelEntry(entry.id)" class="text-red-500 hover:text-red-700 text-xs">✕</button>
-                        </td>
-                    </tr>
-                </template>
-
-                <template x-if="participants.length === 0">
-                    <tr>
-                        <td colspan="4" class="px-4 py-4 text-center text-gray-500">参加者はいません</td>
-                    </tr>
-                </template>
-            </tbody>
-        </table>
+        <div id="participant-table-container">
+            <x-participant-list 
+                :participants="$participants" 
+                :isAdmin="true" 
+                nameFormat="admin" 
+            />
+        </div>
     </div>
 
     <div x-show="openModal" x-cloak class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
@@ -147,77 +115,84 @@
         </div>
     </div>
 </div>
-
+@endsection
+@push('scripts')
 <script>
-    const classShortLabels = {{ Js::from(
-        collect(App\Enums\PlayerClass::cases())
-            ->mapWithKeys(fn($case) => [$case->value => $case->shortLabel()])
-    ) }};
+    // 1. グローバル関数の定義（window直下に配置）
+    window.globalCancelEntry = function(eventId, entryId) {
+    if (!confirm('この参加者をキャンセルしますか？')) return;
+    
+    // 方法1: メタタグから取得（名前を 'csrf-token' で再確認）
+    let token = document.querySelector('meta[name="csrf-token"]')?.content;
+    
+    // 方法2: 見つからない場合の予備（Bladeの関数を直接使う）
+    if (!token) {
+        token = '{{ csrf_token() }}'; 
+    }
 
+    fetch(`/admin/events/${eventId}/participants/${entryId}/cancel`, {
+        method: 'PATCH',
+        headers: { 
+            'X-CSRF-TOKEN': token, // ここでトークンをセット
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(res => {
+        if (res.ok) {
+            window.location.reload();
+        } else {
+            alert('キャンセルに失敗しました（Status: ' + res.status + '）');
+        }
+    })
+    .catch(err => console.error('通信エラー:', err));
+};
+
+    // 2. Alpine.js 用のマネージャー関数
     function participantManager(eventId, maxParticipants) {
+        // クラスラベル用の定数（PHPから注入）
+        const classShortLabels = {{ Js::from(
+            collect(App\Enums\PlayerClass::cases())
+                ->mapWithKeys(fn($case) => [$case->value => $case->shortLabel()])
+        ) }};
+
         return {
             openModal: false,
             participants: [],
             guest: { last_name: '', first_name: '', gender: '', class: '' },
 
+            init() {
+                this.loadParticipants();
+            },
             async loadParticipants() {
                 const res = await fetch(`/admin/events/${eventId}/participants/json`);
                 const list = await res.json();
-                // ステータス順にソート（entryが先、waitlistが後）
                 this.participants = list.sort((a, b) => {
-                    if (a.status !== b.status) {
-                        return a.status === 'entry' ? -1 : 1;
-                    }
-                    return a.id - b.id; // 同じステータスなら申込順
+                    if (a.status !== b.status) return a.status === 'entry' ? -1 : 1;
+                    return a.order - b.order;
                 });
             },
-
-            get sortedParticipants() { return this.participants; },
-
             async addGuest() {
-                // 入力チェック
                 if (!this.guest.last_name || !this.guest.first_name || !this.guest.gender) {
                     alert('未入力の項目があります');
                     return;
                 }
-
                 const currentEntryCount = this.participants.filter(e => e.status === 'entry').length;
                 const status = currentEntryCount < maxParticipants ? 'entry' : 'waitlist';
-
-                const payload = { 
-                    last_name: this.guest.last_name, 
-                    first_name: this.guest.first_name,
-                    gender: this.guest.gender,
-                    class: this.guest.class,
-                    status: status
-                };
 
                 const res = await fetch(`/admin/events/${eventId}/participants`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ ...this.guest, status: status })
                 });
 
-                if (res.ok) {
-                    this.guest = { last_name: '', first_name: '', gender: '', class: '' };
-                    this.openModal = false;
-                    await this.loadParticipants();
-                }
-            },
-
-            async cancelEntry(entryId) {
-                if (!confirm('この参加者をキャンセルしますか？')) return;
-                const res = await fetch(`/admin/events/${eventId}/participants/${entryId}/cancel`, {
-                    method: 'PATCH',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-                });
-                if (res.ok) { await this.loadParticipants(); }
+                if (res.ok) window.location.reload();
             }
         }
     }
 </script>
-@endsection
+@endpush

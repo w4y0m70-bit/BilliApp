@@ -188,7 +188,6 @@ class AdminEventController extends Controller
     return redirect()->route('admin.events.index')->with('success', 'イベントを登録しました');
 }
 
-        // イベント一覧
     // イベント一覧
     public function index()
     {
@@ -225,29 +224,35 @@ class AdminEventController extends Controller
 
     public function participants(Event $event)
     {
-        $participants = $event->userEntries()
-            ->whereIn('status', ['entry', 'waitlist'])
-            ->with('user') // Userテーブルの名前を取得するために必須
-            ->get()
-            ->map(function ($entry, $index) {
-                // Userがいる場合はUserテーブルの名前、いなければUserEntryテーブルのゲスト名
-                $lastName = $entry->user ? $entry->user->last_name : $entry->last_name;
-                $firstName = $entry->user ? $entry->user->first_name : $entry->first_name;
+        // ここで sortedList() を使い、DBの時点で updated_at 順にする
+        $entries = $event->userEntries()
+            ->sortedList() 
+            ->with('user')
+            ->get();
 
-                return [
-                    'id'         => $entry->id,
-                    'status'     => $entry->status,
-                    'last_name'  => $lastName,
-                    'first_name' => $firstName,
-                    'full_name'  => "{$lastName} {$firstName}",
-                    'gender'     => $entry->gender,
-                    'class'      => $entry->class,
-                    // 表示順序用の番号
-                    'order'      => $index + 1,
-                ];
-            });
+        $participants = $entries->map(function ($entry) {
+            return [
+                'id'         => $entry->id,
+                'status'     => $entry->status,
+                'full_name'  => $entry->getDisplayNameByFormat('admin'),
+                'gender'     => $entry->gender,
+                'class'      => $entry->class?->value,
+                'order'      => $entry->order, // ここでモデルの getOrderAttribute が呼ばれる
+                'updated_at' => $entry->updated_at->toDateTimeString(), // デバッグ用に含める
+            ];
+        });
 
         return response()->json($participants);
+    }
+
+    public function showParticipants(Event $event) 
+    {
+        $participants = $event->userEntries()
+            ->sortedList() 
+            ->with('user')
+            ->get();
+
+        return view('admin.participants.index', compact('event', 'participants'));
     }
 
     // --- 編集画面表示 ---

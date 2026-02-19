@@ -31,7 +31,7 @@ class EventManagementController extends Controller
     public function show(Event $event)
     {
         $event->load(['organizer', 'eventClasses', 'userEntries' => function($query) {
-            $query->orderBy('created_at', 'asc');
+            $query->orderBy('updated_at', 'asc');
         }, 'userEntries.user']);
 
         return view('master.events.show', compact('event'));

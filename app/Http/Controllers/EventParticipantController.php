@@ -12,12 +12,12 @@ class EventParticipantController extends Controller
 {
     public function index(Event $event)
     {
-        // ステータスを entry -> waitlist の順にし、それぞれ登録順(created_at)で取得
+        // ステータスを entry -> waitlist の順にし、それぞれ更新順(updated_at)で取得
         $participants = $event->userEntries()
             ->with('user')
             ->whereIn('status', ['entry', 'waitlist'])
             ->orderByRaw("FIELD(status, 'entry', 'waitlist')") // statusの順序を指定
-            ->orderBy('created_at', 'asc')
+            ->orderBy('updated_at', 'asc')
             ->get();
 
         return view('user.events.participants', compact('event', 'participants'));

@@ -51,8 +51,8 @@
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 {{-- 幅を最小限に --}}
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-16">#</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-20 text-center">クラス</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-10">#</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-10 text-center">クラス</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">名前</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">申込日時</th>
                                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
@@ -60,14 +60,7 @@
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                             @php
-                                // 1. エントリー（確定）とキャンセル待ちを分離して並び替える
-                                $entries = $event->userEntries->where('status', 'entry')->sortBy('id');
-                                $waitlists = $event->userEntries->where('status', 'waitlist')->sortBy('id');
-                                
-                                // 2. 確定枠 -> キャンセル待ちの順で結合
-                                $sortedEntries = $entries->concat($waitlists);
-
-                                // 番号カウント用
+                                $sortedEntries = $event->userEntries()->sortedList()->get();
                                 $entryNo = 1;
                                 $wlNo = 1;
                             @endphp
@@ -77,44 +70,35 @@
                                 {{-- 1. 番号表示 --}}
                                 <td class="px-4 py-4 text-sm font-mono">
                                     @if($entry->status === 'entry')
-                                        <span class="text-gray-400">#</span>{{ $entryNo++ }}
+                                        {{ $entryNo++ }}
+                                    @elseif($entry->status === 'waitlist')
+                                        <span class="text-orange-600 font-bold">wl{{ $wlNo++ }}</span>
                                     @else
-                                        <span class="text-orange-600 font-bold">WL-{{ $wlNo++ }}</span>
+                                        <span class="text-gray-400">-</span>
                                     @endif
                                 </td>
 
                                 {{-- 2. クラス表示 --}}
                                 <td class="px-4 py-4 text-sm text-center">
                                     <span class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-[10px] font-bold border border-gray-200 dark:border-gray-600">
-                                        {{ method_exists($entry->class, 'shortLabel') ? $entry->class->shortLabel() : $entry->class->value }}
+                                        {{ $entry->class ? $entry->class->shortLabel() : '未設定' }}
                                     </span>
                                 </td>
 
-                                {{-- 3. 名前（女性なら text-pink-700 / ゲストは青色を維持） --}}
+                                {{-- 3. 名前（一本化したメソッドを使用） --}}
                                 <td class="px-4 py-4 text-sm font-bold">
                                     @php
-                                        // 性別による色分けクラスの決定
-                                        $genderColorClass = $entry->gender === '女性' ? 'text-pink-700' : '';
-                                        // ゲストかどうかの判定
-                                        $isGuest = !$entry->user_id;
+                                        $genderColorClass = $entry->gender === '女性' ? 'text-pink-700' : ($entry->user_id ? 'text-gray-900 dark:text-white' : 'text-blue-600 dark:text-blue-400');
                                     @endphp
-
-                                    @if($isGuest)
-                                        {{-- ゲスト：元の仕様（青色）に女性判定を追加 --}}
-                                        <span class="{{ $genderColorClass ?: 'text-blue-600 dark:text-blue-400' }}">
-                                            {{ $entry->full_name }}
-                                        </span>
-                                    @else
-                                        {{-- 会員：女性判定を追加 --}}
-                                        <span class="{{ $genderColorClass ?: 'text-gray-900 dark:text-white' }}">
-                                            {{ $entry->full_name }}
-                                        </span>
-                                    @endif
+                                    
+                                    <span class="{{ $genderColorClass }}">
+                                        {{ $entry->getDisplayNameByFormat('admin') }}
+                                    </span>
                                 </td>
 
                                 {{-- 4. 申込日時 --}}
                                 <td class="px-4 py-4 text-sm text-gray-500 whitespace-nowrap">
-                                    {{ $entry->created_at->format('m/d H:i') }}
+                                    {{ $entry->updated_at->format('m/d H:i') }}
                                 </td>
 
                                 {{-- 5. 操作 --}}
