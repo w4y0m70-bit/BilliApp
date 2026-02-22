@@ -44,13 +44,14 @@
             </div>
 
             <div class="mt-6">
-                <a href="{{ route('user.line.login') }}" class="w-full inline-flex justify-center items-center bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-2 px-4 rounded transition shadow-sm">
-                    <img src="{{ asset('images/LINE_Brand_icon.png') }}" 
-                            alt="LINEアイコン" 
-                            class="w-10 h-10 sm:w-6 sm:h-6 object-contain">
-                    LINEでログイン
-                </a>
-                <span class="text-gray-500 text-xs mt-1 inline-block w-full text-center">アカウントページで連携が必要です</span>
+                <div class="mt-6">
+                    <x-user.line-auth-button type="login" />
+                    
+                    {{-- メッセージも状況に合わせて変更 --}}
+                    <span class="text-gray-500 text-xs mt-1 inline-block w-full text-center">
+                        LINEアカウントで簡単にログイン・登録ができます
+                    </span>
+                </div>
             </div>
 
             <div class="mt-6 text-center">

@@ -3,18 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use App\Enums\PlayerClass;
 use App\Models\NotificationSetting;
 use App\Models\UserEntry;
+use App\Models\SocialAccount;
+use App\Notifications\UserResetPasswordNotification;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
-use App\Notifications\UserResetPasswordNotification;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable, LogsActivity;
 
@@ -65,6 +68,26 @@ class User extends Authenticatable
         );
     }
     // --------------------------------------------------
+
+    /**
+     * メール認証通知を送信する際に使用するルート名を指定
+     */
+    public function sendEmailVerificationNotification()
+    {
+        // 標準の通知クラスのURL生成ルールを上書き
+        \Illuminate\Auth\Notifications\VerifyEmail::createUrlUsing(function ($notifiable) {
+            return \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                'user.verification.verify', // ここを route:list の名前に合わせる
+                now()->addMinutes(config('auth.verification.expire', 60)),
+                [
+                    'id' => $notifiable->getKey(),
+                    'hash' => sha1($notifiable->getEmailForVerification()),
+                ]
+            );
+        });
+
+        $this->notify(new \Illuminate\Auth\Notifications\VerifyEmail);
+    }
 
     /**
      * LINE通知用のルートを定義する
@@ -131,4 +154,9 @@ class User extends Authenticatable
                     ->withTimestamps();
     }
 
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
+    }
+    
 }

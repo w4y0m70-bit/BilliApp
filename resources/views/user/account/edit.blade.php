@@ -13,6 +13,23 @@
             プロフィール編集
         </h2>
 
+        @if (session('warning'))
+            <div class="mb-4 flex items-center p-4 text-amber-800 border-t-4 border-amber-300 bg-amber-50" role="alert">
+                <span class="material-symbols-outlined mr-2">warning</span>
+                <div class="text-sm font-medium">
+                    {{ session('warning') }}
+                </div>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="mb-4 flex items-center p-4 text-red-800 border-t-4 border-red-300 bg-red-50" role="alert">
+                <span class="material-symbols-outlined mr-2">error</span>
+                <div class="text-sm font-medium">
+                    {{ session('error') }}
+                </div>
+            </div>
+        @endif
         {{-- バリデーションエラー表示 --}}
         @if ($errors->any())
             <div class="mb-4 bg-red-50 text-red-700 p-3 rounded-lg text-sm">
@@ -58,16 +75,6 @@
                     <label class="block text-sm font-semibold mb-1 text-gray-700">アカウント名</label>
                     <input type="text" name="account_name" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-user/50 focus:outline-none"
                             value="{{ old('account_name', $user->account_name) }}" placeholder="アプリ内での表示名">
-                </div>
-
-                {{-- メールアドレス --}}
-                <div class="mb-4">
-                    <label class="block font-semibold mb-1">メールアドレス</label>
-                    <input type="email" name="email" 
-                        value="{{ old('email', $user->email) }}"
-                        readonly 
-                        class="w-full border p-2 rounded mt-1 block bg-gray-100 border-gray-300 shadow-sm focus:ring-0 cursor-not-allowed">
-                    <!-- <p class="text-xs text-gray-500 mt-1">※メールアドレスは変更できません。</p> -->
                 </div>
 
                 {{-- 住所セクション（細分化） --}}
@@ -120,6 +127,131 @@
                     </select>
                 </div>
 
+                {{-- メールアドレス --}}
+                <div class="mb-4">
+                    <label class="block font-semibold mb-1 text-gray-700">メールアドレス</label>
+                    <div class="flex items-start gap-2">
+                        <div class="flex-grow">
+                            <input type="email" id="email_input" name="email" 
+                                value="{{ old('email', $user->email) }}"
+                                class="w-full border p-2 rounded block shadow-sm focus:ring-user focus:border-user {{ $user->email ? 'bg-white' : 'bg-yellow-50' }}"
+                                placeholder="example@mail.com">
+                        </div>
+                        
+                        {{-- 専用ボタン --}}
+                        <div>
+                            @if(!$user->email)
+                                <button type="button" onclick="updateEmailOnly()" class="bg-user text-white text-xs px-4 py-2.5 rounded shadow-sm hover:opacity-90 whitespace-nowrap">
+                                    登録
+                                </button>
+                            @elseif(!$user->hasVerifiedEmail())
+                                <button type="button" onclick="event.preventDefault(); document.getElementById('verification-form').submit();" class="bg-amber-500 text-white text-xs px-4 py-2.5 rounded shadow-sm hover:bg-amber-600 whitespace-nowrap">
+                                    認証メールを送信
+                                </button>
+                            @else
+                                <button type="button" onclick="updateEmailOnly()" class="bg-gray-600 text-white text-xs px-4 py-2.5 rounded shadow-sm hover:bg-gray-700 whitespace-nowrap">
+                                    変更
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- ステータス表示 --}}
+                    @if($user->email)
+                        <div class="mt-1">
+                            @if($user->hasVerifiedEmail())
+                                <span class="text-green-600 text-[10px] flex items-center">
+                                    <span class="material-symbols-outlined text-xs mr-1">check_circle</span>認証済み。このアドレスでログイン可能です。
+                                </span>
+                            @else
+                                <span class="text-amber-600 text-[10px] flex items-center">
+                                    <span class="material-symbols-outlined text-xs mr-1">pending</span>未認証。届いたメールのリンクをクリックしてください。
+                                </span>
+                            @endif
+                        </div>
+                    @endif
+                </div>
+
+                {{-- パスワード設定 (新規追加) --}}
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 mt-6">
+                    <label class="block text-sm font-bold mb-3 text-blue-800 flex items-center">
+                        <span class="material-symbols-outlined text-sm mr-1">lock</span>
+                        ログインパスワード（メールアドレスでログインする場合に必要です）
+                    </label>
+                    @if(empty($user->password))
+                        {{-- パスワードが未設定（LINE登録直後など） --}}
+                        <div class="flex items-center p-1 mb-2 text-amber-800 bg-amber-50 rounded-lg border border-amber-200">
+                            <span class="material-symbols-outlined mr-2 text-sm">priority_high</span>
+                            <p class="text-xs">
+                                現在パスワードが設定されていません。メールアドレスでログインするには設定が必要です。
+                            </p>
+                        </div>
+                    @else
+                        {{-- パスワード設定済み --}}
+                        <div class="flex items-center p-1 mb-2 text-green-800 bg-green-50 rounded-lg border border-green-200">
+                            <span class="material-symbols-outlined mr-2 text-sm">check_circle</span>
+                            <p class="text-xs">
+                                パスワードは設定済みです。変更したい場合は入力してください。
+                            </p>
+                        </div>
+                    @endif
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs text-gray-500 font-bold">新しいパスワード</label>
+                            <input type="password" name="password" 
+                                class="w-full border rounded px-3 py-2 focus:ring-1 focus:ring-user" placeholder="8文字以上">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500 font-bold">パスワード(確認)</label>
+                            <input type="password" name="password_confirmation" 
+                                class="w-full border rounded px-3 py-2 focus:ring-1 focus:ring-user" placeholder="もう一度入力">
+                        </div>
+                    </div>
+                    <!-- <p class="text-[10px] text-blue-600 mt-2">※メールアドレスでログインしたい場合は設定してください。</p> -->
+                </div>
+
+                {{-- LINE連携 --}}
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200 mt-6">
+                    <label class="block text-sm font-bold mb-3 text-gray-700 flex items-center">
+                        <img src="{{ asset('images/LINE_Brand_icon.png') }}" class="w-4 h-4 mr-1">
+                        LINE連携設定
+                    </label>
+
+                    @if($user->socialAccounts->where('provider', 'line')->isNotEmpty())
+                        <div class="bg-white p-3 rounded border border-green-200">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-green-700 font-medium flex items-center">
+                                    <span class="material-symbols-outlined mr-1 text-sm">check_circle</span>
+                                    LINEと連携しています
+                                </span>
+
+                                {{-- 解除条件の判定 --}}
+                                @if(!empty($user->email) && !empty($user->password))
+                                    <button type="button" 
+                                            onclick="if(confirm('LINE連携を解除しますか？')) document.getElementById('line-disconnect-form').submit();"
+                                            class="text-xs text-red-500 hover:underline">
+                                        連携を解除する
+                                    </button>
+                                @endif
+                            </div>
+
+                            {{-- メール/パスワードが未設定の場合の警告 --}}
+                            <!-- @if(empty($user->email) || empty($user->password))
+                                <div class="mt-3 p-2 bg-green-50 border border-green-100 rounded text-[11px] text-green-600">
+                                    <p class="font-bold mb-1">【重要】連携を解除できません</p>
+                                    <p>メールアドレスとパスワードが設定されていないため、今連携を解除すると次回からログインできなくなります。解除を希望される場合は、先に上記の項目を設定して保存してください。</p>
+                                </div>
+                            @endif -->
+                        </div>
+                    @else
+                        {{-- 未連携時の表示はそのまま --}}
+                        <div class="bg-white p-3 rounded border border-gray-200">
+                            <p class="text-xs text-gray-500 mb-3">LINEと連携すると、ログインが簡単になり、通知をLINEで受け取れるようになります。</p>
+                            <x-user.line-auth-button type="link" class="!w-auto !py-1.5 !text-xs" />
+                        </div>
+                    @endif
+                </div>
+                
                 {{-- 通知設定 --}}
                 <div class="pt-4 border-t">
                     <label class="block font-bold mb-4 text-gray-700 text-sm">通知設定</label>
@@ -138,19 +270,42 @@
                                 <div class="flex gap-6 pl-2">
                                     @foreach($notificationVias as $viaKey => $viaLabel)
                                         @php
+                                            // 現在の設定状況を確認
                                             $isEnabled = $user->notificationSettings
                                                 ->where('type', $type)
                                                 ->where('via', $viaKey)
                                                 ->where('enabled', true)
                                                 ->isNotEmpty();
+
+                                            // 選択可能かどうかの判定
+                                            $isDisabled = false;
+                                            $reason = '';
+
+                                            if ($viaKey === 'mail' && !$user->hasVerifiedEmail()) {
+                                                $isDisabled = true;
+                                                $reason = '(メール認証後に利用可)';
+                                            }
+
+                                            if ($viaKey === 'line' && $user->socialAccounts->where('provider', 'line')->isEmpty()) {
+                                                $isDisabled = true;
+                                                $reason = '(LINE連携後に利用可)';
+                                            }
                                         @endphp
-                                        <label class="inline-flex items-center cursor-pointer group">
+
+                                        <label class="inline-flex items-center {{ $isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer group' }}">
                                             <input type="checkbox" 
                                                 name="notifications[{{ $type }}][{{ $viaKey }}]" 
                                                 value="1"
                                                 @checked(old("notifications.$type.$viaKey", $isEnabled))
-                                                class="rounded border-gray-300 text-user shadow-sm focus:ring-user">
-                                            <span class="ml-2 text-sm text-gray-600 group-hover:text-user transition">{{ $viaLabel }}</span>
+                                                {{ $isDisabled ? 'disabled' : '' }}
+                                                class="rounded border-gray-300 text-user shadow-sm focus:ring-user {{ $isDisabled ? 'bg-gray-100' : '' }}">
+                                            
+                                            <span class="ml-2 text-sm text-gray-600">
+                                                {{ $viaLabel }}
+                                                @if($isDisabled)
+                                                    <span class="text-[10px] text-gray-400 block md:inline md:ml-1">{{ $reason }}</span>
+                                                @endif
+                                            </span>
                                         </label>
                                     @endforeach
                                 </div>
@@ -164,12 +319,44 @@
                 <button type="submit" class="bg-user hover:opacity-90 text-white font-bold py-2 px-8 rounded-full shadow-md transition-all">
                     更新する
                 </button>
-                <a href="{{ route('user.account.show') }}" class="text-sm text-gray-500 hover:text-gray-700 underline">
-                    戻る
-                </a>
+                @if($user->last_name)
+                    <a href="{{ route('user.account.show') }}" class="text-gray-500 text-sm">
+                        ＜ 戻る
+                    </a>
+                @else
+                    {{-- 名前がない（新規登録直後）は、戻るボタンの代わりに案内を出すか、何も出さない --}}
+                    <span class="text-red-500 text-xs font-bold">
+                        ※ プロフィールの初期設定を完了させてください
+                    </span>
+                @endif
             </div>
         </form>
     </div>
 </div>
+
+{{-- 認証メール送信用の隠しフォーム --}}
+<form id="verification-form" method="POST" action="{{ route('user.verification.send') }}" class="hidden">
+    @csrf
+</form>
+{{-- LINE認証解除用の隠しフォーム --}}
+<form id="line-disconnect-form" action="{{ route('user.line.disconnect') }}" method="POST" style="display: none;">
+    @csrf
+    {{-- メソッドを DELETE にしている場合はコントローラー側も合わせる必要があります --}}
+    @method('POST') 
+</form>
+
+<script>
+function updateEmailOnly() {
+    const email = document.getElementById('email_input').value;
+    if(!email) {
+        alert('メールアドレスを入力してください。');
+        return;
+    }
+    if(confirm('メールアドレスを更新し、認証メールを送信しますか？')) {
+        // メインのフォームを送信する
+        document.querySelector('form.h-adr').submit();
+    }
+}
+</script>
 @endsection
 

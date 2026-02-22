@@ -35,6 +35,14 @@ class UserEntryController extends Controller
 
     public function create(Event $event)
     {
+        $user = auth()->user();
+
+        // 名前が入っていなければ、編集画面へ戻す
+        if (empty($user->last_name) || empty($user->first_name)) {
+            return redirect()->route('user.account.edit')
+                ->with('warning', 'エントリーするには、まずお名前（氏名）を正しく登録してください。');
+        }
+
         $event->load('eventClasses');
         // すでにエントリー済みかチェック
         $existing = UserEntry::where('user_id', auth()->id())
@@ -49,13 +57,18 @@ class UserEntryController extends Controller
         // Eager Loading でクラス一覧も取得
         $event->load('eventClasses');
 
-        return view('user.events.create', compact('event'));
+        return view('user.events.create', compact('event', 'user'));
     }
 
     public function entry(Request $request, Event $event)
     {
         $user = auth()->user();
         $userId = $user->id;
+
+        if (empty($user->last_name) || empty($user->first_name)) {
+            return redirect()->route('user.account.edit')
+                ->with('error', '利用者情報が不十分です。お名前を登録してください。');
+        }
 
         // バリデーション（ユーザーが選んだクラスと回答）
         $request->validate([

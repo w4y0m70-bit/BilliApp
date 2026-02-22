@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\User\{
     UserLoginController,
     UserEventController,
@@ -9,19 +10,18 @@ use App\Http\Controllers\User\{
     UserForgotPasswordController,
     UserResetPasswordController,
     UserGroupController,
-    LineLoginController,
-    Auth\UserRegisterController
+    Auth\UserRegisterController,
+    Auth\UserLineAuthController
 };
 use App\Http\Controllers\EventParticipantController;
-// LINEログイン
-Route::get('login/line/callback', [LineLoginController::class, 'handleLineCallback'])->name('line.callback');
 
-// LINE連携
-// 連携を開始するルート（ボタンのリンク先）
-Route::get('/login/line', [LineLoginController::class, 'redirectToLine'])->name('line.login');
-// LINEからのコールバックを受けるルート
-// ※外部から叩かれるため、ここにも名前をつけておくと管理しやすいです
-// Route::get('/login/line/callback', [LineLoginController::class, 'handleLineCallback']);
+// LINEログイン・登録（未ログイン時に使用）
+// ボタンのリンク先: route('line.login')
+Route::get('/login/line', [UserLineAuthController::class, 'redirectToProvider'])->name('line.login');
+
+// LINEからのコールバック（共通）
+// LINE Developers側にはこのURLを登録: https://ドメイン/user/login/line/callback
+Route::get('/login/line/callback', [UserLineAuthController::class, 'handleProviderCallback'])->name('line.callback');
 
 Route::get('/login', [UserLoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [UserLoginController::class, 'login'])->name('login.post');
@@ -40,6 +40,13 @@ Route::post('/register', [UserRegisterController::class, 'register'])->name('reg
 Route::get('forgot-password', [UserForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
 // メール送信
 Route::post('forgot-password', [UserForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+// メール認証リンクをクリックしたときの処理
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill();
+    return redirect()->route('user.account.show')->with('success', 'メールアドレスの認証が完了しました！');
+})->middleware(['auth', 'signed'])
+->name('verification.verify');
+
 // 再設定画面
 Route::get('reset-password/{token}', [UserResetPasswordController::class, 'showResetForm'])
     ->name('password.reset');
@@ -82,6 +89,11 @@ Route::middleware(['auth:web', 'session.lifetime:60'])->group(function () {
     Route::get('account/edit', [UserProfileController::class, 'edit'])->name('account.edit');
     Route::patch('account/update', [UserProfileController::class, 'update'])->name('account.update');
 
+    // 認証メール再送
+    Route::post('/email/verification-notification', [UserProfileController::class, 'sendVerificationEmail'])
+        ->middleware(['throttle:6,1'])
+        ->name('verification.send');
+
     // グループ一覧
     Route::get('/groups', [UserGroupController::class, 'index'])->name('groups.index');
     
@@ -89,6 +101,6 @@ Route::middleware(['auth:web', 'session.lifetime:60'])->group(function () {
     Route::post('/groups/{group}/apply', [UserGroupController::class, 'apply'])->name('groups.apply');
 
     // LINE連携解除
-    Route::post('/login/line/disconnect', [LineLoginController::class, 'disconnect'])->name('line.disconnect');
+    Route::post('/login/line/disconnect', [UserLineAuthController::class, 'disconnect'])->name('line.disconnect');
 
 });

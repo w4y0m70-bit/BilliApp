@@ -55,52 +55,59 @@
                     </div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row sm:justify-between border-b pb-2">
-                    <span class="text-gray-500 text-sm font-semibold">電話番号</span>
-                    <span>{{ $user->phone ?? '－' }}</span>
+                <div class="grid grid-cols-2 gap-4 border-b pb-2">
+                    <div class="flex flex-col">
+                        <span class="text-gray-500 text-sm font-semibold">電話番号</span>
+                        <span>{{ $user->phone ?? '－' }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-gray-500 text-sm font-semibold">クラス</span>
+                        <span class="bg-gray-100 px-2 py-0.5 rounded text-sm">{{ $user->class ?? '－' }}</span>
+                    </div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row sm:justify-between border-b pb-2">
-                    <span class="text-gray-500 text-sm font-semibold">メールアドレス</span>
-                    <span class="text-blue-600">{{ $user->email }}</span>
-                </div>
+                <div class="mb-4">
+                    <label class="block font-semibold text-gray-700 text-sm">メールアドレス</label>
+                    <div class="mt-1 flex items-center gap-2">
+                        <span class="text-gray-900">
+                            {{ $user->email ?: '未登録' }}
+                        </span>
 
-                <div class="flex flex-col sm:flex-row sm:justify-between border-b pb-2">
-                    <span class="text-gray-500 text-sm font-semibold">クラス</span>
-                    <span class="bg-gray-100 px-2 py-0.5 rounded text-sm">{{ $user->class ?? '－' }}</span>
+                        @if($user->email)
+                            @if($user->hasVerifiedEmail())
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                    <span class="material-symbols-outlined text-xs mr-1">check_circle</span>
+                                    認証済み
+                                </span>
+                            @else
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                                    <span class="material-symbols-outlined text-xs mr-1">pending</span>
+                                    未認証
+                                </span>
+                            @endif
+                        @endif
+                    </div>
                 </div>
-            </div>
 
             {{-- LINE連携セクション (コンパクト版) --}}
             <div class="flex items-center justify-between py-3 border-b border-gray-100">
                 <div class="flex items-center space-x-2">
-                    <span class="text-gray-600 text-sm font-medium">LINE連携</span>
-                    @if($user->line_id)
+                    <span class="text-gray-600 text-sm font-medium">LINE連携ステータス</span>
+                    {{-- line_id ではなく socialAccounts の存在で判定 --}}
+                    @if($user->socialAccounts->where('provider', 'line')->isNotEmpty())
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                             <span class="material-symbols-outlined text-xs mr-1">check_circle</span>
                             連携済み
                         </span>
                     @else
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">
+                            <span class="material-symbols-outlined text-xs mr-1">block</span>
                             未連携
                         </span>
                     @endif
                 </div>
-
-                <div>
-                    @if($user->line_id)
-                        {{-- 連携済みの場合：解除をシンプルに --}}
-                        <form action="{{ route('user.line.disconnect') }}" method="POST" onsubmit="return confirm('LINE連携を解除しますか？');">
-                            @csrf
-                            <button type="submit" class="text-xs text-red-400 hover:text-red-600 underline">連携解除</button>
-                        </form>
-                    @else
-                        {{-- 未連携の場合：小さいボタン --}}
-                        <a href="{{ route('user.line.login') }}" class="inline-flex items-center bg-[#06C755] hover:bg-[#05b34c] text-white text-xs font-bold py-1.5 px-3 rounded shadow-sm transition">
-                            <span class="material-symbols-outlined text-sm mr-1.5">chat</span>
-                            連携する
-                        </a>
-                    @endif
+                <div class="text-xs text-gray-400">
+                    ※連携設定は「登録情報を修正する」から行えます
                 </div>
             </div>
             {{-- 通知設定セクション --}}
@@ -142,11 +149,11 @@
                             </div>
                         </div>
                     @endforeach
-                    @if(!$user->line_id)
+                    <!-- @if(!$user->line_id)
                         <p class="text-[10px] text-red-500 mt-2">
                             ※LINE通知を有効にするには、上記の「LINEと連携する」ボタンから連携を行ってください。
                         </p>
-                    @endif
+                    @endif -->
                 </div>
             </div>
 

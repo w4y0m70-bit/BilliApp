@@ -36,11 +36,12 @@ return [
     ],
 
     'line' => [
-        'url' => env('LINE_OFFICIAL_ACCOUNT_URL'),
-        'client_id' => env('LINE_CLIENT_ID'),
+        'client_id'     => env('LINE_CLIENT_ID'),
         'client_secret' => env('LINE_CLIENT_SECRET'),
-        'redirect_uri' => env('LINE_REDIRECT_URI'),
-        'access_token' => env('LINE_ACCESS_TOKEN'),
+        'redirect'      => env('LINE_REDIRECT_URI'),
+        'additional'    => [
+            'site' => 'https://access.line.me',
+        ],
     ],
 
 ];

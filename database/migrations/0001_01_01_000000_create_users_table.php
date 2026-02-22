@@ -11,16 +11,15 @@ return new class extends Migration {
             $table->id();
             
             // --- 氏名の分割 ---
-            $table->string('last_name')->comment('姓');
-            $table->string('first_name')->comment('名');
-            $table->string('last_name_kana')->comment('セイ');
-            $table->string('first_name_kana')->comment('メイ');
+            $table->string('last_name')->nullable();
+            $table->string('first_name')->nullable();
+            $table->string('last_name_kana')->nullable();
+            $table->string('first_name_kana')->nullable();
             // ------------------
 
-            $table->string('email')->unique();
+            $table->string('email')->unique()->nullable();
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('line_id')->nullable();
-            $table->string('password');
+            $table->string('password')->nullable();;
             $table->rememberToken();
             $table->timestamps();
             $table->string('role')->default('player');
