@@ -4,6 +4,17 @@
 
 @section('content')
 <div class="max-w-2xl mx-auto">
+    @if (session('success'))
+        <div class="alert alert-success" style="color: green; background: #e6fffa; padding: 10px; margin-bottom: 20px;">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-danger" style="color: red; background: #fff5f5; padding: 10px; margin-bottom: 20px;">
+            {{ session('error') }}
+        </div>
+    @endif
     <div class="bg-white shadow rounded-xl overflow-hidden">
         <div class="bg-admin px-6 py-4">
             <h2 class="text-xl font-bold text-white flex items-center">

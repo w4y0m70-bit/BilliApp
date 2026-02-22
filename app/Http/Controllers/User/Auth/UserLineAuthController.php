@@ -4,7 +4,7 @@ namespace App\Http\Controllers\User\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\SocialAccount;
+use App\Models\UserSocialAccount;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +16,9 @@ class UserLineAuthController extends Controller
      */
     public function redirectToProvider()
     {
-        return Socialite::driver('line')->redirect();
+        return Socialite::driver('line')
+            ->with(['redirect_uri' => route('user.line.callback')]) 
+            ->redirect();
     }
 
     /**
@@ -31,7 +33,7 @@ class UserLineAuthController extends Controller
         }
 
         // すでに同じLINE IDで登録があるか探す
-        $socialAccount = SocialAccount::where('provider', 'line')
+        $socialAccount = UserSocialAccount::where('provider', 'line')
             ->where('provider_id', $socialUser->getId())
             ->first();
 
@@ -43,7 +45,10 @@ class UserLineAuthController extends Controller
 
         if (Auth::check()) {
             // 【連携】ログイン中なら今のユーザーに紐付け
-            $this->linkProvider($socialUser, Auth::user());
+            $result = $this->linkProvider($socialUser, Auth::user());
+            if (!$result) {
+                return redirect()->route('user.account.edit')->with('error', 'このLINEアカウントは既に他のユーザーに連携されています。');
+            }
             return redirect()->route('user.account.show')->with('success', 'LINE連携が完了しました。');
         }
 
@@ -80,17 +85,19 @@ class UserLineAuthController extends Controller
      */
     private function linkProvider($socialUser, $user)
     {
-        // 既に他のユーザーが同じLINE IDを使っていないか確認
-        $exists = SocialAccount::where('provider', 'line')
+        $exists = UserSocialAccount::where('provider', 'line')
             ->where('provider_id', $socialUser->getId())
             ->exists();
 
-        if (!$exists) {
-            $user->socialAccounts()->create([
-                'provider' => 'line',
-                'provider_id' => $socialUser->getId(),
-            ]);
+        if ($exists) {
+            return false; // 既に使われている
         }
+
+        $user->socialAccounts()->create([
+            'provider' => 'line',
+            'provider_id' => $socialUser->getId(),
+        ]);
+        return true;
     }
 
     /**

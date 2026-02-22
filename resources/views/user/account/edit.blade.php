@@ -51,7 +51,7 @@
                 {{-- 氏名セクション (追加) --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-semibold mb-1 text-gray-700">氏名</label>
+                        <label class="block text-sm font-semibold mb-1 text-gray-700">氏名<span class="text-red-500 ml-1">*</span></label>
                         <div class="flex gap-2">
                             <input type="text" name="last_name" value="{{ old('last_name', $user->last_name) }}" 
                                 class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-user/50 focus:outline-none" placeholder="姓" required>

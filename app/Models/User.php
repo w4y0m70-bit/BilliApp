@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use App\Enums\PlayerClass;
 use App\Models\NotificationSetting;
 use App\Models\UserEntry;
-use App\Models\SocialAccount;
+use App\Models\UserSocialAccount;
 use App\Notifications\UserResetPasswordNotification;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
@@ -156,7 +156,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function socialAccounts(): HasMany
     {
-        return $this->hasMany(SocialAccount::class);
+        return $this->hasMany(UserSocialAccount::class);
     }
     
 }

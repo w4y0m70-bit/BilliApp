@@ -8,11 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('social_accounts', function (Blueprint $table) {
+        Schema::create('admin_social_accounts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // ユーザー削除で連動削除
-            $table->string('provider'); // 'line', 'google' などが入る
-            $table->string('provider_id'); // LINE側のユーザー識別子
+            $table->foreignId('admin_id')->constrained()->onDelete('cascade');
+            $table->string('provider'); // 'line'
+            $table->string('provider_id')->unique(); // 管理者の中でユニーク
             $table->timestamps();
 
             // 同じプロバイダーで同じIDが重複して登録されないようにする
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('social_accounts');
+        Schema::dropIfExists('admin_social_accounts');
     }
 };

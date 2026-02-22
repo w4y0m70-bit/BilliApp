@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\{
     Auth\AdminRegisterController,
+    Auth\AdminLineAuthController,
     AdminResetPasswordController,
     AdminForgotPasswordController,
     AdminLoginController,
@@ -15,7 +16,6 @@ use App\Http\Controllers\Admin\{
 
 // プレフィックスや名前空間は app.php で一括設定するので、中身だけでOK
 Route::middleware('guest:admin')->group(function () {
-    Route::middleware('guest:admin')->group(function () {
     // 1. ログイン
     Route::get('login', [AdminLoginController::class, 'showLoginForm'])->name('login');
     Route::post('login', [AdminLoginController::class, 'login'])->name('login.post');
@@ -32,7 +32,7 @@ Route::middleware('guest:admin')->group(function () {
 
     // 4. 【最終ステップ】保存処理
     Route::post('register/store', [AdminRegisterController::class, 'register'])->name('register.post');
-});
+
     // パスワードリセット（管理者）
     Route::get('forgot-password', [AdminForgotPasswordController::class, 'showLinkRequestForm'])
         ->name('password.request');
@@ -94,6 +94,28 @@ Route::middleware(['auth:admin', 'role:admin', 'session.lifetime:20'])->group(fu
         Route::get('/', [AdminAccountController::class, 'show'])->name('show');
         Route::get('edit', [AdminAccountController::class, 'edit'])->name('edit');
         Route::patch('update', [AdminAccountController::class, 'update'])->name('update');
+        // メール変更リクエスト（Ajax）
+        Route::post('email-request', [AdminAccountController::class, 'requestEmailChange'])->name('email.request');
+        // メール認証リンクの受け皿
+        Route::get('email-verify/{token}', [AdminAccountController::class, 'verifyEmailChange'])->name('email.verify');
+    });
+
+    // 管理者用LINE連携ルート
+    Route::get('line/link', [AdminLineAuthController::class, 'redirectToProvider'])->name('line.login');
+    Route::get('line/callback', [AdminLineAuthController::class, 'handleProviderCallback'])->name('line.callback');
+    Route::post('line/disconnect', [AdminLineAuthController::class, 'disconnect'])->name('line.disconnect');
+
+    // メール認証関連
+    Route::prefix('email')->name('verification.')->group(function () {
+        // 認証リンクをクリックした時の受け皿
+        Route::get('verify/{id}/{hash}', [AdminAccountController::class, 'verify'])
+            ->middleware(['signed', 'throttle:6,1'])
+            ->name('verify');
+
+        // 認証メールの再送
+        Route::post('resend', [AdminAccountController::class, 'resend'])
+            ->middleware('throttle:6,1')
+            ->name('resend');
     });
 
     // グループ管理の基本（一覧・作成）

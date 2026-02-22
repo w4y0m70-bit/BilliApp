@@ -3,15 +3,19 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use App\Models\NotificationSetting;
+use App\Models\UserSocialAccount;
+use App\Models\Ticket;
+use App\Models\Admin;
 use App\Notifications\AdminResetPasswordNotification;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
-class Admin extends Authenticatable
+class Admin extends Authenticatable implements MustVerifyEmail
 {
     use Notifiable;
 
@@ -98,10 +102,27 @@ class Admin extends Authenticatable
         $this->notify(new AdminResetPasswordNotification($token));
     }
 
+    /**
+     * 管理者専用の認証メールを送信する
+     */
+    public function sendEmailVerificationNotification()
+    {
+        // ユーザー側とURLを分けるため、独自の通知クラスを呼び出すのが理想的です
+        // もし独自クラスを作るのが面倒な場合は、ここに直接メール送信処理を書いてもOKです
+        $this->notify(new \App\Notifications\Admin\VerifyEmailNotification);
+    }
+
     public function tickets()
     {
         // 1人が複数のチケットを持つので「hasMany」
         return $this->hasMany(Ticket::class);
+    }
+
+    public function socialAccounts()
+    {
+        // 管理者用のSNSアカウント情報を取得
+        // 多対多、もしくは一対多の定義に合わせてください（通常は hasMany）
+        return $this->hasOne(AdminSocialAccount::class);
     }
 
     // ログ

@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->string('name_kana')->nullable();
             $table->string('manager_name')->nullable();
             $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('zip_code', 7)->nullable();
             $table->string('prefecture')->nullable();
@@ -34,5 +35,6 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists('admins');
+        $table->dropColumn('email_verified_at');
     }
 };

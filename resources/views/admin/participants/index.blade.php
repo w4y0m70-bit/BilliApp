@@ -62,11 +62,11 @@
             <form @submit.prevent="addGuest">
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="block mb-1 font-medium text-sm">姓</label>
+                        <label class="block mb-1 font-medium text-sm">姓<span class="text-red-500 ml-1">*</span></label>
                         <input type="text" x-model="guest.last_name" class="border rounded w-full px-3 py-2" placeholder="例: 山田" required>
                     </div>
                     <div>
-                        <label class="block mb-1 font-medium text-sm">名</label>
+                        <label class="block mb-1 font-medium text-sm">名<span class="text-red-500 ml-1">*</span></label>
                         <input type="text" x-model="guest.first_name" class="border rounded w-full px-3 py-2" placeholder="例: 太郎" required>
                     </div>
                 </div>
@@ -82,7 +82,7 @@
                     </div>
                 </div>
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">性別</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">性別<span class="text-red-500 ml-1">*</span></label>
                     <div class="flex gap-4">
                         <template x-for="(label, value) in {'男性':'男性', '女性':'女性', '未回答':'回答しない'}" :key="value">
                             <label class="inline-flex items-center">
