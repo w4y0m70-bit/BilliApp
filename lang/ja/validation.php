@@ -129,5 +129,14 @@ return [
     'attributes' => [
         'email'    => 'メールアドレス',
         'password' => 'パスワード',
+        'classes' => '募集クラス',
+        'event_date' => '開催日',
+        'entry_deadline' => 'エントリー期限',
+        'first_name' => '姓',
+        'first_name_kana' => '姓（カナ）',
+        'gender' => '性別',
+        'groups' => 'グループ',
+        'last_name' => '名',
+        'last_name_kana' => '名（カナ）',
     ],
 ];

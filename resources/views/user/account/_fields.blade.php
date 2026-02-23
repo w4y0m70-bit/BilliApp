@@ -19,12 +19,17 @@
     </div>
 </div>
 
+{{-- アカウント名 --}}
+<div>
+    <x-form.input type="string" name="account_name" label="アカウント名" :value="old('account_name', $user->account_name ?? '')" required class="mb-0" />
+</div>
+
 {{-- 2. 性別・生年月日セクション --}}
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     {{-- 性別 --}}
     <div class="flex flex-col">
-        <label class="block text-sm font-semibold text-gray-700">性別 <span class="text-red-500">*</span></label>
         <div class="flex gap-4 mt-2 mb-1"> {{-- 縦に並んだ際、下の項目とくっつきすぎないよう調整 --}}
+            <label class="block text-sm font-semibold text-gray-700">性別 <span class="text-red-500">*</span></label>
             @foreach(['男性' => '男性', '女性' => '女性', '未回答' => '未回答'] as $val => $label)
                 <label class="inline-flex items-center cursor-pointer">
                     <input type="radio" name="gender" value="{{ $val }}" 
@@ -56,4 +61,15 @@
         @endforeach
     </x-form.select>
 </div>
+{{-- 住所セクション --}}
+<div class="bg-blue-50/50 p-4 rounded-lg border border-blue-100 space-y-3">
+    <p class="text-sm font-bold text-blue-800 flex items-center">
+        <span class="material-symbols-outlined text-sm mr-1">location_on</span>住所
+    </p>
+    <x-form.input name="zip_code" label="郵便番号" :value="old('zip_code', $user->zip_code ?? '')" placeholder="1234567" class="p-postal-code" />
+    <x-form.input name="prefecture" label="都道府県" :value="old('prefecture', $user->prefecture ?? '')" readonly class="p-region bg-gray-50" />
+    <x-form.input name="city" label="市区町村" :value="old('city', $user->city ?? '')" class="p-locality" />
+    <x-form.input name="address_line" label="番地・建物名" :value="old('address_line', $user->address_line ?? '')" class="p-street-address p-extended-address" />
+</div>
+<x-form.input name="phone" label="電話番号" :value="old('phone', $user->phone ?? '')" placeholder="09012345678" />
 </div>

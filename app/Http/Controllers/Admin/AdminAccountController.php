@@ -7,6 +7,7 @@ use App\Mail\AdminEmailUpdateVerification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -111,9 +112,22 @@ class AdminAccountController extends Controller
 
     public function requestEmailChange(Request $request)
     {
-        $request->validate([
+        // 1. バリデーターを個別に作成
+        $validator = Validator::make($request->all(), [
             'new_email' => 'required|email|unique:admins,email',
+        ], [
+            'new_email.required' => 'メールアドレスを入力してください。',
+            'new_email.email'    => '正しいメールアドレスの形式で入力してください。',
+            'new_email.unique'   => 'このメールアドレスは既に登録されています。',
         ]);
+
+        // 2. 失敗した場合は JSON で 422 エラーを返す
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors'  => $validator->errors()
+            ], 422);
+        }
 
         $admin = Auth::guard('admin')->user();
         $token = \Illuminate\Support\Str::random(64);
@@ -130,7 +144,10 @@ class AdminAccountController extends Controller
         // Mailableを作成し、URLを含めて送信
         Mail::to($request->new_email)->send(new AdminEmailUpdateVerification($token));
 
-        return response()->json(['message' => 'success']);
+        return response()->json([
+            'success' => true,
+            'message' => 'success'
+        ]);
     }
 
     public function verifyEmailChange($token)

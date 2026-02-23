@@ -13,17 +13,6 @@
             アカウント情報編集
         </h2>
 
-        {{-- バリデーションエラーの表示 --}}
-        <!-- @if ($errors->any())
-            <div class="mb-4 bg-red-50 text-red-700 p-3 rounded-lg text-sm">
-                <ul class="list-disc list-inside">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif -->
-
         <form action="{{ route('admin.account.update') }}" method="POST" class="h-adr">
             @csrf
             @method('PATCH')
@@ -31,7 +20,7 @@
             {{-- 国名指定（yubinbango用） --}}
             <span class="p-country-name" style="display:none;">Japan</span>
 
-                <x-form.input name="admin_id" label="管理者ID" :value="$admin->admin_id" required />
+                <x-form.input name="admin_id" label="ログインID" :value="$admin->admin_id" required />
 
                 <x-form.input name="name" label="店舗名（主催者名）" :value="$admin->name" required />
 

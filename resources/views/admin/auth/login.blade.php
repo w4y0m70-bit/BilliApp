@@ -18,7 +18,7 @@
                 @csrf
 
                 <div class="mb-4">
-                    <label class="block mb-1 font-medium">管理者ID</label>
+                    <label class="block mb-1 font-medium">ログインID</label>
                     <input type="text" name="admin_id" class="border w-full p-2 rounded" placeholder="admin001">
                 </div>
 

@@ -27,7 +27,7 @@
             {{-- 基本情報セクション --}}
             <div class="grid grid-cols-1 gap-y-4">
                 <div class="flex flex-col sm:flex-row sm:justify-between border-b pb-2">
-                    <span class="text-gray-500 text-sm font-semibold">管理者ID</span>
+                    <span class="text-gray-500 text-sm font-semibold">ログインID</span>
                     <span class="font-mono">{{ $admin->admin_id }}</span>
                 </div>
                 <div class="flex flex-col sm:flex-row sm:justify-between border-b pb-2">

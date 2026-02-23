@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
@@ -126,11 +127,24 @@ class UserProfileController extends Controller
      */
     public function requestEmailChange(Request $request)
     {
-        $request->validate([
+        // 1. Validatorを個別に作成して制御する
+        $validator = Validator::make($request->all(), [
             'new_email' => 'required|email|unique:users,email',
+        ], [
+            'new_email.required' => 'メールアドレスを入力してください。',
+            'new_email.email'    => '正しいメールアドレスの形式で入力してください。',
+            'new_email.unique'   => 'このメールアドレスは既に登録されています。',
         ]);
 
-        $user = Auth::user(); // 一般ユーザー用ガード
+        // 2. バリデーション失敗時のレスポンスをJSONに固定
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors'  => $validator->errors()
+            ], 422); // 422ステータスを返すことでJS側のcatchや!response.okで拾える
+        }
+
+        $user = Auth::user();
         $token = Str::random(64);
 
         DB::table('user_email_resets')->updateOrInsert(
@@ -144,7 +158,7 @@ class UserProfileController extends Controller
 
         Mail::to($request->new_email)->send(new UserEmailUpdateVerification($token));
 
-        return response()->json(['message' => 'success']);
+        return response()->json(['success' => true, 'message' => 'success']);
     }
 
     /**

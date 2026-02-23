@@ -29,7 +29,7 @@
             <thead>
                 <tr class="bg-gray-100 border-b">
                     <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">No.</th>
-                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">氏名 / アカウント名</th>
+                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">アカウント名</th>
                     {{-- 性別カラムを削除 --}}
                     <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">クラス</th>
                 </tr>
@@ -48,7 +48,7 @@
                             {{-- 女性なら text-pink-700 を適用 --}}
                             <div class="font-bold {{ $participant->gender === '女性' ? 'text-pink-700' : 'text-gray-800' }}">
                                 @if($participant->user)
-                                    {{ $participant->user->account_name }}
+                                    {{ $participant->user?->account_name ?? '（未設定）' }}
                                 @else
                                     {{ $participant->full_name }}
                                     <span class="ml-1 text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded border border-gray-200 font-normal">ゲスト</span>

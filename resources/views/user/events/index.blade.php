@@ -4,24 +4,26 @@
 
 @section('content')
 <div class="px-4">
-    <h2 class="text-2xl font-bold">公開中のイベント
-    <span help-key="user.events.index" class="inline-block mb-4">
-        <x-help help-key="user.events.index" />
-    </span>
-    </h2>
+    <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold">公開中のイベント
+        <span help-key="user.events.index" class="inline-block mb-4">
+            <x-help help-key="user.events.index" />
+        </span>
+        </h2>
 
-    {{-- エリアフィルター 完成しているが今は非表示--}}
-    <!-- <div class="mb-2 flex justify-end">
-        <button type="button" onclick="toggleFilter()" class="flex items-center space-x-2 bg-white border border-gray-300 px-4 py-2 rounded-full shadow-sm hover:bg-gray-50 transition">
-            <span class="material-symbols-outlined text-gray-600">tune</span>
-            <span class="text-sm font-bold text-gray-700">エリアを絞り込む</span>
-            @if(request()->filled('prefs') || request()->filled('cities'))
-                <span class="bg-user text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
-                    {{ count(request('prefs', [])) + count(request('cities', [])) }}
-                </span>
-            @endif
-        </button>
-    </div> -->
+        {{-- エリアフィルター 完成しているが今は非表示 （消さないように！！！）--}}
+        <!-- <div class="mb-2 flex justify-end">
+            <button type="button" onclick="toggleFilter()" class="flex items-center space-x-2 bg-white border border-gray-300 px-4 py-2 rounded-full shadow-sm hover:bg-gray-50 transition">
+                <span class="material-symbols-outlined text-gray-600">tune</span>
+                <span class="text-sm font-bold text-gray-700">エリアを絞り込む</span>
+                @if(request()->filled('prefs') || request()->filled('cities'))
+                    <span class="bg-user text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
+                        {{ count(request('prefs', [])) + count(request('cities', [])) }}
+                    </span>
+                @endif
+            </button>
+        </div> -->
+    </div>
 
     <div id="filter-overlay" onclick="toggleFilter()" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity"></div>
 
