@@ -16,16 +16,19 @@ class UserEventController extends Controller
     public function index(Request $request)
     {
         $now = now();
-        // 公開中のイベントを主催するAdminから、住所リストを取得
+
+        // 1. フィルター用の住所リスト取得
         $availableLocations = Admin::whereIn('id', function($q) use ($now) {
-                $q->select('admin_id')->from('events')
-                ->whereNotNull('published_at')->where('published_at', '<=', $now)
-                ->where('event_date', '>=', $now);
+                // ★ ここはスコープを使わず、直接カラムを指定して書きます
+                $q->select('admin_id')
+                  ->from('events')
+                  ->whereNotNull('published_at')
+                  ->where('published_at', '<=', $now)
+                  ->where('event_date', '>=', $now);
             })
             ->whereNotNull('prefecture')
             ->get(['prefecture', 'city']);
 
-        // フィルタ用のデータ整形： [ '東京都' => ['新宿区', '渋谷区'], '神奈川県' => ['横浜市'] ]
         $groupedLocations = [];
         foreach ($availableLocations as $loc) {
             if (preg_match('/^.*?(市|区)/u', $loc->city, $matches)) {
@@ -34,9 +37,13 @@ class UserEventController extends Controller
             }
         }
 
-        $query = Event::with('organizer')->where('event_date', '>=', $now)->whereNotNull('published_at');
+        // 2. クエリのビルド開始
+        // ここは Event モデルから始まっているので scopePublished() が使えます
+        $query = Event::with('organizer')
+            ->published() 
+            ->where('event_date', '>=', $now);
 
-        // 複数選択フィルタリング (都道府県 OR 市区)
+        // 3. 複数選択フィルタリング (都道府県 OR 市区)
         if ($request->filled('prefs') || $request->filled('cities')) {
             $query->whereHas('organizer', function($q) use ($request) {
                 $q->where(function($sub) use ($request) {
@@ -52,21 +59,13 @@ class UserEventController extends Controller
             });
         }
 
-        $events = $query->orderBy('event_date', 'asc')->paginate(12);
+        // 4. 最後に並び替えてデータを取得
+        $events = $query->orderBy('event_date', 'asc')->get();
 
         return view('user.events.index', [
             'events' => $events,
             'groupedLocations' => $groupedLocations,
         ]);
-    }
-
-    public function show(Event $event)
-    {
-        $currentUser = Auth::user() ?? \App\Models\User::first();
-        $userEntry = $event->userEntries()->where('user_id', $currentUser->id)->first();
-        $status = $userEntry ? $userEntry->status : null;
-
-        return view('user.events.show', compact('event', 'userEntry', 'status'));
     }
 
 }
