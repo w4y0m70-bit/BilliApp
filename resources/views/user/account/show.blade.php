@@ -4,6 +4,18 @@
 
 @section('content')
 <div class="max-w-3xl mx-auto px-4">
+    {{-- セッションメッセージ表示用 --}}
+    @if (session('success'))
+        <div class="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded relative">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
+            {{ session('error') }}
+        </div>
+    @endif
     <div class="bg-white shadow rounded-xl overflow-hidden">
         <div class="bg-user px-6 py-4">
             <h2 class="text-xl font-bold text-white flex items-center">
@@ -106,9 +118,9 @@
                         </span>
                     @endif
                 </div>
-                <div class="text-xs text-gray-400">
+                <!-- <div class="text-xs text-gray-400">
                     ※連携設定は「登録情報を修正する」から行えます
-                </div>
+                </div> -->
             </div>
             {{-- 通知設定セクション --}}
             <div class="mt-8 bg-gray-50 p-4 rounded-lg border border-gray-100">

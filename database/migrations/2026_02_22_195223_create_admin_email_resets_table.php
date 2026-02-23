@@ -1,3 +1,4 @@
+<!-- 管理者メールアドレス変更用テーブル -->
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -14,7 +15,7 @@ return new class extends Migration
         Schema::create('admin_email_resets', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('admin_id');
-            $table->string('new_email');
+            $table->string('new_email')->nullable();
             $table->string('token');
             $table->timestamp('created_at')->nullable(); // ここは単独テーブルなのでOK
         });

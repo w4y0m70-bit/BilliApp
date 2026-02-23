@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\NotificationSetting;
 use App\Enums\PlayerClass;
+use App\Mail\UserEmailUpdateVerification;
+use App\Models\User;
 
 class UserProfileController extends Controller
 {
@@ -21,7 +26,7 @@ class UserProfileController extends Controller
 
     public function edit()
     {
-        $user = Auth::user();
+        $user = Auth::user()->load(['notificationSettings', 'socialAccounts']);
         return view('user.account.edit', compact('user'));
     }
 
@@ -114,5 +119,54 @@ class UserProfileController extends Controller
         $user->sendEmailVerificationNotification();
 
         return redirect()->back()->with('success', '認証用メールを送信しました。メール内のリンクをクリックして完了してください。');
+    }
+
+    /**
+     * メールアドレス変更リクエスト（メール送信）
+     */
+    public function requestEmailChange(Request $request)
+    {
+        $request->validate([
+            'new_email' => 'required|email|unique:users,email',
+        ]);
+
+        $user = Auth::user(); // 一般ユーザー用ガード
+        $token = Str::random(64);
+
+        DB::table('user_email_resets')->updateOrInsert(
+            ['user_id' => $user->id],
+            [
+                'new_email' => $request->new_email,
+                'token' => $token,
+                'created_at' => now()
+            ]
+        );
+
+        Mail::to($request->new_email)->send(new UserEmailUpdateVerification($token));
+
+        return response()->json(['message' => 'success']);
+    }
+
+    /**
+     * メールアドレス変更の確定処理
+     */
+    public function verifyEmailChange($token)
+    {
+        $reset = DB::table('user_email_resets')->where('token', $token)->first();
+
+        // 24時間期限チェック
+        if (!$reset || Carbon::parse($reset->created_at)->addHours(24)->isPast()) {
+            return redirect()->route('profile.show')->with('error', 'リンクの有効期限が切れているか、無効です。');
+        }
+
+        $user = User::find($reset->user_id);
+        $user->update([
+            'email' => $reset->new_email,
+            'email_verified_at' => now(),
+        ]);
+
+        DB::table('user_email_resets')->where('token', $token)->delete();
+
+        return redirect()->route('user.account.show')->with('success', 'メールアドレスを更新しました。');
     }
 }

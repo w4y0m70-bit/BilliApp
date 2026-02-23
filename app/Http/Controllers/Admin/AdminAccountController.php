@@ -62,9 +62,6 @@ class AdminAccountController extends Controller
             
             $admin->update(collect($validated)->except('email')->toArray());
             
-            // 3. 基本情報の保存
-            $admin->save();
-
             // 4. 通知設定の更新
             $notificationTypes = ['event_full']; 
             $notificationVias  = ['mail', 'line'];
@@ -79,9 +76,7 @@ class AdminAccountController extends Controller
                 }
             }
 
-            $message = $isEmailUpdated 
-                ? '情報を更新しました。新しいアドレスに認証メールを送信しました。' 
-                : 'アカウント情報を更新しました。';
+            $message = 'アカウント情報を更新しました。';
 
             return redirect()->route('admin.account.show')->with('success', $message);
         });

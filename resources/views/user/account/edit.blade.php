@@ -132,27 +132,17 @@
                     <label class="block font-semibold mb-1 text-gray-700">メールアドレス</label>
                     <div class="flex items-start gap-2">
                         <div class="flex-grow">
-                            <input type="email" id="email_input" name="email" 
-                                value="{{ old('email', $user->email) }}"
-                                class="w-full border p-2 rounded block shadow-sm focus:ring-user focus:border-user {{ $user->email ? 'bg-white' : 'bg-yellow-50' }}"
-                                placeholder="example@mail.com">
+                            {{-- 直接編集できないように readonly を追加 --}}
+                            <input type="email" value="{{ old('email', $user->email) }}"
+                                class="w-full border p-2 rounded block shadow-sm bg-gray-100 cursor-not-allowed"
+                                readonly placeholder="example@mail.com">
                         </div>
                         
-                        {{-- 専用ボタン --}}
+                        {{-- ボタンでモーダルを起動 --}}
                         <div>
-                            @if(!$user->email)
-                                <button type="button" onclick="updateEmailOnly()" class="bg-user text-white text-xs px-4 py-2.5 rounded shadow-sm hover:opacity-90 whitespace-nowrap">
-                                    登録
-                                </button>
-                            @elseif(!$user->hasVerifiedEmail())
-                                <button type="button" onclick="event.preventDefault(); document.getElementById('verification-form').submit();" class="bg-amber-500 text-white text-xs px-4 py-2.5 rounded shadow-sm hover:bg-amber-600 whitespace-nowrap">
-                                    認証メールを送信
-                                </button>
-                            @else
-                                <button type="button" onclick="updateEmailOnly()" class="bg-gray-600 text-white text-xs px-4 py-2.5 rounded shadow-sm hover:bg-gray-700 whitespace-nowrap">
-                                    変更
-                                </button>
-                            @endif
+                            <button type="button" onclick="openEmailModal()" class="bg-gray-600 text-white text-xs px-4 py-2.5 rounded shadow-sm hover:bg-gray-700 whitespace-nowrap">
+                                変更
+                            </button>
                         </div>
                     </div>
 
@@ -161,11 +151,11 @@
                         <div class="mt-1">
                             @if($user->hasVerifiedEmail())
                                 <span class="text-green-600 text-[10px] flex items-center">
-                                    <span class="material-symbols-outlined text-xs mr-1">check_circle</span>認証済み。このアドレスでログイン可能です。
+                                    <span class="material-symbols-outlined text-xs mr-1">check_circle</span>認証済み。
                                 </span>
                             @else
                                 <span class="text-amber-600 text-[10px] flex items-center">
-                                    <span class="material-symbols-outlined text-xs mr-1">pending</span>未認証。届いたメールのリンクをクリックしてください。
+                                    <span class="material-symbols-outlined text-xs mr-1">pending</span>未認証。
                                 </span>
                             @endif
                         </div>
@@ -270,14 +260,7 @@
                                 <div class="flex gap-6 pl-2">
                                     @foreach($notificationVias as $viaKey => $viaLabel)
                                         @php
-                                            // 現在の設定状況を確認
-                                            $isEnabled = $user->notificationSettings
-                                                ->where('type', $type)
-                                                ->where('via', $viaKey)
-                                                ->where('enabled', true)
-                                                ->isNotEmpty();
-
-                                            // 選択可能かどうかの判定
+                                            // --- 1. 表示可能・操作可能かどうかの判定 (isDisabled) ---
                                             $isDisabled = false;
                                             $reason = '';
 
@@ -289,6 +272,29 @@
                                             if ($viaKey === 'line' && $user->socialAccounts->where('provider', 'line')->isEmpty()) {
                                                 $isDisabled = true;
                                                 $reason = '(LINE連携後に利用可)';
+                                            }
+
+                                            // --- 2. チェックを入れるかどうか (isEnabled) ---
+                                            $settingExists = $user->notificationSettings->isNotEmpty();
+
+                                            if ($settingExists) {
+                                                // すでにDBに設定がある場合は、DBの値を優先
+                                                $isEnabled = $user->notificationSettings
+                                                    ->where('type', $type)
+                                                    ->where('via', $viaKey)
+                                                    ->where('enabled', true)
+                                                    ->isNotEmpty();
+                                            } else {
+                                                // 設定がない（新規登録直後）場合のデフォルト挙動
+                                                if ($viaKey === 'mail') {
+                                                    // メール登録者（またはメアド認証済み）ならON、未認証ならOFF
+                                                    $isEnabled = $user->hasVerifiedEmail();
+                                                } elseif ($viaKey === 'line') {
+                                                    // LINE連携済みならON
+                                                    $isEnabled = $user->socialAccounts->where('provider', 'line')->isNotEmpty();
+                                                } else {
+                                                    $isEnabled = false;
+                                                }
                                             }
                                         @endphp
 
@@ -334,6 +340,32 @@
     </div>
 </div>
 
+<div id="emailChangeModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black opacity-50"></div>
+        <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full z-50">
+            <div class="bg-white p-6">
+                <h3 class="text-lg font-bold mb-4">メールアドレスの変更</h3>
+                <p class="text-sm text-gray-600 mb-4">新しいメールアドレスを入力してください。確認メールを送信します。</p>
+                <input type="email" id="new_email_input" 
+                    class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-user/50 focus:outline-none"
+                    placeholder="new-email@example.com">
+                <div id="modal_error" class="text-red-500 text-xs mt-2 hidden"></div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="submitEmailChange()" id="submitBtn"
+                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-user text-base font-medium text-white hover:opacity-90 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                    送信する
+                </button>
+                <button type="button" onclick="closeEmailModal()"
+                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    キャンセル
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- 認証メール送信用の隠しフォーム --}}
 <form id="verification-form" method="POST" action="{{ route('user.verification.send') }}" class="hidden">
     @csrf
@@ -346,16 +378,57 @@
 </form>
 
 <script>
-function updateEmailOnly() {
-    const email = document.getElementById('email_input').value;
-    if(!email) {
-        alert('メールアドレスを入力してください。');
+function openEmailModal() {
+    document.getElementById('emailChangeModal').classList.remove('hidden');
+    document.getElementById('modal_error').classList.add('hidden');
+}
+
+function closeEmailModal() {
+    document.getElementById('emailChangeModal').classList.add('hidden');
+}
+
+function submitEmailChange() {
+    const newEmail = document.getElementById('new_email_input').value;
+    const errorDiv = document.getElementById('modal_error');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (!newEmail) {
+        errorDiv.textContent = 'メールアドレスを入力してください。';
+        errorDiv.classList.remove('hidden');
         return;
     }
-    if(confirm('メールアドレスを更新し、認証メールを送信しますか？')) {
-        // メインのフォームを送信する
-        document.querySelector('form.h-adr').submit();
-    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = '送信中...';
+
+    // 先ほど routes/web.php で定義したルートへ送信
+    fetch("{{ route('user.account.email.request') }}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+        },
+        body: JSON.stringify({ new_email: newEmail })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === 'success') {
+            alert('確認メールを送信しました。メール内のリンクをクリックして完了させてください。');
+            location.reload();
+        } else {
+            errorDiv.textContent = data.errors ? Object.values(data.errors)[0] : '送信に失敗しました。';
+            errorDiv.classList.remove('hidden');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '送信する';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        errorDiv.textContent = '通信エラーが発生しました。';
+        errorDiv.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitBtn.textContent = '送信する';
+    });
 }
 </script>
 @endsection

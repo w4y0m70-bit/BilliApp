@@ -39,6 +39,7 @@ return [
         'client_id'     => env('LINE_CLIENT_ID'),
         'client_secret' => env('LINE_CLIENT_SECRET'),
         'redirect'      => env('LINE_REDIRECT_URI'),
+        'url'           => env('LINE_FRIEND_URL'),
         'additional'    => [
             'site' => 'https://access.line.me',
         ],

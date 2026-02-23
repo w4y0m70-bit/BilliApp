@@ -40,10 +40,13 @@ Route::post('/register', [UserRegisterController::class, 'register'])->name('reg
 Route::get('forgot-password', [UserForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
 // メール送信
 Route::post('forgot-password', [UserForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+// メール内のリンクの着地先
+Route::get('account/verify-email-change/{token}', [UserProfileController::class, 'verifyEmailChange'])
+    ->name('email.verify');
 // メール認証リンクをクリックしたときの処理
 Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
     $request->fulfill();
-    return redirect()->route('user.account.show')->with('success', 'メールアドレスの認証が完了しました！');
+    return redirect()->route('account.show')->with('success', 'メールアドレスの認証が完了しました！');
 })->middleware(['auth', 'signed'])
 ->name('verification.verify');
 
@@ -88,6 +91,10 @@ Route::middleware(['auth:web', 'session.lifetime:60'])->group(function () {
     Route::get('account/show', [UserProfileController::class, 'show'])->name('account.show');
     Route::get('account/edit', [UserProfileController::class, 'edit'])->name('account.edit');
     Route::patch('account/update', [UserProfileController::class, 'update'])->name('account.update');
+
+    // メールアドレス変更リクエスト（モーダルからの送信先）
+    Route::post('account/request-email-change', [UserProfileController::class, 'requestEmailChange'])
+        ->name('account.email.request');
 
     // 認証メール再送
     Route::post('/email/verification-notification', [UserProfileController::class, 'sendVerificationEmail'])

@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('admins', function (Blueprint $table) {
             $table->id();
-            $table->string('admin_id')->unique();
+            $table->string('admin_id')->unique()->onDelete('cascade');
             $table->string('name');               // 店舗名
             $table->string('name_kana')->nullable();
             $table->string('manager_name')->nullable();

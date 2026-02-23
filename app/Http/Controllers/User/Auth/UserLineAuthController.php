@@ -32,24 +32,38 @@ class UserLineAuthController extends Controller
             return redirect()->route('user.login')->withErrors(['line' => 'LINE認証に失敗しました。']);
         }
 
-        // すでに同じLINE IDで登録があるか探す
+        // ★【最優先】まず「ログイン中か」を確認する
+        if (Auth::check()) {
+            $user = Auth::user();
+            
+            // すでにこのLINE IDが誰かに使われていないかチェック
+            $exists = UserSocialAccount::where('provider', 'line')
+                ->where('provider_id', $socialUser->getId())
+                ->where('user_id', '!=', $user->id) // 自分以外が使っていたらNG
+                ->exists();
+
+            if ($exists) {
+                return redirect()->route('user.account.edit')->with('error', 'このLINEアカウントは既に他のユーザーに連携されています。');
+            }
+
+            // 自分自身の連携、または新規連携なら保存
+            $user->socialAccounts()->updateOrCreate(
+                ['provider' => 'line'], // LINEは1人1つ
+                ['provider_id' => $socialUser->getId()]
+            );
+
+            return redirect()->route('user.account.show')->with('success', 'LINE連携が完了しました。');
+        }
+
+        // --- 以下、未ログイン時の処理（ログインまたは新規登録） ---
+
         $socialAccount = UserSocialAccount::where('provider', 'line')
             ->where('provider_id', $socialUser->getId())
             ->first();
 
         if ($socialAccount) {
-            // 【ログイン】登録済みならそのままログイン
             Auth::login($socialAccount->user);
-            return redirect()->route('user.events.index'); // 任意のダッシュボードへ
-        }
-
-        if (Auth::check()) {
-            // 【連携】ログイン中なら今のユーザーに紐付け
-            $result = $this->linkProvider($socialUser, Auth::user());
-            if (!$result) {
-                return redirect()->route('user.account.edit')->with('error', 'このLINEアカウントは既に他のユーザーに連携されています。');
-            }
-            return redirect()->route('user.account.show')->with('success', 'LINE連携が完了しました。');
+            return redirect()->route('user.events.index');
         }
 
         // 【新規登録】登録がない＆未ログインなら、新規作成

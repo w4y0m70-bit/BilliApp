@@ -88,6 +88,7 @@ class UserRegisterController extends Controller
             
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'email_verified_at' => now(),
             'gender' => $request->gender,
             'birthday' => $request->birthday,
             'zip_code' => $request->zip_code,
@@ -101,7 +102,7 @@ class UserRegisterController extends Controller
         ]);
 
         // 通知設定の初期保存（変更なし）
-        $types = ['event_published', 'waitlist_updates', 'waitlist_updates'];
+        $types = ['event_published', 'waitlist_updates'];
         $vias = $request->input('notification_via', []);
 
         foreach ($types as $type) {
