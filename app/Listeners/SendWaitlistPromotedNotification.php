@@ -18,6 +18,11 @@ class SendWaitlistPromotedNotification implements ShouldQueue
         try {
             $entry = $event->entry;
             $user = $entry->user;
+            // ★ ゲスト（会員登録なし）の場合は通知対象外として終了
+            if (!$user) {
+                Log::info("Entry ID {$entry->id} はゲスト（非会員）のため通知をスキップしました。");
+                return;
+            }
             $eventData = $entry->event;
 
             // 1. LINE送信設定の確認
@@ -27,19 +32,19 @@ class SendWaitlistPromotedNotification implements ShouldQueue
                 ->where('enabled', true)
                 ->exists();
 
-            if ($isLineEnabled && !empty($user->line_id)) {
+            if ($isLineEnabled && !empty($user->provider_id)) {
                 $organizerName = $eventData->organizer->name ?? '主催者';
                 $eventName = $eventData->title;
                 $eventDate = $eventData->event_date ? $eventData->event_date->format('Y/m/d H:i') : '未定';
 
-                $lineMessage = "【繰り上げ参加確定】\n\n"
+                $lineMessage = "【エントリーが確定しました（キャンセル待ち繰り上がり）】\n\n"
                              . "キャンセル待ちのイベントで空きが出たため、参加が確定しました！\n\n"
                              . "［{$organizerName}］\n"
                              . "■{$eventName}\n"
                              . "■{$eventDate}\n\n"
                              . "詳細はこちら：\n" . url('/user/events/' . $eventData->id);
 
-                app(LineService::class)->push($user->line_id, $lineMessage);
+                app(LineService::class)->push($user->provider_id, $lineMessage);
             }
 
             // 2. 通知（メール）の実行（viaで判定）

@@ -106,7 +106,7 @@
                         <x-help help-key="app.about" />
                     </div>
                     <p>
-                        ©2026 Billents / <span class="font-mono">ver 0.963-beta</span>
+                        ©2026 Billents / <span class="font-mono">ver 0.964-beta</span>
                     </p>
                 </div>
             </div>

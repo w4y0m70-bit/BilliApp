@@ -70,13 +70,11 @@ class UserEntryController extends Controller
                 ->with('error', '利用者情報が不十分です。お名前を登録してください。');
         }
 
-        // バリデーション（ユーザーが選んだクラスと回答）
         $request->validate([
             'class' => 'required|string', 
             'user_answer' => 'nullable|string|max:500',
         ]);
 
-        // 既存エントリーの確認（既存コード維持）
         $existing = UserEntry::where('user_id', $userId)
             ->where('event_id', $event->id)
             ->first();
@@ -94,7 +92,6 @@ class UserEntryController extends Controller
 
         $status = $isFull ? 'waitlist' : 'entry';
 
-        // キャンセル待ち期限の計算（既存コード維持）
         $waitlistUntil = null;
         if ($status === 'waitlist' && $request->input('waitlist_until')) {
             $waitlistUntil = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $request->input('waitlist_until'));
@@ -113,12 +110,14 @@ class UserEntryController extends Controller
         ];
 
         $service = new \App\Services\EventEntryService();
-        $entry = $service->addEntry($event, $entryData);
+        $entry = $service->addEntry($event, $entryData); 
+        // ↑ ここで保存された瞬間に、モデル(UserEntry)のsavedイベントが動き、
+        //   自動的に満員判定＆管理者通知が行われます。
 
         $message = $status === 'entry'
             ? "「{$event->title}」にエントリーしました！"
             : "「{$event->title}」のキャンセル待ちに登録されました。";
-
+            
         return redirect()
             ->route('user.events.show', $event->id)
             ->with('message', $message);

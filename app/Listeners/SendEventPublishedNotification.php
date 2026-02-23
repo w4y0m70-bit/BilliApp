@@ -19,7 +19,7 @@ class SendEventPublishedNotification implements ShouldQueue
         $eventData = $event->event;
         $organizerName = $eventData->organizer->name ?? '主催者';
 
-        // 1. 公開通知設定が「メール」または「LINE」のいずれか一方でONになっているユーザーを全員取得
+        // 1. 公開通知設定がONになっているユーザーを取得
         $users = User::whereHas('notificationSettings', function ($q) {
             $q->where('type', 'event_published')
               ->where('enabled', true);
@@ -34,7 +34,13 @@ class SendEventPublishedNotification implements ShouldQueue
                     ->where('enabled', true)
                     ->exists();
 
-                if ($isLineEnabled && !empty($user->line_id)) {
+                // 🌟 リレーション経由で LINE ID を取得
+                $lineAccount = $user->socialAccounts()
+                    ->where('provider', 'line')
+                    ->first();
+                $lineId = $lineAccount ? $lineAccount->provider_id : null;
+
+                if ($isLineEnabled && !empty($lineId)) {
                     $message = "【イベント公開のお知らせ】\n\n"
                              . "新しいイベントが公開されました！\n\n"
                              . "［{$organizerName}］\n"
@@ -42,11 +48,11 @@ class SendEventPublishedNotification implements ShouldQueue
                              . "■開催日：" . ($eventData->event_date ? $eventData->event_date->format('Y/m/d H:i') : '未定') . "\n\n"
                              . "詳細はこちら：\n" . url('/user/events/' . $eventData->id);
 
-                    app(LineService::class)->push($user->line_id, $message);
+                    app(LineService::class)->push($lineId, $message);
+                    Log::info("新規イベントLINE通知送信成功: User ID {$user->id}");
                 }
 
-                // --- メール送信判定 (Notification内でvia制御) ---
-                // user->notifyを呼ぶ。Notification側のviaで「設定がONか」を判定させる
+                // --- メール送信判定 (Notification経由) ---
                 $user->notify(new EventPublishedNotification($eventData));
 
             } catch (\Throwable $e) {

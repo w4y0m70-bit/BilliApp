@@ -27,8 +27,41 @@ class UserEntry extends Model
         'waitlist_until',
         'user_answer',
         'class',
-        ];
-        
+        ];        
+    
+    /* ============================================================
+     * モデルイベント：保存・更新・削除時に満員チェックを自動化
+     * ============================================================ */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saved(function ($entry) {
+            $event = $entry->event;
+
+            // 1. すでに通知済みなら絶対に送らない（最優先ストッパー）
+            if (!$event || $event->notified_at !== null) {
+                return;
+            }
+
+            // 2. 今回の保存で「ステータスが entry になった（または entry のまま保存された）」場合のみ対象
+            // ※キャンセル待ち(waitlist)が増えただけの時は、ここで処理を終える
+            if ($entry->status !== 'entry') {
+                return;
+            }
+
+            // 3. 現在の「確定枠(entry)」の人数をカウント
+            $currentCount = $event->userEntries()->where('status', 'entry')->count();
+
+            // 4. 定員チェック（ちょうど満員になった時のみ送る）
+            // $currentCount > $event->max_participants を含めないことで、
+            // 万が一のオーバー時にも連打されるのを防ぎます。
+            if ($currentCount == $event->max_participants) {
+                event(new \App\Events\EventFull($event));
+            }
+        });
+    }
+    
     /* =====================
     * アクセサ：フルネーム
     * ===================== */

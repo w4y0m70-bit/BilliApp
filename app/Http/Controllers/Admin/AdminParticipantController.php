@@ -117,7 +117,7 @@ class AdminParticipantController extends Controller
                 'status'     => $entry->status,
                 'last_name'  => $lastName,
                 'first_name' => $firstName,
-                'full_name'  => "{$lastName} {$firstName}",
+                'full_name'  => $entry->full_name,
                 'account_name' => $accountName,
                 'gender'     => $entry->gender,
                 'class'      => $entry->class,

@@ -29,7 +29,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'email_verified_at',
         'password',
-        'line_id',
+        'provider_id',
         'gender',
         'birthday',
         'zip_code',
@@ -96,8 +96,8 @@ class User extends Authenticatable implements MustVerifyEmail
     public function routeNotificationForLine($notification)
     {
         // Notificationクラスが 'line' チャンネルを使おうとした時、
-        // 自動的にこの line_id が宛先として使われます。
-        return $this->line_id;
+        // 自動的にこの provider_id が宛先として使われます。
+        return $this->provider_id;
     }
     
     public function sendPasswordResetNotification($token)
@@ -133,10 +133,12 @@ class User extends Authenticatable implements MustVerifyEmail
                 'last_name_kana',
                 'first_name_kana',
                 'email',
-                'line_id',
+                'email_verified_at',
+                'password',
+                'provider_id',
                 'gender',
                 'birthday',
-                'zip_code', // addressからこちらへ修正
+                'zip_code',
                 'prefecture',
                 'city',
                 'address_line',
@@ -144,6 +146,7 @@ class User extends Authenticatable implements MustVerifyEmail
                 'account_name',
                 'class',
                 'notification_type',
+                'role',
             ])
             ->logOnlyDirty();
     }

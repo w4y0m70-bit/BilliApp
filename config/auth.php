@@ -125,4 +125,8 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    'master' => [
+    'admin_id' => env('ADMIN_ID', 'superadmin'),
+    'password' => env('ADMIN_PASSWORD'), // ここはデフォルト値を書かない方が安全
+],
 ];

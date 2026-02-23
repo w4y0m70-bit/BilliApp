@@ -11,13 +11,16 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         // 1件目：スーパー管理者
-        Admin::create([
-            'name'     => 'Superadmin',
-            'email'    => 'jiyuhonpostudio@gmail.com',
-            'password' => Hash::make(env('ADMIN_PASSWORD')),
-            'admin_id' => 'superadmin',
-            'role'     => 'super_admin',
-        ]);
+        Admin::updateOrCreate(
+            ['admin_id' => config('auth.master.admin_id')],
+            [
+                'name' => 'Superadmin',
+                'email'    => 'jiyuhonpostudio@gmail.com',
+                'password' => Hash::make(config('auth.master.password')),
+                'admin_id' => 'superadmin',
+                'role' => 'super_admin',
+            ]
+        );
 
         // 2件目：テスト店舗
         Admin::create([

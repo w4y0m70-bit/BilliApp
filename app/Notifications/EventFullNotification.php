@@ -16,7 +16,13 @@ class EventFullNotification extends Notification
 
     public function via($notifiable)
     {
-        return ['mail'];
+        $isMailEnabled = $notifiable->notificationSettings()
+            ->where('type', 'event_full')
+            ->where('via', 'mail')
+            ->where('enabled', true)
+            ->exists();
+
+        return ($isMailEnabled && $notifiable->email) ? ['mail'] : [];
     }
 
     public function toMail($notifiable)

@@ -17,11 +17,11 @@
         <div class="mt-1">
             @if($user->hasVerifiedEmail())
                 <span class="text-green-600 text-[10px] flex items-center">
-                    <span class="material-symbols-outlined text-xs mr-1">check_circle</span>認証済み。
+                    <span class="material-symbols-outlined text-sm mr-1 leading-none">check_circle</span>認証済み
                 </span>
             @else
                 <span class="text-amber-600 text-[10px] flex items-center">
-                    <span class="material-symbols-outlined text-xs mr-1">pending</span>未認証。
+                    <span class="material-symbols-outlined text-xs mr-1 leading-none">pending</span>未認証
                 </span>
             @endif
         </div>

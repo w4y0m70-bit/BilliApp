@@ -1,5 +1,5 @@
 <?php
-
+//  イベント関係（作成・編集・閲覧）
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;

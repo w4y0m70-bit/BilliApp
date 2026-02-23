@@ -21,26 +21,26 @@ class WaitlistExpiredNotification extends Notification
      */
     public function via($notifiable)
     {
-        // --- 現場検証ログ ---
-        // \Log::info("--- 通知判定開始 ---");
-        // \Log::info("通知先User ID: " . $notifiable->id);
-        // $allSettings = $notifiable->notificationSettings()->get();
-        // \Log::info("保持している設定数: " . $allSettings->count());
-        // foreach ($allSettings as $s) {
-        //     \Log::info("設定詳細: type={$s->type}, via={$s->via}, enabled=" . ($s->enabled ? 'TRUE' : 'FALSE'));
-        // }
-        // ------------------
+        // 1. まず、本当に User モデルが来ているかチェック
+        if (!$notifiable instanceof \App\Models\User) {
+            \Log::error("WaitlistExpiredNotification: Notifiable is not a User instance.");
+            return [];
+        }
 
         $channels = [];
-        $this->shouldSendLine = false;
 
-        // メール設定がONかチェック
-        if ($notifiable->notificationSettings()
+        // 2. 判定を「存在チェック」から「直接取得」に変えてデバッグしやすくする
+        // type を 'waitlist_updates' に統合している前提
+        $mailSetting = $notifiable->notificationSettings()
             ->where('type', 'waitlist_updates')
             ->where('via', 'mail')
-            ->where('enabled', true)
-            ->exists()) {
+            ->first();
+
+        if ($mailSetting && $mailSetting->enabled) {
             $channels[] = 'mail';
+        } else {
+            // なぜ届かないのか、ログで理由を特定する（確認できたら消してOK）
+            \Log::info("通知スキップ理由(User:{$notifiable->id}): " . ($mailSetting ? "enabledがFALSE" : "設定レコードなし"));
         }
 
         return $channels;

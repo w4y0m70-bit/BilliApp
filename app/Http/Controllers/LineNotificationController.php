@@ -24,13 +24,13 @@ class LineNotificationController extends Controller
         $user = User::findOrFail($userId);
 
         // 2. LINE IDが登録されているかチェック
-        if (!$user->line_id) {
+        if (!$user->provider_id) {
             return back()->with('error', 'このユーザーはLINE連携されていません。');
         }
 
         // 3. LineServiceを使って送信
         $message = "{$user->full_name}様、いつもご利用ありがとうございます！";
-        $result = $this->lineService->push($user->line_id, $message);
+        $result = $this->lineService->push($user->provider_id, $message);
 
         return $result ? "送信成功" : "送信失敗";
     }

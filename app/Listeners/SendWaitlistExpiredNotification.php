@@ -23,35 +23,46 @@ class SendWaitlistExpiredNotification
         try {
             $entry = $event->entry;
             $user = $entry->user;
-            $eventData = $entry->event;
+            if (!$user) return;
 
             // 1. LINE送信設定の確認
-            $isLineEnabled = $user->notificationSettings()
+            $lineRecord = $user->notificationSettings()
                 ->where('type', 'waitlist_updates')
                 ->where('via', 'line')
                 ->where('enabled', true)
-                ->exists();
+                ->first();
 
-            if ($isLineEnabled && !empty($user->line_id)) {
-                $organizerName = $eventData->organizer->name ?? '主催者';
-                $eventName = $eventData->title;
-                $eventDate = $eventData->event_date ? $eventData->event_date->format('Y/m/d H:i') : '未定';
+            // 2. リレーション経由で LINE の provider_id を取得
+            // socialAccounts の中から provider が 'line' のものを探し、その provider_id を取る
+            $lineAccount = $user->socialAccounts()
+                ->where('provider', 'line')
+                ->first();
+            
+            $lineId = $lineAccount ? $lineAccount->provider_id : null;
+
+            // デバッグログ（不要になったら消してOKです）
+            // \Log::info("通知判定: Enabled=" . ($lineRecord ? 'YES' : 'NO') . ", LineID=" . ($lineId ?? 'NULL'));
+
+            if ($lineRecord && !empty($lineId)) {
+                $organizerName = $entry->event->organizer->name ?? '主催者';
+                $eventName = $entry->event->title;
+                $eventDate = $entry->event->event_date ? $entry->event->event_date->format('Y/m/d H:i') : '未定';
 
                 $lineMessage = "【キャンセル待ち期限切れ】\n\n"
                              . "［{$organizerName}］\n"
                              . "■{$eventName}\n"
                              . "■{$eventDate}\n\n"
-                             . "期限が過ぎたため、自動キャンセルとなりました。アプリから再度空き状況をご確認いただけます。";
+                             . "期限が過ぎたため、自動キャンセルとなりました。";
 
-                app(LineService::class)->push($user->line_id, $lineMessage);
-                Log::info("LINE送信成功（期限切れ通知）: User ID {$user->id}");
+                app(LineService::class)->push($lineId, $lineMessage);
+                \Log::info("★LINE送信成功（期限切れ通知）: User ID {$user->id}");
             }
 
-            // 2. 通知（メール）の実行
+            // 3. メール通知の実行
             $user->notify(new WaitlistExpiredNotification($entry));
 
         } catch (\Throwable $e) {
-            Log::error("WaitlistExpiredリスナーでエラー発生: " . $e->getMessage());
+            \Log::error("WaitlistExpiredリスナーでエラー発生: " . $e->getMessage());
         }
     }
 }

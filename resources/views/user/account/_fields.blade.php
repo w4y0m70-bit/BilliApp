@@ -38,7 +38,7 @@
 
     {{-- 生年月日 --}}
     <div>
-        <x-form.input type="date" name="birthday" label="生年月日" :value="old('birthday', $user->birthday ?? '')" required class="mb-0" />
+        <x-form.input type="date" name="birthday" label="生年月日" :value="old('birthday', optional($user->birthday)->format('Y-m-d'))" required class="mb-0" />
     </div>
 </div>
 

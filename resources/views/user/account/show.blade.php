@@ -161,7 +161,7 @@
                             </div>
                         </div>
                     @endforeach
-                    <!-- @if(!$user->line_id)
+                    <!-- @if(!$user->provider_id)
                         <p class="text-[10px] text-red-500 mt-2">
                             ※LINE通知を有効にするには、上記の「LINEと連携する」ボタンから連携を行ってください。
                         </p>
