@@ -14,7 +14,7 @@
         </h2>
 
         {{-- バリデーションエラーの表示 --}}
-        @if ($errors->any())
+        <!-- @if ($errors->any())
             <div class="mb-4 bg-red-50 text-red-700 p-3 rounded-lg text-sm">
                 <ul class="list-disc list-inside">
                     @foreach ($errors->all() as $error)
@@ -22,7 +22,7 @@
                     @endforeach
                 </ul>
             </div>
-        @endif
+        @endif -->
 
         <form action="{{ route('admin.account.update') }}" method="POST" class="h-adr">
             @csrf
@@ -31,23 +31,11 @@
             {{-- 国名指定（yubinbango用） --}}
             <span class="p-country-name" style="display:none;">Japan</span>
 
-            <div class="mb-4">
-                <label class="block text-sm font-semibold mb-1 text-gray-700">管理者ID<span class="text-red-500 ml-1">*</span></label>
-                <input type="text" name="admin_id" class="border rounded w-full p-2 focus:ring-2 focus:ring-admin focus:outline-none"
-                       value="{{ old('admin_id', $admin->admin_id) }}">
-            </div>
+                <x-form.input name="admin_id" label="管理者ID" :value="$admin->admin_id" required />
 
-            <div class="mb-4">
-                <label class="block text-sm font-semibold mb-1 text-gray-700">店舗名（管理者名）<span class="text-red-500 ml-1">*</span></label>
-                <input type="text" name="name" class="border rounded w-full p-2 focus:ring-2 focus:ring-admin focus:outline-none"
-                       value="{{ old('name', $admin->name) }}" required>
-            </div>
+                <x-form.input name="name" label="店舗名（主催者名）" :value="$admin->name" required />
 
-            <div class="mb-4">
-                <label class="block text-sm font-semibold mb-1 text-gray-700">担当者名</label>
-                <input type="text" name="manager_name" class="border rounded w-full p-2 focus:ring-2 focus:ring-admin focus:outline-none"
-                       value="{{ old('manager_name', $admin->manager_name) }}">
-            </div>
+                <x-form.input name="manager_name" label="担当者名" :value="$admin->manager_name" />
 
             <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <label class="block text-sm font-bold mb-3 text-admin flex items-center">
@@ -55,38 +43,52 @@
                     所在地<span class="text-red-500 ml-1">*</span>
                 </label>
                 
-                <div class="grid grid-cols-1 gap-4">
-                    <div>
-                        <label class="text-xs text-gray-500">郵便番号 (ハイフンなし)</label>
-                        <input type="text" name="zip_code" value="{{ old('zip_code', $admin->zip_code) }}" 
-                            class="p-postal-code w-full border rounded px-3 py-2 focus:ring-1 focus:ring-admin" placeholder="1234567">
-                    </div>
+                <div class="grid grid-cols-1">
+                    {{-- 郵便番号 --}}
+                    <x-form.input 
+                        name="zip_code" 
+                        label="郵便番号" 
+                        :value="$admin->zip_code" 
+                        info="ハイフンなしで入力してください" 
+                        class="p-postal-code" 
+                        placeholder="1234567" 
+                    />
 
-                    <div>
-                        <label class="text-xs text-gray-500">都道府県</label>
-                        <input type="text" name="prefecture" value="{{ old('prefecture', $admin->prefecture) }}" 
-                            class="p-region w-full border rounded px-3 py-2 bg-white" readonly>
-                    </div>
+                    {{-- 都道府県（yubinbango用。入力不可だが値は送る必要がある） --}}
+                    <x-form.input 
+                        name="prefecture" 
+                        label="都道府県" 
+                        :value="$admin->prefecture" 
+                        class="p-region bg-white" 
+                        readonly 
+                    />
 
-                    <div>
-                        <label class="text-xs text-gray-500">市区町村</label>
-                        <input type="text" name="city" value="{{ old('city', $admin->city) }}" 
-                            class="p-locality w-full border rounded px-3 py-2 focus:ring-1 focus:ring-admin">
-                    </div>
+                    {{-- 市区町村 --}}
+                    <x-form.input 
+                        name="city" 
+                        label="市区町村" 
+                        :value="$admin->city" 
+                        class="p-locality" 
+                    />
 
-                    <div>
-                        <label class="text-xs text-gray-500">番地・建物名</label>
-                        <input type="text" name="address_line" value="{{ old('address_line', $admin->address_line) }}" 
-                            class="p-street-address p-extended-address w-full border rounded px-3 py-2 focus:ring-1 focus:ring-admin">
-                    </div>
+                    {{-- 番地・建物名 --}}
+                    <x-form.input 
+                        name="address_line" 
+                        label="番地・建物名" 
+                        :value="$admin->address_line" 
+                        class="p-street-address p-extended-address" 
+                    />
                 </div>
             </div>
 
-            <div class="mb-4">
-                <label class="block text-sm font-semibold mb-1 text-gray-700">電話番号</label>
-                <input type="text" name="phone" class="border rounded w-full p-2 focus:ring-2 focus:ring-admin focus:outline-none"
-                       value="{{ old('phone', $admin->phone) }}">
-            </div>
+            {{-- 電話番号 --}}
+            <x-form.input 
+                name="phone" 
+                label="電話番号" 
+                :value="$admin->phone" 
+                type="tel" 
+                placeholder="09012345678" 
+            />
 
             <div class="mb-6">
                 <label class="block text-sm font-semibold mb-1 text-gray-700">
@@ -156,15 +158,17 @@
                                         ->where('via', $viaKey)
                                         ->where('enabled', true)
                                         ->isNotEmpty();
+                                        
+                                    // LINE未連携時の無効化判定
+                                    $isLineDisabled = ($viaKey === 'line' && !$hasLine);
                                 @endphp
-                                <label class="inline-flex items-center cursor-pointer group">
-                                    <input type="checkbox" 
-                                        name="notifications[{{ $type }}][{{ $viaKey }}]" 
-                                        @checked(old("notifications.$type.$viaKey", $isChecked))
-                                        @if($viaKey === 'line' && !$hasLine) disabled @endif
-                                        class="rounded border-gray-300 text-admin shadow-sm focus:ring-admin {{ ($viaKey === 'line' && !$hasLine) ? 'opacity-50 cursor-not-allowed' : '' }}">
-                                        <span class="ml-2 text-sm text-gray-600 group-hover:text-admin transition">{{ $viaLabel }}</span>
-                                </label>
+
+                                <x-form.checkbox 
+                                    name="notifications[{{ $type }}][{{ $viaKey }}]" 
+                                    :label="$viaLabel" 
+                                    :checked="$isChecked" 
+                                    :disabled="$isLineDisabled"
+                                />
                             @endforeach
                         </div>
                     </div>

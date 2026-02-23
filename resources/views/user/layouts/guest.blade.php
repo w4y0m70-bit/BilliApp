@@ -8,13 +8,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+{{-- items-center を外して、上下にゆとりを持たせる --}}
+<body class="bg-gray-100 min-h-screen">
 
-    <div class="bg-white p-6 rounded shadow w-full max-w-md">
+    {{-- 
+        ここで max-w-md や bg-white を固定せず、
+        各ページ（register, loginなど）側で幅を決められるようにします 
+    --}}
+    <main>
         @yield('content')
-    </div>
+    </main>
 
 </body>
 </html>

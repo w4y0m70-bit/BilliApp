@@ -1,3 +1,4 @@
+<!-- アクティビティログテーブルにイベントカラムを追加 -->
 <?php
 
 use Illuminate\Support\Facades\Schema;

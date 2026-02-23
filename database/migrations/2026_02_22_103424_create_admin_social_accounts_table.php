@@ -1,3 +1,4 @@
+<!-- 管理者ソーシャルアカウントテーブル -->
 <?php
 
 use Illuminate\Database\Migrations\Migration;

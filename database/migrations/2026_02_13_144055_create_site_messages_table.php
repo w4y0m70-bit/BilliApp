@@ -1,3 +1,4 @@
+<!-- トップページに表示するメッセージテーブル -->
 <?php
 
 use Illuminate\Database\Migrations\Migration;

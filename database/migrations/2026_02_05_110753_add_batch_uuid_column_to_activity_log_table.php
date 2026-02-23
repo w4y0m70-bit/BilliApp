@@ -1,3 +1,4 @@
+<!-- アクティビティログテーブルにbatch_uuidカラムを追加 -->
 <?php
 
 use Illuminate\Support\Facades\Schema;

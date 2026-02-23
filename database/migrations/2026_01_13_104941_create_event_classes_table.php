@@ -1,3 +1,4 @@
+<!-- イベントの参加可能クラス設定テーブル -->
 <?php
 
 use Illuminate\Database\Migrations\Migration;
