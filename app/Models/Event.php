@@ -24,12 +24,14 @@ class Event extends Model
         'admin_id',
         'ticket_id',
         'instruction_label',
+        'notified_at',
     ];
 
     protected $casts = [
         'event_date' => 'datetime',
         'entry_deadline' => 'datetime',
         'published_at' => 'datetime',
+        'notified_at' => 'datetime',
     ];
 
     // UserEntry モデルを参照

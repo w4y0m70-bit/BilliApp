@@ -177,7 +177,6 @@ class AdminEventController extends Controller
                 'used_at'  => now()
             ]);
 
-            event(new \App\Events\EventPublished($event));
         });
     } catch (\Exception $e) {
         return redirect()->route('admin.events.create')
