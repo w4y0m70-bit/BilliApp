@@ -98,6 +98,9 @@ Route::middleware(['auth:admin', 'role:admin', 'session.lifetime:20'])->group(fu
         Route::post('email-request', [AdminAccountController::class, 'requestEmailChange'])->name('email.request');
         // メール認証リンクの受け皿
         Route::get('email-verify/{token}', [AdminAccountController::class, 'verifyEmailChange'])->name('email.verify');
+        // パスワード変更関連
+        Route::get('password', [AdminAccountController::class, 'editPassword'])->name('password.edit');
+        Route::patch('password', [AdminAccountController::class, 'updatePassword'])->name('password.update');
     });
 
     // 管理者用LINE連携ルート

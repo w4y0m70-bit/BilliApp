@@ -79,55 +79,6 @@
                 placeholder="09012345678" 
             />
 
-            <div class="mb-6">
-                <label class="block text-sm font-semibold mb-1 text-gray-700">
-                    メールアドレス
-                    <span class="text-red-500 ml-1">*</span>
-                </label>
-                <div class="flex gap-2">
-                    {{-- name="email" は送信しない（または hidden にする）ことで全体保存時の混乱を防ぐ --}}
-                    <input type="email" value="{{ $admin->email }}" readonly
-                        class="border rounded w-full p-2 bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed shadow-sm">
-                    
-                    <button type="button" onclick="openEmailModal()" 
-                            class="shrink-0 px-4 py-2 border border-admin text-admin text-xs font-bold rounded hover:bg-admin hover:text-white transition">
-                        変更する
-                    </button>
-                </div>
-            </div>
-
-            {{-- LINE連携セクションの追加（通知設定の上あたり） --}}
-            <div class="mb-8 p-4 bg-green-50 rounded-lg border border-green-200">
-                <label class="block text-sm font-bold mb-3 text-green-800 flex items-center">
-                    <span class="material-symbols-outlined text-sm mr-1">chat</span>
-                    LINE連携ステータス
-                </label>
-                
-                <div class="flex items-center justify-between">
-                    @if($hasLine)
-                        <div class="flex items-center">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-300">
-                                <span class="w-2 h-2 mr-1.5 bg-green-500 rounded-full"></span>
-                                連携済み
-                            </span>
-                        </div>
-                        <button type="button" onclick="event.preventDefault(); document.getElementById('line-disconnect-form').submit();"
-                                class="text-xs text-red-600 hover:underline flex items-center">
-                            <!-- <span class="material-symbols-outlined text-sm mr-1">link_off</span> -->
-                            連携を解除する
-                        </button>
-                    @else
-                        <div class="flex items-center text-gray-500 text-xs">
-                            <span class="material-symbols-outlined text-sm mr-1">info</span>
-                            未連携（通知をLINEで受け取るには連携が必要です）
-                        </div>
-                        <a href="{{ route('admin.line.login') }}" class="bg-[#06C755] hover:bg-[#05b34c] text-white px-4 py-1.5 rounded text-xs font-bold flex items-center shadow-sm">
-                            LINEと連携する
-                        </a>
-                    @endif
-                </div>
-            </div>
-
             <div class="mb-8">
                 <label class="block font-bold mb-4 border-b pb-2 text-gray-700 text-sm">通知設定</label>
                 
@@ -166,10 +117,10 @@
 
             <div class="flex items-center border-t pt-6">
                 <button type="submit" class="bg-admin hover:bg-admin-dark text-white px-8 py-2 rounded-full font-bold shadow-md transition-all">
-                    更新する
+                    情報を更新する
                 </button>
                 <a href="{{ route('admin.account.show') }}" class="ml-6 text-sm text-gray-500 hover:text-gray-700 underline">
-                    キャンセル
+                    戻る
                 </a>
             </div>
         </form>
@@ -215,57 +166,4 @@
     </div>
 </div>
 
-<script>    
-    function openEmailModal() {
-        document.getElementById('email-modal').classList.remove('hidden');
-        document.getElementById('email-error').classList.add('hidden');
-    }
-
-    function closeEmailModal() {
-        document.getElementById('email-modal').classList.add('hidden');
-    }
-
-    async function submitEmailChange() {
-        const email = document.getElementById('new-email-field').value;
-        const btn = document.getElementById('email-submit-btn');
-        const errorDiv = document.getElementById('email-error');
-
-        if (!email) {
-            errorDiv.textContent = 'メールアドレスを入力してください。';
-            errorDiv.classList.remove('hidden');
-            return;
-        }
-
-        // 送信中処理
-        btn.disabled = true;
-        btn.textContent = '送信中...';
-
-        try {
-            const response = await fetch("{{ route('admin.account.email.request') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ new_email: email })
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                alert('認証メールを送信しました。メール内のリンクをクリックして完了してください。');
-                closeEmailModal();
-            } else {
-                errorDiv.textContent = result.errors?.new_email?.[0] || '送信に失敗しました。';
-                errorDiv.classList.remove('hidden');
-            }
-        } catch (e) {
-            errorDiv.textContent = '通信エラーが発生しました。';
-            errorDiv.classList.remove('hidden');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = '認証メールを送信';
-        }
-    }
-</script>
 @endsection

@@ -61,10 +61,6 @@
                     <span>{{ $admin->phone ?? '未設定' }}</span>
                 </div>
                 <div class="flex flex-col sm:flex-row sm:justify-between border-b pb-2">
-                    <span class="text-gray-500 text-sm font-semibold">メールアドレス</span>
-                    <span class="text-blue-600">{{ $admin->email }}</span>
-                </div>
-                <div class="flex flex-col sm:flex-row sm:justify-between border-b pb-2">
                     <span class="text-gray-500 text-sm font-semibold">最終ログイン</span>
                     <span class="text-sm text-gray-600">{{ $admin->last_login_at ? $admin->last_login_at->format('Y/m/d H:i') : '記録なし' }}</span>
                 </div>
@@ -117,7 +113,133 @@
                     情報を編集する
                 </a>
             </div>
+
+            <div class="mt-8">
+                <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center">
+                    <span class="material-symbols-outlined text-sm mr-1">security</span>
+                    ログイン・セキュリティ
+                </h3>
+                <div class="grid grid-cols-1 gap-3">
+                    {{-- メールアドレス --}}
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                        <div>
+                            <span class="text-xs text-gray-500 font-bold block">メールアドレス</span>
+                            <span class="text-gray-800">{{ $admin->email }}</span>
+                        </div>
+                        <button type="button" onclick="openEmailModal()" 
+                                class="text-admin text-xs font-bold border border-admin px-3 py-1.5 rounded-full hover:bg-admin hover:text-white transition text-center">
+                            変更する
+                        </button>
+                    </div>
+
+                    {{-- パスワード --}}
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                        <div>
+                            <span class="text-xs text-gray-500 font-bold block">パスワード</span>
+                            @if(!empty($admin->password))
+                                <span class="text-gray-400 tracking-tighter">●●●●●●●●●●</span>
+                            @else
+                                <span class="text-red-400 text-xs font-medium italic">未設定</span>
+                            @endif
+                        </div>
+                        <a href="{{ route('admin.account.password.edit') }}" class="text-admin text-xs font-bold border border-admin px-3 py-1.5 rounded-full hover:bg-admin hover:text-white transition text-center">
+                            {{ !empty($admin->password) ? '変更する' : '設定する' }}
+                        </a>
+                    </div>
+
+                    {{-- LINE連携 --}}
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                        <div>
+                            <span class="text-xs text-gray-500 font-bold block">LINE連携</span>
+                            @if($hasLine)
+                                <span class="inline-flex items-center text-green-600 text-xs font-bold">
+                                    <span class="w-2 h-2 mr-1 bg-green-500 rounded-full"></span>連携済み
+                                </span>
+                            @else
+                                <span class="text-gray-400 text-xs">未連携</span>
+                            @endif
+                        </div>
+                        @if($hasLine)
+                            <button type="button" onclick="event.preventDefault(); document.getElementById('line-disconnect-form').submit();"
+                                    class="text-red-500 text-xs font-bold border border-red-500 px-3 py-1.5 rounded-full hover:bg-red-500 hover:text-white transition text-center">
+                                解除する
+                            </button>
+                        @else
+                            <a href="{{ route('admin.line.login') }}" class="bg-[#06C755] text-white text-xs font-bold px-3 py-1.5 rounded-full hover:bg-[#05b34c] transition text-center">
+                                LINE連携
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+{{-- LINE解除用隠しフォーム --}}
+@if($hasLine)
+<form id="line-disconnect-form" action="{{ route('admin.line.disconnect') }}" method="POST" class="hidden">
+    @csrf
+</form>
+@endif
+
+{{-- メール変更モーダル --}}
+<div id="email-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+    {{-- モーダルの内容は edit.blade.php からそのまま移動 --}}
+    {{-- ... (中略) ... --}}
+</div>
+
+<script>    
+    function openEmailModal() {
+        document.getElementById('email-modal').classList.remove('hidden');
+        document.getElementById('email-error').classList.add('hidden');
+    }
+
+    function closeEmailModal() {
+        document.getElementById('email-modal').classList.add('hidden');
+    }
+
+    async function submitEmailChange() {
+        const email = document.getElementById('new-email-field').value;
+        const btn = document.getElementById('email-submit-btn');
+        const errorDiv = document.getElementById('email-error');
+
+        if (!email) {
+            errorDiv.textContent = 'メールアドレスを入力してください。';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
+        // 送信中処理
+        btn.disabled = true;
+        btn.textContent = '送信中...';
+
+        try {
+            const response = await fetch("{{ route('admin.account.email.request') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ new_email: email })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('認証メールを送信しました。メール内のリンクをクリックして完了してください。');
+                closeEmailModal();
+            } else {
+                errorDiv.textContent = result.errors?.new_email?.[0] || '送信に失敗しました。';
+                errorDiv.classList.remove('hidden');
+            }
+        } catch (e) {
+            errorDiv.textContent = '通信エラーが発生しました。';
+            errorDiv.classList.remove('hidden');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '認証メールを送信';
+        }
+    }
+</script>
 @endsection

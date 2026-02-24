@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -24,7 +25,9 @@ class AdminAccountController extends Controller
     {
         // ログイン中の管理者を取得（guardの指定が必要な場合は適宜修正）
         $admin = Auth::guard('admin')->user(); 
-        return view('admin.account.show', compact('admin'));
+        // LINE連携しているかどうかの判定を追加
+        $hasLine = $admin->line_id !== null;
+        return view('admin.account.show', compact('admin', 'hasLine'));
     }
 
     /**
@@ -168,5 +171,40 @@ class AdminAccountController extends Controller
         DB::table('admin_email_resets')->where('token', $token)->delete();
 
         return redirect()->route('admin.account.show')->with('success', 'メールアドレスを更新しました。');
+    }
+
+    /**
+     * パスワード変更画面の表示
+     */
+    public function editPassword()
+    {
+        // 現在ログインしている管理者の情報を取得
+        $admin = auth('admin')->user(); 
+        return view('admin.account.password_edit', compact('admin'));
+    }
+
+    /**
+     * パスワードの更新処理
+     */
+    public function updatePassword(Request $request)
+    {
+        $admin = auth('admin')->user();
+
+        $rules = [
+            'password' => ['required', 'confirmed', 'min:8'],
+        ];
+
+        // パスワードが設定されている場合のみ、現在のパスワード入力を必須にする
+        if ($admin->password) {
+            $rules['current_password'] = ['required', 'current_password'];
+        }
+
+        $request->validate($rules);
+
+        $admin->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return redirect()->route('admin.account.show')->with('success', 'パスワードを更新しました。');
     }
 }

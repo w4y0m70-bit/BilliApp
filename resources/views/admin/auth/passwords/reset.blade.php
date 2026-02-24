@@ -17,7 +17,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('admin.password.update') }}">
+    <form method="POST" action="{{ route('admin.account.password.update') }}">
         @csrf
 
         {{-- トークン（必須） --}}
