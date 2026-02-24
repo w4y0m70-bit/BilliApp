@@ -183,4 +183,33 @@ class UserProfileController extends Controller
 
         return redirect()->route('user.account.show')->with('success', 'メールアドレスを更新しました。');
     }
+
+    // パスワード変更
+    public function editPassword() {
+        return view('user.account.password_edit'); // 管理者の場合は admin.account.password_edit
+    }
+
+    // パスワード更新
+    public function updatePassword(Request $request)
+    {
+        $user = $request->user();
+        
+        // パスワードが設定されているかどうかでバリデーションを分ける
+        $rules = [
+            'password' => ['required', 'confirmed', 'min:8'],
+        ];
+
+        if ($user->password) {
+            // パスワード設定済みの場合は現在値の確認を必須に
+            $rules['current_password'] = ['required', 'current_password'];
+        }
+
+        $request->validate($rules);
+
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return redirect()->route('user.account.show')->with('success', 'パスワードを設定しました。');
+    }
 }

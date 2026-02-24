@@ -78,50 +78,6 @@
                     </div>
                 </div>
 
-                <div class="mb-4">
-                    <label class="block font-semibold text-gray-700 text-sm">メールアドレス</label>
-                    <div class="mt-1 flex items-center gap-2">
-                        <span class="text-gray-900">
-                            {{ $user->email ?: '未登録' }}
-                        </span>
-
-                        @if($user->email)
-                            @if($user->hasVerifiedEmail())
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                    <span class="material-symbols-outlined text-xs mr-1">check_circle</span>
-                                    認証済み
-                                </span>
-                            @else
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-                                    <span class="material-symbols-outlined text-xs mr-1">pending</span>
-                                    未認証
-                                </span>
-                            @endif
-                        @endif
-                    </div>
-                </div>
-
-            {{-- LINE連携セクション (コンパクト版) --}}
-            <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                <div class="flex items-center space-x-2">
-                    <span class="text-gray-600 text-sm font-medium">LINE連携ステータス</span>
-                    {{-- line_id ではなく socialAccounts の存在で判定 --}}
-                    @if($user->socialAccounts->where('provider', 'line')->isNotEmpty())
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                            <span class="material-symbols-outlined text-xs mr-1">check_circle</span>
-                            連携済み
-                        </span>
-                    @else
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">
-                            <span class="material-symbols-outlined text-xs mr-1">block</span>
-                            未連携
-                        </span>
-                    @endif
-                </div>
-                <!-- <div class="text-xs text-gray-400">
-                    ※連携設定は「登録情報を修正する」から行えます
-                </div> -->
-            </div>
             {{-- 通知設定セクション --}}
             <div class="mt-8 bg-gray-50 p-4 rounded-lg border border-gray-100">
                 <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center">
@@ -174,7 +130,83 @@
                     登録情報を修正する
                 </a>
             </div>
+                            {{-- ログイン・認証情報セクション --}}
+                <div class="mt-8 bg-blue-50/50 p-5 rounded-xl border border-blue-100 space-y-4">
+                    <h3 class="text-sm font-bold text-blue-800 mb-2 flex items-center">
+                        <span class="material-symbols-outlined text-sm mr-1">shield</span>
+                        ログイン・セキュリティ設定
+                    </h3>
+
+                    {{-- メールアドレス --}}
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3 rounded-lg shadow-sm">
+                        <div>
+                            <span class="text-xs text-gray-500 font-bold block">メールアドレス</span>
+                            <div class="flex items-center">
+                                <span class="text-gray-900 font-medium">{{ $user->email }}</span>
+                                @if($user->hasVerifiedEmail())
+                                    <span class="ml-2 text-[10px] text-green-600 flex items-center bg-green-50 px-1.5 py-0.5 rounded border border-green-100">
+                                        <span class="material-symbols-outlined text-[12px] mr-0.5">verified</span>認証済み
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                        <button type="button" onclick="openEmailModal()" class="text-user text-xs font-bold border border-user px-3 py-1.5 rounded-full hover:bg-user hover:text-white transition">
+                            変更する
+                        </button>
+                    </div>
+
+                    {{-- パスワード --}}
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3 rounded-lg shadow-sm">
+                        <div>
+                            <span class="text-xs text-gray-500 font-bold block">パスワード</span>
+                            @if(!empty(auth()->user()->password))
+                                {{-- パスワード設定済みの場合 --}}
+                                <span class="text-gray-400 tracking-tighter">●●●●●●●●●●</span>
+                            @else
+                                {{-- パスワード未設定の場合 --}}
+                                <span class="text-red-400 text-xs font-medium italic text-sm">未設定</span>
+                            @endif
+                        </div>
+                        {{-- パスワード変更画面、またはモーダルへのリンク --}}
+                        <a href="{{ route('user.account.password.edit') }}" class="text-user text-xs font-bold border border-user px-3 py-1.5 rounded-full hover:bg-user hover:text-white transition text-center">
+                            変更する
+                        </a>
+                    </div>
+
+                    {{-- LINE連携 --}}
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3 rounded-lg shadow-sm border-l-4 {{ $user->socialAccounts->where('provider', 'line')->isNotEmpty() ? 'border-green-400' : 'border-gray-300' }}">
+                        <div class="flex items-center">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" class="w-4 h-4 mr-2" alt="LINE">
+                            <div>
+                                <span class="text-xs text-gray-500 font-bold block">LINE連携</span>
+                                @if($user->socialAccounts->where('provider', 'line')->isNotEmpty())
+                                    <span class="text-green-600 text-xs font-bold">連携済み</span>
+                                @else
+                                    <span class="text-gray-400 text-xs">未連携</span>
+                                @endif
+                            </div>
+                        </div>
+                        @if($user->socialAccounts->where('provider', 'line')->isNotEmpty())
+                            <button type="button" onclick="confirmDisconnectLine()" class="text-red-500 text-xs font-bold hover:underline">
+                                解除する
+                            </button>
+                        @else
+                            <a href="{{ route('user.line.redirect') }}" class="bg-[#06C755] text-white text-xs font-bold px-4 py-1.5 rounded-full hover:opacity-90 transition shadow-sm">
+                                連携する
+                            </a>
+                        @endif
+                    </div>
+                </div>
         </div>
     </div>
 </div>
+
+{{-- モーダルとスクリプト（show画面でも必要になります） --}}
+@include('user.account._email_modal')
+@include('user.account._scripts')
+{{-- 隠しフォーム --}}
+<form id="line-disconnect-form" action="{{ route('user.line.disconnect') }}" method="POST" class="hidden">
+    @csrf @method('POST') 
+</form>
+
 @endsection

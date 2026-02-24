@@ -20,45 +20,21 @@
             @csrf
             @method('PATCH')
             
-            {{-- 共通入力項目 (新規登録と共有) --}}
+            {{-- 氏名・性別・生年月日・住所・電話番号・クラスなど --}}
             @include('user.account._fields')
 
-            <hr class="my-8">
-
-            {{-- 編集画面のみ：メールアドレス (変更モーダル付き) --}}
-            @include('user.account._email_section')
-
-            {{-- 編集画面のみ：パスワード設定 --}}
-            @include('user.account._password_section')
-
-            {{-- 編集画面のみ：LINE連携 --}}
-            @include('user.account._line_section')
-            
-            {{-- 編集画面のみ：通知設定 --}}
+            {{-- 通知設定も「アクション」ではなく「項目の選択」なので、ここに残すのが自然です --}}
+            <hr class="my-8 border-gray-100">
             @include('user.account._notification_settings')
 
-            {{-- ボタンエリア --}}
             <div class="mt-8 pt-6 border-t flex items-center gap-4">
-                <button type="submit" class="bg-user hover:opacity-90 text-white font-bold py-2 px-8 rounded-full shadow-md transition-all">
-                    更新する
+                <button type="submit" class="bg-user hover:opacity-90 text-white font-bold py-2 px-10 rounded-full shadow-md transition-all">
+                    設定を保存する
                 </button>
-                @if($user->last_name)
-                    <a href="{{ route('user.account.show') }}" class="text-gray-500 text-sm">＜ 戻る</a>
-                @else
-                    <span class="text-red-500 text-xs font-bold">※ プロフィールの初期設定を完了させてください</span>
-                @endif
+                <a href="{{ route('user.account.show') }}" class="text-gray-500 text-sm">キャンセル</a>
             </div>
         </form>
     </div>
 </div>
 
-{{-- モーダル --}}
-@include('user.account._email_modal')
-
-{{-- 隠しフォーム --}}
-<form id="line-disconnect-form" action="{{ route('user.line.disconnect') }}" method="POST" class="hidden">
-    @csrf @method('POST') 
-</form>
-
-@include('user.account._scripts')
 @endsection

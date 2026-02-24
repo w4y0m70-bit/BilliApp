@@ -92,6 +92,10 @@ Route::middleware(['auth:web', 'session.lifetime:60'])->group(function () {
     Route::get('account/edit', [UserProfileController::class, 'edit'])->name('account.edit');
     Route::patch('account/update', [UserProfileController::class, 'update'])->name('account.update');
 
+    // パスワード変更
+    Route::get('account/password', [UserProfileController::class, 'editPassword'])->name('account.password.edit');
+    Route::patch('account/password', [UserProfileController::class, 'updatePassword'])->name('account.password.update');
+
     // メールアドレス変更リクエスト（モーダルからの送信先）
     Route::post('account/request-email-change', [UserProfileController::class, 'requestEmailChange'])
         ->name('account.email.request');

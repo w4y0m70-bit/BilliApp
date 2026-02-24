@@ -4,7 +4,7 @@
         ログインパスワード（メールアドレスでログインする場合に必要です）
     </label>
     
-    @if(empty($user->password))
+    <!-- @if(empty($user->password))
         <div class="flex items-center p-2 mb-2 text-amber-800 bg-amber-50 rounded-lg border border-amber-200">
             <span class="material-symbols-outlined mr-2 text-sm">priority_high</span>
             <p class="text-xs">現在パスワードが設定されていません。メールアドレスでログインするには設定が必要です。</p>
@@ -14,7 +14,7 @@
             <span class="material-symbols-outlined mr-2 text-sm">check_circle</span>
             <p class="text-xs">パスワードは設定済みです。変更したい場合は入力してください。</p>
         </div>
-    @endif
+    @endif -->
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <x-form.input name="password" type="password" label="新しいパスワード" placeholder="8文字以上" />
