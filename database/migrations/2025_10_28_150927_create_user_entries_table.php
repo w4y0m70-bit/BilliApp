@@ -9,30 +9,20 @@ return new class extends Migration {
     {
         Schema::create('user_entries', function (Blueprint $table) {
             $table->id();
-
-            // プレイヤーとイベントの紐づけ（ゲストは user_id null）
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
+            //  イベントとの紐づけ
             $table->foreignId('event_id')->constrained('events')->onDelete('cascade');
-
-            // ゲスト用の名前・性別・クラス
-            $table->string('last_name')->nullable();  // 姓
-            $table->string('first_name')->nullable(); // 名
-            $table->string('last_name_kana')->nullable();
-            $table->string('first_name_kana')->nullable();
-            $table->string('gender', 10)->nullable();
-            $table->string('class', 20)->nullable();
-            $table->text('user_answer')->nullable(); // ユーザー回答
-
-            // エントリーステータス
-            $table->enum('status', ['entry', 'waitlist', 'cancelled'])->default('entry');
-
-            // キャンセル待ち有効期限
-            $table->dateTime('waitlist_until')->nullable();
-
+            // 「誰が申し込んだか」を管理。1人エントリーの場合はその本人が入ります
+            $table->foreignId('representative_user_id')->constrained('users')->onDelete('cascade');
+            // チーム名（ペア名の入力など）
+            $table->string('team_name')->nullable();
+            // エントリー全体の管理用（以前のものを継続）
+            $table->text('user_answer')->nullable(); 
+            $table->enum('status', ['entry', 'waitlist', 'cancelled', 'pending'])->default('entry');
+            $table->dateTime('waitlist_until')->nullable();  //  キャンセル待ち期限
             $table->timestamps();
 
-            // 同じイベントに同じプレイヤーは重複させない
-            $table->unique(['event_id', 'user_id']);
+            // 同じイベントに同じ人が複数チームの代表者として申し込めないようにする場合（任意）
+            $table->unique(['event_id', 'representative_user_id']);
         });
     }
 
