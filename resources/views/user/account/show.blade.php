@@ -187,11 +187,14 @@
                             </div>
                         </div>
                         @if($user->socialAccounts->where('provider', 'line')->isNotEmpty())
-                            <button type="button" onclick="confirmDisconnectLine()" class="text-red-500 text-xs font-bold hover:underline">
-                                解除する
-                            </button>
+                            <form action="{{ route('user.line.disconnect') }}" method="POST" onsubmit="return confirm('本当にLINE連携を解除しますか？');">
+                                @csrf
+                                <button type="submit" class="text-red-600 hover:text-red-800 text-sm font-medium">
+                                    LINE連携を解除する
+                                </button>
+                            </form>
                         @else
-                            <a href="{{ route('user.line.redirect') }}" class="bg-[#06C755] text-white text-xs font-bold px-4 py-1.5 rounded-full hover:opacity-90 transition shadow-sm">
+                            <a href="{{ route('user.line.login') }}" class="bg-[#06C755] text-white text-xs font-bold px-4 py-1.5 rounded-full hover:opacity-90 transition shadow-sm">
                                 連携する
                             </a>
                         @endif

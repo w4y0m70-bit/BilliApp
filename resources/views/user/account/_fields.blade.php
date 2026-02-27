@@ -25,7 +25,7 @@
 </div>
 
 {{-- 2. 性別・生年月日セクション --}}
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+<!-- <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2"> -->
     {{-- 性別 --}}
     <div class="flex flex-col">
         <div class="flex gap-4 mt-2 mb-1"> {{-- 縦に並んだ際、下の項目とくっつきすぎないよう調整 --}}
@@ -43,9 +43,16 @@
 
     {{-- 生年月日 --}}
     <div>
-        <x-form.input type="date" name="birthday" label="生年月日" :value="old('birthday', optional($user->birthday)->format('Y-m-d'))" required class="mb-0" />
+        <x-form.input 
+            type="date" 
+            name="birthday" 
+            label="生年月日" 
+            :value="old('birthday', isset($user) && $user->birthday ? \Carbon\Carbon::parse($user->birthday)->format('Y-m-d') : '')" 
+            required 
+            class="mb-0" 
+        />
     </div>
-</div>
+<!-- </div> -->
 
 {{-- クラス選択（住所の前に持ってきた方が収まりが良い場合があります） --}}
 @php

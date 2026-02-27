@@ -23,7 +23,10 @@
                 <div class="space-y-4">
                     <div class="bg-gray-50 p-3 rounded border border-gray-200">
                         <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider">ログイン用メールアドレス</label>
-                        <p class="font-bold text-gray-800 text-lg">{{ $email }}</p>
+                        
+                        {{-- text-lg から text-base にし、break-all で枠内での改行を許可 --}}
+                        <p class="font-bold text-gray-800 text-base break-all">{{ $email }}</p>
+                        
                         <input type="hidden" name="email" value="{{ $email }}">
                         <p class="text-[10px] text-green-600 mt-1 flex items-center font-medium">
                             <span class="material-symbols-outlined text-[14px] mr-1">verified</span>認証済み
@@ -44,7 +47,7 @@
                         value="mail" 
                         label="メール通知を受け取る（推奨）" 
                         :checked="!old('notification_via') || (is_array(old('notification_via')) && in_array('mail', old('notification_via')))"
-                        reason="※エントリー完了などの大切な案内が届きます"
+                        reason="※エントリー状況などの大切な案内が届きます"
                     />
                 </div>
 

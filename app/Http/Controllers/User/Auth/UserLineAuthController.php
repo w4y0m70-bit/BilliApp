@@ -131,7 +131,6 @@ class UserLineAuthController extends Controller
         // LINEの連携情報を削除
         $user->socialAccounts()->where('provider', 'line')->delete();
 
-        return redirect()->route('user.account.edit')
-            ->with('success', 'LINE連携を解除しました。');
+        return back()->with('success', 'LINE連携を解除しました。');
     }
 }

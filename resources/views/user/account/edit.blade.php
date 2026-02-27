@@ -21,11 +21,12 @@
             @method('PATCH')
             
             {{-- 氏名・性別・生年月日・住所・電話番号・クラスなど --}}
-            @include('user.account._fields')
+            @include('user.account._fields', ['user' => $user])
 
             {{-- 通知設定も「アクション」ではなく「項目の選択」なので、ここに残すのが自然です --}}
             <hr class="my-8 border-gray-100">
             @include('user.account._notification_settings')
+            <!-- @include('user.account._notification_settings', ['user' => $user]) -->
 
             <div class="mt-8 pt-6 border-t flex items-center gap-4">
                 <button type="submit" class="bg-user hover:opacity-90 text-white font-bold py-2 px-10 rounded-full shadow-md transition-all">
