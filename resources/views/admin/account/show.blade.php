@@ -151,7 +151,7 @@
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
                         <div>
                             <span class="text-xs text-gray-500 font-bold block">LINE連携</span>
-                            @if($hasLine)
+                            @if($admin->socialAccounts)
                                 <span class="inline-flex items-center text-green-600 text-xs font-bold">
                                     <span class="w-2 h-2 mr-1 bg-green-500 rounded-full"></span>連携済み
                                 </span>
@@ -159,11 +159,13 @@
                                 <span class="text-gray-400 text-xs">未連携</span>
                             @endif
                         </div>
-                        @if($hasLine)
-                            <button type="button" onclick="event.preventDefault(); document.getElementById('line-disconnect-form').submit();"
-                                    class="text-red-500 text-xs font-bold border border-red-500 px-3 py-1.5 rounded-full hover:bg-red-500 hover:text-white transition text-center">
-                                解除する
-                            </button>
+                        @if($admin->socialAccounts)
+                            <form action="{{ route('admin.line.disconnect') }}" method="POST" onsubmit="return confirm('LINE連携を解除しますか？');">
+        @csrf
+        <button type="submit" class="text-red-500 text-xs font-bold border border-red-500 px-3 py-1.5 rounded-full hover:bg-red-500 hover:text-white transition text-center">
+            解除する
+        </button>
+    </form>
                         @else
                             <a href="{{ route('admin.line.login') }}" class="bg-[#06C755] text-white text-xs font-bold px-3 py-1.5 rounded-full hover:bg-[#05b34c] transition text-center">
                                 LINE連携
@@ -176,17 +178,38 @@
     </div>
 </div>
 
-{{-- LINE解除用隠しフォーム --}}
-@if($hasLine)
-<form id="line-disconnect-form" action="{{ route('admin.line.disconnect') }}" method="POST" class="hidden">
-    @csrf
-</form>
-@endif
-
 {{-- メール変更モーダル --}}
-<div id="email-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
-    {{-- モーダルの内容は edit.blade.php からそのまま移動 --}}
-    {{-- ... (中略) ... --}}
+<div id="email-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onclick="closeEmailModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                    <span class="material-symbols-outlined mr-2">mail</span>
+                    メールアドレスの変更
+                </h3>
+                <p class="text-sm text-gray-500 mb-4">
+                    新しいメールアドレスを入力してください。認証メールが送信されます。
+                </p>
+                <input type="email" id="new-email-field" 
+                       class="w-full border rounded p-2 focus:ring-2 focus:ring-admin focus:outline-none" 
+                       placeholder="example@mail.com">
+                <div id="email-error" class="hidden mt-2 text-red-600 text-xs"></div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="submitEmailChange()" 
+                        id="email-submit-btn"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-admin text-base font-medium text-white hover:bg-admin-dark focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                    認証メールを送信
+                </button>
+                <button type="button" onclick="closeEmailModal()" 
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    キャンセル
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>    

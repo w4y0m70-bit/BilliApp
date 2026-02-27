@@ -25,7 +25,7 @@ class AdminLineAuthController extends Controller
                 ->with(['redirect_uri' => route('admin.line.callback')])
                 ->user();
         } catch (\Exception $e) {
-            return redirect()->route('admin.account.edit')->with('error', 'LINE連携に失敗しました。');
+            return redirect()->route('admin.account.show')->with('error', 'LINE連携に失敗しました。');
         }
 
         $admin = Auth::guard('admin')->user();
@@ -37,7 +37,7 @@ class AdminLineAuthController extends Controller
             ['provider_id' => $lineUser->getId()]
         );
 
-        return redirect()->route('admin.account.edit')->with('success', 'LINE連携が完了しました。');
+        return redirect()->route('admin.account.show')->with('success', 'LINE連携が完了しました。');
     }
 
     // 連携解除
@@ -48,6 +48,6 @@ class AdminLineAuthController extends Controller
             $admin->socialAccounts()->where('provider', 'line')->delete();
         }
 
-        return redirect()->route('admin.account.edit')->with('success', 'LINE連携を解除しました。');
+        return redirect()->route('admin.account.show')->with('success', 'LINE連携を解除しました。');
     }
 }
