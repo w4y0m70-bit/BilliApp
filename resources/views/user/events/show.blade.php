@@ -6,7 +6,7 @@
 @php
     $currentUser = Auth::user() ?? \App\Models\User::first();
     $userEntry = $event->userEntries()
-        ->where('user_id', $currentUser->id)
+        ->where('representative_user_id', $currentUser->id)
         ->where('status', '!=', 'cancelled')
         ->latest('created_at')
         ->first();
@@ -192,7 +192,7 @@
             :confirm-action="route('user.entries.cancel', ['event' => $event->id, 'entryId' => $userEntry->id])"
         >
             このイベントのエントリーをキャンセルしますか？
-            @if($event->userEntries()->where('status','waitlist')->count() > 0)
+            @if($event->waitlist_count > 0)
                 <br>現在キャンセル待ちの人がいます。再度エントリーするとキャンセル待ちの最後に登録されます。
             @endif
             <x-slot name="trigger">

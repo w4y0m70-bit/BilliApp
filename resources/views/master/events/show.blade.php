@@ -88,7 +88,7 @@
                                 {{-- 3. 名前（一本化したメソッドを使用） --}}
                                 <td class="px-4 py-4 text-sm font-bold">
                                     @php
-                                        $genderColorClass = $entry->gender === '女性' ? 'text-pink-700' : ($entry->user_id ? 'text-gray-900 dark:text-white' : 'text-blue-600 dark:text-blue-400');
+                                        $genderColorClass = $entry->gender === '女性' ? 'text-pink-700' : ($entry->representative_user_id ? 'text-gray-900 dark:text-white' : 'text-blue-600 dark:text-blue-400');
                                     @endphp
                                     
                                     <span class="{{ $genderColorClass }}">
@@ -103,8 +103,8 @@
 
                                 {{-- 5. 操作 --}}
                                 <td class="px-4 py-4 text-sm text-right whitespace-nowrap">
-                                    @if($entry->user_id)
-                                        <a href="{{ route('master.users.show', $entry->user_id) }}" class="text-indigo-600 hover:underline">詳細</a>
+                                    @if($entry->representative_user_id)
+                                        <a href="{{ route('master.users.show', $entry->representative_user_id) }}" class="text-indigo-600 hover:underline">詳細</a>
                                     @else
                                         <span class="text-gray-400 text-[10px]">GUEST</span>
                                     @endif

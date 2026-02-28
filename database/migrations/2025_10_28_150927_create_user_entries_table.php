@@ -12,7 +12,7 @@ return new class extends Migration {
             //  イベントとの紐づけ
             $table->foreignId('event_id')->constrained('events')->onDelete('cascade');
             // 「誰が申し込んだか」を管理。1人エントリーの場合はその本人が入ります
-            $table->foreignId('representative_user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('representative_user_id')->nullable()->constrained('users')->onDelete('cascade');
             // チーム名（ペア名の入力など）
             $table->string('team_name')->nullable();
             // エントリー全体の管理用（以前のものを継続）

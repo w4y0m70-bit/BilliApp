@@ -47,17 +47,32 @@
                         <td class="px-5 py-3 text-sm">
                             {{-- 女性なら text-pink-700 を適用 --}}
                             <div class="font-bold {{ $participant->gender === '女性' ? 'text-pink-700' : 'text-gray-800' }}">
-                                @if($participant->user)
-                                    {{ $participant->user?->account_name ?? '（未設定）' }}
-                                @else
-                                    {{ $participant->full_name }}
+                                @php
+                                    // 代表者（最初のメンバー）を取得
+                                    $member = $participant->members->first();
+                                @endphp
+                                @if($member && $member->user)
+                                    {{-- ユーザー登録がある場合はアカウント名を表示 --}}
+                                    {{ $member->user->account_name ?? $member->full_name }}
+                                @elseif($member)
+                                    {{-- ゲスト等の場合は氏名を表示 --}}
+                                    {{ $member->full_name }}
                                     <span class="ml-1 text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded border border-gray-200 font-normal">ゲスト</span>
+                                @else
+                                    <span class="text-gray-400">不明</span>
                                 @endif
                             </div>
                         </td>
-                        {{-- 性別カラムのデータ部分を削除 --}}
                         <td class="px-5 py-3 text-sm">
-                            {{ ($participant->class instanceof \App\Enums\PlayerClass) ? $participant->class->shortLabel() : '—' }}
+                            @php
+                                $member = $participant->members->first();
+                                $classValue = $member ? $member->class : null;
+                                // Enum型であることを考慮して表示
+                                $classEnum = $classValue instanceof \App\Enums\PlayerClass 
+                                    ? $classValue 
+                                    : \App\Enums\PlayerClass::tryFrom($classValue);
+                            @endphp
+                            {{ $classEnum ? $classEnum->shortLabel() : ($classValue ?? '—') }}
                         </td>
                     </tr>
                 @empty

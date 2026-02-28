@@ -56,6 +56,8 @@ class Event extends Model
     // 現在の参加人数を動的に算出
     public function getEntryCountAttribute()
     {
+        // 「エントリー（チーム）の数」をカウントする
+        // これで 1人チームも 2人チームも「1枠」として計算されます
         return $this->userEntries()->where('status', 'entry')->count();
     }
 

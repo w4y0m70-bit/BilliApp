@@ -16,7 +16,7 @@ class UserEntry extends Model
     use LogsActivity;
     
     protected $fillable = [
-        'user_id',
+        'representative_user_id',  // エントリーチーム
         'event_id',
         'last_name',       // name から分割
         'first_name',      // name から分割
@@ -98,6 +98,18 @@ class UserEntry extends Model
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
+    }
+
+    // 代表者ユーザーへのリレーション
+    public function representative(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'representative_user_id');
+    }
+
+    // チームに属するメンバーたちへのリレーション（新設）
+    public function members(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(EntryMember::class);
     }
 
     /**

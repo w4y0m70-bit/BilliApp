@@ -95,7 +95,7 @@
             @php
                 $currentUser = Auth::user();
                 $userEntry = $event->userEntries()
-                    ->where('user_id', $currentUser->id)
+                    ->where('representative_user_id', $currentUser->id)
                     ->where('status', '!=', 'cancelled')
                     ->latest('created_at')
                     ->first();

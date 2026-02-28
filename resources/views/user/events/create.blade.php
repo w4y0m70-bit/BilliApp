@@ -49,12 +49,19 @@
                 <label class="block font-bold mb-2">クラスの申告</label>
                 <x-help help-key="user.entries.class" />
             </div>
-            <div class="grid grid-cols-4 gap-3">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 @foreach($event->eventClasses as $class)
+                    @php
+                        // ループの中で、現在のクラス名をEnumに変換
+                        $currentClassEnum = \App\Enums\PlayerClass::tryFrom($class->class_name);
+                    @endphp
                     <label class="flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50 has-[:checked]:border-user has-[:checked]:bg-user/5">
                         <input type="radio" name="class" value="{{ $class->class_name }}" required
                             {{ old('class', $defaultClass) == $class->class_name ? 'checked' : '' }}>
-                        <span class="font-medium">{{ $class->class_name }}</span>
+                        <span class="font-medium">
+                            {{-- ここで $currentClassEnum を使ってラベルを表示 --}}
+                            {{ $currentClassEnum ? $currentClassEnum->shortLabel() : $class->class_name }}
+                        </span>
                     </label>
                 @endforeach
             </div>

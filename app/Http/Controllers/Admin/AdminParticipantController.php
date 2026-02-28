@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\UserEntry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use App\Services\WaitlistService;
 
 class AdminParticipantController extends Controller
@@ -23,13 +24,9 @@ class AdminParticipantController extends Controller
      */
     public function index(Event $event)
     {
-        $entryCount = $event->userEntries()->where('status', 'entry')->count();
-        $waitlistCount = $event->userEntries()->where('status', 'waitlist')->count();
         $participants = $event->userEntries()
-            ->with('user')
-            ->sortedList()
+            ->with(['members.user']) // membersをロード
             ->whereIn('status', ['entry', 'waitlist'])
-            ->with('user:id,last_name,first_name')
             ->orderByRaw("FIELD(status, 'entry', 'waitlist')")
             ->orderBy('updated_at', 'asc')
             ->get();
@@ -44,45 +41,67 @@ class AdminParticipantController extends Controller
             }
         }
 
-        return view('admin.participants.index', compact(
-            'event',
-            'participants',
-            'entryCount',
-            'waitlistCount'
-        ));
+        return view('admin.participants.index', compact('event', 'participants'));
     }
 
     /**
-     * ゲスト登録 (名前を姓・名に分けて保存)
+     * ゲスト登録 (新構造対応)
      */
     public function store(Request $request, Event $event)
     {
+        // 1. リクエストデータを取得
         $data = $request->json()->all();
 
-        // 1. バリデーションを分割後の名前に合わせる
-        Validator::make($data, [
-            'last_name'  => 'required|string|max:50',
-            'first_name' => 'required|string|max:50',
-            'gender'     => 'nullable|string|in:男性,女性,未回答',
-            'class'      => 'nullable|string|max:20',
-        ])->validate();
+        // 2. バリデーション
+        $validator = Validator::make($data, [
+            'last_name'       => 'required|string|max:50',
+            'first_name'      => 'required|string|max:50',
+            'last_name_kana'  => 'nullable|string|max:50',
+            'first_name_kana' => 'nullable|string|max:50',
+            'gender'          => 'nullable|string|in:男性,女性,未回答',
+            'class'           => 'nullable|string|max:20',
+        ]);
 
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // 3. 定員チェック
         $currentEntryCount = $event->userEntries()->where('status', 'entry')->count();
         $status = $currentEntryCount < $event->max_participants ? 'entry' : 'waitlist';
 
-        // 2. 保存処理を分割カラムに合わせる
-        $entry = $event->userEntries()->create([
-            'user_id'    => null,
-            'last_name'  => $data['last_name'],
-            'first_name' => $data['first_name'],
-            'gender'     => $data['gender'] ?? null,
-            'class'      => $data['class'] ?? null,
-            'status'     => $status,
-        ]);
+        try {
+            // 4. トランザクションで保存
+            DB::transaction(function () use ($event, $data, $status) {
+                // 親レコード (UserEntry) 作成
+                // ※ ここで last_name などを入れないよう注意
+                $userEntry = $event->userEntries()->create([
+                    'representative_user_id' => null,
+                    'status' => $status,
+                    'team_name' => null,
+                ]);
 
-        return response()->json([
-            'message' => "ゲスト「{$entry->last_name} {$entry->first_name}」を登録しました"
-        ]);
+                // 子レコード (EntryMember) 作成
+                $userEntry->members()->create([
+                    'user_id'         => null,
+                    'last_name'       => $data['last_name'],
+                    'first_name'      => $data['first_name'],
+                    'last_name_kana'  => $data['last_name_kana'] ?? null,
+                    'first_name_kana' => $data['first_name_kana'] ?? null,
+                    'gender'          => $data['gender'] ?? '未回答',
+                    'class'           => $data['class'] ?? null,
+                ]);
+            });
+
+            return response()->json([
+                'message' => "ゲストを登録しました"
+            ]);
+
+        } catch (\Exception $e) {
+            // エラー内容をログに書き出す（storage/logs/laravel.log で確認可能）
+            \Log::error($e->getMessage());
+            return response()->json(['error' => '保存に失敗しました: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -92,37 +111,27 @@ class AdminParticipantController extends Controller
     {
         $participants = $event->userEntries()
             ->whereIn('status', ['entry', 'waitlist'])
-            ->with('user') 
-            ->sortedList()
+            ->with(['members.user']) 
             ->get();
 
         $entryCount = 0;
         $waitlistCount = 0;
 
         $results = $participants->map(function ($entry) use (&$entryCount, &$waitlistCount) {
-            // ★ ここでモデルのメソッドと同じ判定ロジックを適用
-            if ($entry->user_id) {
-                $accountName = $entry->user?->account_name ?: '（未設定）';
-            } else {
-                $accountName = '―';
-            }
-
-            $lastName = $entry->user ? $entry->user->last_name : $entry->last_name;
-            $firstName = $entry->user ? $entry->user->first_name : $entry->first_name;
-            
+            $member = $entry->members->first();
             $order = ($entry->status === 'entry') ? ++$entryCount : ++$waitlistCount;
 
             return [
-                'id'         => $entry->id,
-                'status'     => $entry->status,
-                'last_name'  => $lastName,
-                'first_name' => $firstName,
-                'full_name'  => $entry->full_name,
-                'account_name' => $accountName,
-                'gender'     => $entry->gender,
-                'class'      => $entry->class,
-                'order'      => $order,
-                'user_id'    => $entry->user_id,
+                'id'           => $entry->id,
+                'status'       => $entry->status,
+                'last_name'    => $member?->last_name,
+                'first_name'   => $member?->first_name,
+                'full_name'    => $member?->full_name,
+                'account_name' => $member?->user?->account_name ?? '―',
+                'gender'       => $member?->gender,
+                'class'        => $member?->class,
+                'order'        => $order,
+                'user_id'      => $entry->representative_user_id,
             ];
         });
 
@@ -134,10 +143,8 @@ class AdminParticipantController extends Controller
      */
     public function cancel(Event $event, UserEntry $entry)
     {
-        // 名前の取得を会員/ゲスト両対応に
-        $name = $entry->user 
-            ? "{$entry->user->last_name} {$entry->user->first_name}" 
-            : "{$entry->last_name} {$entry->first_name}";
+        $member = $entry->members->first();
+        $name = $member ? $member->full_name : '不明';
 
         $this->waitlistService->cancelAndPromote($entry);
 

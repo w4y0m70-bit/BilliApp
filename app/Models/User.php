@@ -120,7 +120,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function userEntries()
     {
-        return $this->hasMany(UserEntry::class);
+        return $this->hasMany(UserEntry::class, 'representative_user_id');
     }
 
     // ログ設定

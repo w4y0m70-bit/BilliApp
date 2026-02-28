@@ -68,4 +68,12 @@ class UserEventController extends Controller
         ]);
     }
 
+    public function show(Event $event)
+    {
+        $currentUser = Auth::user() ?? \App\Models\User::first();
+        $userEntry = $event->userEntries()->where('representative_user_id', $currentUser->id)->first();
+        $status = $userEntry ? $userEntry->status : null;
+
+        return view('user.events.show', compact('event', 'userEntry', 'status'));
+    }
 }
