@@ -92,7 +92,7 @@ class UserEntry extends Model
      * ===================== */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'representative_user_id');
     }
 
     public function event(): BelongsTo

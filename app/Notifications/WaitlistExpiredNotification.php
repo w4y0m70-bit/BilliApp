@@ -65,6 +65,7 @@ class WaitlistExpiredNotification extends Notification
         // 3. メール送信
         return (new MailMessage)
             ->subject("【{$eventName}】キャンセル待ち期限切れのお知らせ")
+            ->greeting("{$memberName} 様")
             ->line("キャンセル待ちをしていただいていた以下のイベントについて、期限内に空きが出なかったため、エントリーが自動キャンセルされました。")
             ->line("----------------------------------")
             ->line("［{$organizerName}］")

@@ -23,7 +23,10 @@ class SendWaitlistExpiredNotification
         try {
             $entry = $event->entry;
             $user = $entry->user;
-            if (!$user) return;
+            if (!$user) {
+                \Log::warning("WaitlistExpired通知スキップ: 会員情報が見つかりません (Entry ID: {$entry->id})");
+                return;
+            }
 
             // 1. LINE送信設定の確認
             $lineRecord = $user->notificationSettings()
@@ -60,6 +63,7 @@ class SendWaitlistExpiredNotification
 
             // 3. メール通知の実行
             $user->notify(new WaitlistExpiredNotification($entry));
+            \Log::info("★メール通知実行（期限切れ通知）: User ID {$user->id}");
 
         } catch (\Throwable $e) {
             \Log::error("WaitlistExpiredリスナーでエラー発生: " . $e->getMessage());
