@@ -73,4 +73,82 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     };
 });
+
+function fillDefaultDescription() {
+    const textarea = document.getElementById('event-description');
+    const defaultText = `【種目】ナインボール（セットマッチ）
+【試合形式】予選：ダブルイリミネーション／決勝（ベスト８）：シングルイリミネーション
+【ルール】ランダムラック／勝者ブレイク／スリーポイントルール採用／プッシュアウトあり／ダブルヒットなし
+【ショットクロック】採用：◯分・時間切れ＞1ショット40秒・エクステンション（1ラック1回40秒）
+【ハンデ】P=6／A=5／B=4／C=3
+【参加費】◯円
+【賞典】◯円分の商品券
+【注意事項】時間厳守（遅れる場合は事前に店舗までご連絡お願いいたします）
+【お店より】和気あいあいと楽しく行うトーナメントです。奮ってご参加ください！
+エントリー入力画面から所属店舗の入力をお願いいたします`;
+
+    // テキストエリアに既に値があるか確認
+    if (textarea.value.trim() !== "") {
+        const result = confirm("既にテキストが入力されています。上書きしてもよろしいですか？");
+        if (!result) {
+            return; // キャンセルした場合は何もしない
+        }
+    }
+
+    // テキストをセット
+    textarea.value = defaultText;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const checkboxes = document.querySelectorAll('.class-checkbox');
+    const noneCheckbox = document.querySelector('.class-checkbox[data-is-none="true"]');
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.dataset.isNone === 'true') {
+                // 「指定なし」がチェックされた場合、他の全てを外す
+                if (this.checked) {
+                    checkboxes.forEach(cb => {
+                        if (cb !== noneCheckbox) cb.checked = false;
+                    });
+                }
+            } else {
+                // 「指定なし」以外がチェックされた場合、「指定なし」を外す
+                if (this.checked) {
+                    noneCheckbox.checked = false;
+                }
+            }
+        });
+    });
+});
+/**
+ * クラスのチェックボックスを一括操作する
+ * @param {boolean} checked - trueなら全選択、falseなら全解除
+ */
+function selectAllClasses(checked) {
+    // class-checkboxというクラスを持つ全てのinput要素を取得
+    const checkboxes = document.querySelectorAll('.class-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = checked;
+    });
+}
+// チケットの定員上限と募集人数の整合性をリアルタイムでチェック
+// document.addEventListener('change', function() {
+//     const ticketSelect = document.getElementById('ticket_id');
+//     const maxEntries = document.getElementById('max_entries');
+//     const teamSize = document.querySelector('input[name="max_team_size"]:checked');
+    
+//     if (ticketSelect && maxEntries && teamSize) {
+//         const capacity = ticketSelect.options[ticketSelect.selectedIndex].dataset.capacity;
+//         const total = maxEntries.value * teamSize.value;
+        
+//         if (capacity && total > capacity) {
+//             alert(`警告：総人数(${total}名)がチケットの上限(${capacity}名)を超えています。`);
+//             maxEntries.classList.add('border-red-500');
+//         } else {
+//             maxEntries.classList.remove('border-red-500');
+//         }
+//     }
+// });
 </script>

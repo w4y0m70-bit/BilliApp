@@ -10,6 +10,7 @@ use App\Http\Controllers\User\{
     UserForgotPasswordController,
     UserResetPasswordController,
     UserGroupController,
+    UserSearchController,
     Auth\UserRegisterController,
     Auth\UserLineAuthController
 };
@@ -114,4 +115,11 @@ Route::middleware(['auth:web', 'session.lifetime:60'])->group(function () {
     // LINE連携解除
     Route::post('/login/line/disconnect', [UserLineAuthController::class, 'disconnect'])->name('line.disconnect');
 
+    // ユーザー検索API (エントリー時のチーム検索用)
+    Route::get('/users/search', [UserSearchController::class, 'search'])
+        ->name('users.search');
+
+    // 勧誘されたユーザーの返答画面
+    Route::post('/events/{event}/entries/{entry}/respond', [UserEntryController::class, 'respond'])
+        ->name('entries.respond');
 });

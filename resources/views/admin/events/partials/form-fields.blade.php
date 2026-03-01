@@ -11,7 +11,7 @@
 
 {{-- イベント内容 --}}
 <div class="mb-4">
-    <div class="flex items-center mb-1 gap-2"> {{-- gap-2で要素間に隙間を作ります --}}
+    <div class="flex items-center mb-1 gap-2">
         <label class="block font-medium mb-1">イベント内容・詳細</label>
         <x-help help-key="admin.events.description" />
         
@@ -70,13 +70,47 @@
 {{-- 募集人数 --}}
 <div class="mb-4">
     <div class="flex items-center mb-1">
-        <label class="font-medium">募集人数</label>
-        <x-help help-key="admin.events.max_participants" />
+        <label class="font-medium">募集人数（またはチーム数）</label>
+        <!-- {{-- <x-help help-key="admin.events.max_entries" /> --}} -->
     </div>
-    <input type="number" name="max_participants" id="max_participants" 
-        value="{{ old('max_participants', $event->max_participants ?? '') }}" 
+    <input type="number" name="max_entries" id="max_entries" 
+        value="{{ old('max_entries', $event->max_entries ?? '') }}" 
         class="w-full border p-2 rounded @if($isLimited && !$isReplicate) bg-gray-100 @endif"
         min="1" @if($isLimited && !$isReplicate) readonly @else required @endif>
+</div>
+
+{{-- エントリー形式（1名 or チーム） --}}
+<div class="mb-4">
+    <div class="flex items-center mb-1">
+        <label class="font-medium">エントリー形式</label>
+        <!-- {{-- <x-help help-key="admin.events.entry_type" /> --}} -->
+    </div>
+    <div class="flex gap-6 bg-gray-50 p-3 rounded-lg border">
+        <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="max_team_size" value="1" 
+                {{ old('max_team_size', $event->max_team_size ?? 1) == 1 ? 'checked' : '' }}
+                @if($isLimited && !$isReplicate)
+                disabled 
+                @endif
+                class="text-admin focus:ring-admin">
+            <span class="text-sm font-bold">個人（1名）</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="max_team_size" value="2" 
+                {{ old('max_team_size', $event->max_team_size ?? 1) == 2 ? 'checked' : '' }}
+                @if($isLimited && !$isReplicate)
+                disabled
+                @endif
+                class="text-admin focus:ring-admin">
+            <span class="text-sm font-bold">チーム（2名）</span>
+        </label>
+    </div>
+    @if($isLimited && !$isReplicate)
+        <input type="hidden" name="max_team_size" value="{{ $event->max_team_size }}">
+        <small class="text-red-500">公開後はエントリー形式を変更できません</small>
+    @else
+        <small class="text-gray-500">チームを許可する場合、ユーザーはチームメイトを招待してエントリーします</small>
+    @endif
 </div>
 
 {{-- キャンセル待ち --}}
@@ -86,8 +120,10 @@
         <x-help help-key="admin.events.allow_waitlist" />
     </div>
     <div class="flex gap-6">
-        <label><input type="radio" name="allow_waitlist" value="1" {{ old('allow_waitlist', $event->allow_waitlist ?? 1) == 1 ? 'checked' : '' }}> 有</label>
-        <label><input type="radio" name="allow_waitlist" value="0" {{ old('allow_waitlist', $event->allow_waitlist ?? 1) == 0 ? 'checked' : '' }}> 無</label>
+        <label><input type="radio" name="allow_waitlist" value="1" class="class=text-admin focus:ring-admin" 
+        {{ old('allow_waitlist', $event->allow_waitlist ?? 1) == 1 ? 'checked' : '' }}> 有</label>
+        <label><input type="radio" name="allow_waitlist" value="0" class="class=text-admin focus:ring-admin" 
+        {{ old('allow_waitlist', $event->allow_waitlist ?? 1) == 0 ? 'checked' : '' }}> 無</label>
     </div>
     <small class="text-gray-500">公開後は変更できません</small>
 </div>
@@ -210,64 +246,3 @@
     @endif
 </div>
 
-<script>
-function fillDefaultDescription() {
-    const textarea = document.getElementById('event-description');
-    const defaultText = `【種目】ナインボール（セットマッチ）
-【試合形式】予選：ダブルイリミネーション／決勝（ベスト８）：シングルイリミネーション
-【ルール】ランダムラック／勝者ブレイク／スリーポイントルール採用／プッシュアウトあり／ダブルヒットなし
-【ショットクロック】採用：◯分・時間切れ＞1ショット40秒・エクステンション（1ラック1回40秒）
-【ハンデ】P=6／A=5／B=4／C=3
-【参加費】◯円
-【賞典】◯円分の商品券
-【注意事項】時間厳守（遅れる場合は事前に店舗までご連絡お願いいたします）
-【お店より】和気あいあいと楽しく行うトーナメントです。奮ってご参加ください！
-エントリー入力画面から所属店舗の入力をお願いいたします`;
-
-    // テキストエリアに既に値があるか確認
-    if (textarea.value.trim() !== "") {
-        const result = confirm("既にテキストが入力されています。上書きしてもよろしいですか？");
-        if (!result) {
-            return; // キャンセルした場合は何もしない
-        }
-    }
-
-    // テキストをセット
-    textarea.value = defaultText;
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    const checkboxes = document.querySelectorAll('.class-checkbox');
-    const noneCheckbox = document.querySelector('.class-checkbox[data-is-none="true"]');
-
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            if (this.dataset.isNone === 'true') {
-                // 「指定なし」がチェックされた場合、他の全てを外す
-                if (this.checked) {
-                    checkboxes.forEach(cb => {
-                        if (cb !== noneCheckbox) cb.checked = false;
-                    });
-                }
-            } else {
-                // 「指定なし」以外がチェックされた場合、「指定なし」を外す
-                if (this.checked) {
-                    noneCheckbox.checked = false;
-                }
-            }
-        });
-    });
-});
-/**
- * クラスのチェックボックスを一括操作する
- * @param {boolean} checked - trueなら全選択、falseなら全解除
- */
-function selectAllClasses(checked) {
-    // class-checkboxというクラスを持つ全てのinput要素を取得
-    const checkboxes = document.querySelectorAll('.class-checkbox');
-    
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = checked;
-    });
-}
-</script>

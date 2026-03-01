@@ -68,5 +68,7 @@
         <p>© {{ date('Y') }} Billents</p>
     </footer>
 
+    @stack('scripts')
+
 </body>
 </html>

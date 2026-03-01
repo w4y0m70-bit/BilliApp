@@ -10,6 +10,7 @@ class EntryMember extends Model
     protected $fillable = [
         'user_entry_id',
         'user_id',
+        'invite_status',
         'last_name',
         'first_name',
         'last_name_kana',

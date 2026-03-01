@@ -4,6 +4,35 @@
 
 @section('content')
 <div class="px-4">
+    {{-- 招待バナーセクション --}}
+    @if(isset($invitations) && $invitations->isNotEmpty())
+        <div class="mb-8 space-y-3">
+            @foreach($invitations as $invitation)
+                <div class="bg-gradient-to-r from-user to-user-dark text-white p-4 rounded-xl shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 animate-pulse-subtle">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-white/20 p-2 rounded-full">
+                            <span class="material-symbols-outlined text-white">group_add</span>
+                        </div>
+                        <div>
+                            <p class="text-xs text-white/80 font-bold">チームの招待が届いています</p>
+                            <p class="font-bold">
+                                {{ $invitation->representative->full_name }}さんから「{{ $invitation->event->title }}」に誘われています！
+                            </p>
+                            <p class="text-[10px] text-white/70">
+                                回答期限：{{ $invitation->pending_until->format('m/d H:i') }} まで
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        {{-- 承諾画面（詳細画面）へ誘導 --}}
+                        <a href="{{ route('user.events.show', $invitation->event_id) }}" class="flex-1 sm:flex-none bg-white text-user px-6 py-2 rounded-full text-sm font-bold hover:bg-gray-100 transition text-center shadow-md">
+                            詳細を確認する
+                        </a>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
     <div class="flex justify-between items-center">
         <h2 class="text-2xl font-bold">公開中のイベント
         <span help-key="user.events.index" class="inline-block mb-4">
@@ -94,14 +123,40 @@
         @foreach ($events as $event)
             @php
                 $currentUser = Auth::user();
+                // 自分が代表者、またはメンバーとして含まれるエントリーを探す
                 $userEntry = $event->userEntries()
-                    ->where('representative_user_id', $currentUser->id)
+                    ->where(function($query) use ($currentUser) {
+                        $query->where('representative_user_id', $currentUser->id)
+                            ->orWhereHas('members', function($q) use ($currentUser) {
+                                $q->where('user_id', $currentUser->id);
+                            });
+                    })
                     ->where('status', '!=', 'cancelled')
                     ->latest('created_at')
                     ->first();
 
                 $status = $userEntry->status ?? null;
                 $isFull = $event->entry_count >= $event->max_participants;
+                $isDeadlinePast = $event->entry_deadline->isPast();
+
+                // 自分が「招待されている最中（未回答）」かどうかの判定
+                $isInvited = $event->userEntries()
+                    ->whereHas('members', function($q) use ($currentUser) {
+                        $q->where('user_id', $currentUser->id)->where('invite_status', 'pending');
+                    })
+                    ->where('status', 'pending')
+                    ->exists();
+
+                // ★ 単位と分母のロジックを修正
+                // チームサイズが1より大きければ「チーム」、1なら「人」
+                $isTeamEvent = $event->max_team_size > 1;
+                $unit = $isTeamEvent ? 'チーム' : '人';
+
+                // 分母を max_entries に変更
+                $maxCapacity = $event->max_entries; 
+
+                // エントリー数（分子）と定員（分母）の比較で満員判定
+                $isFull = $event->entry_count >= $maxCapacity;
                 $isDeadlinePast = $event->entry_deadline->isPast();
             @endphp
 
@@ -197,7 +252,7 @@
                     </a>
                     <x-help help-key="user.events.show" />
                 </h3>
-                {{-- 募集クラス (追加部分) --}}
+                {{-- 募集クラス --}}
                 <div class="mt-2 flex items-start gap-1">
                     <strong class="text-sm text-gray-700">参加資格：</strong>
                     <div class="flex flex-wrap gap-1">
@@ -242,48 +297,63 @@
                     <x-help help-key="user.events.waitlist_until" />
                 </div>
 
-                {{-- ★ 修正箇所：参加人数の数字をリンクにする --}}
+                {{-- 参加状況 --}}
                 <div class="flex items-center mb-1">
-                <p class="text-sm text-gray-700 mt-1">
-                    <strong>参加人数：</strong>
-                    <a href="{{ route('user.events.participants', $event->id) }}" class="text-blue-600 hover:underline font-bold">
-                        {{ $event->entry_count }}
-                        ／{{ $event->max_participants }}人
-                        （
-                        @if($event->allow_waitlist)
-                        WL：{{ $event->waitlist_count }}
-                        @else
-                        ✕
-                        @endif
-                        ）
-                    </a>
-                </p>
-                <x-help help-key="user.events.participants" />
+                    <p class="text-sm text-gray-700 mt-1">
+                        <strong>参加数：</strong>
+                        <a href="{{ route('user.events.participants', $event->id) }}" class="text-blue-600 hover:underline font-bold">
+                            {{ $event->entry_count }}
+                            ／{{ $event->max_entries }}{{ $unit }}
+                            （
+                            @if($event->allow_waitlist)
+                                WL：{{ $event->waitlist_count }}
+                            @else
+                                ✕
+                            @endif
+                            ）
+                        </a>
+                    </p>
+                    <x-help help-key="user.events.participants" />
                 </div>
 
                 {{-- 状態グループ --}}
                 <div class="mt-3">
-                    @if ($status === 'entry')
-                            <span class="inline-block bg-user text-white text-sm px-3 py-1 rounded transition">
-                                エントリー中
+                    @if ($isInvited)
+                        {{-- 相手から誘われている場合 --}}
+                        <span class="inline-block bg-blue-600 text-white text-sm px-3 py-1 rounded animate-bounce-short shadow-md font-bold">
+                            招待が届いています
+                        </span>
+                    @elseif ($status === 'pending')
+                        {{-- 自分が誰かを誘って、相手の回答待ちの場合 --}}
+                        <div class="space-y-1">
+                            <span class="inline-block bg-yellow-500 text-white text-sm px-3 py-1 rounded font-bold shadow-sm">
+                                パートナーの回答待ち
                             </span>
-                        @elseif ($status === 'waitlist')
-                            <span class="inline-block bg-orange-500 text-white text-sm px-3 py-1 rounded transition">
-                                キャンセル待ち（{{ $userEntry->waitlist_position ?? '' }}番目）
-                            </span>
-                        @elseif ($isDeadlinePast)
-                            <span class="inline-block bg-gray-500 text-white text-sm px-3 py-1 rounded transition">
-                                エントリー締切
-                            </span>
-                        @else
-                            <span class="inline-block bg-gray-400 text-white text-sm px-3 py-1 rounded transition">
-                                @if($isFull && !$event->allow_waitlist)
+                            <p class="text-[10px] text-red-500 font-bold">
+                                期限：{{ $userEntry->pending_until->format('m/d H:i') }} まで
+                            </p>
+                        </div>
+                    @elseif ($status === 'entry')
+                        <span class="inline-block bg-user text-white text-sm px-3 py-1 rounded transition font-bold shadow-sm">
+                            エントリー中
+                        </span>
+                    @elseif ($status === 'waitlist')
+                        <span class="inline-block bg-orange-500 text-white text-sm px-3 py-1 rounded transition font-bold shadow-sm">
+                            キャンセル待ち（{{ $userEntry->waitlist_position ?? '' }}番目）
+                        </span>
+                    @elseif ($isDeadlinePast)
+                        <span class="inline-block bg-gray-500 text-white text-sm px-3 py-1 rounded transition text-xs">
+                            エントリー締切
+                        </span>
+                    @else
+                        <span class="inline-block bg-gray-400 text-white text-sm px-3 py-1 rounded transition text-xs font-bold shadow-sm">
+                            @if($isFull && !$event->allow_waitlist)
                                 満員
-                                @else
+                            @else
                                 未エントリー
-                                @endif
-                            </span>
-                        @endif
+                            @endif
+                        </span>
+                    @endif
                 </div>
             </div>
         @endforeach

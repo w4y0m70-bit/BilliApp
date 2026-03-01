@@ -16,6 +16,8 @@ return new class extends Migration
             // ユーザー情報の紐付け
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
 
+            // 招待状況の管理'pending' (招待中), 'approved' (承諾済み), 'rejected' (拒否)
+            $table->string('invite_status', 20)->default('approved');
             // ゲスト用、またはエントリー時のスナップショット
             $table->string('last_name')->nullable();
             $table->string('first_name')->nullable();

@@ -68,13 +68,15 @@ class AdminEventController extends Controller
             'event_date'        => 'required|date|after_or_equal:now', 
             'entry_deadline'    => 'required|date|before:event_date', // 締切は開催日より前
             'published_at'      => 'nullable|date',
-            'max_participants'  => 'required|integer|min:1',
+            'max_entries'  => 'required|integer|min:1',
             'allow_waitlist'    => 'nullable|boolean',
             'description'       => 'nullable|string',
             'classes'           => 'required|array|min:1', 
             'instruction_label' => 'nullable|string|max:100',
             'groups'            => 'nullable|array',
             'groups.*'          => 'exists:groups,id',
+            'max_entries'      => 'required|integer|min:1', // チーム枠数
+            'max_team_size' => 'required|integer|in:1,2', // 1チームあたりの人数
         ]);
 
         // バリデーション失敗時は、以前の「入力画面」にエラーを持って戻る
@@ -88,6 +90,26 @@ class AdminEventController extends Controller
         // 複製時は ID を持っているが、新規作成として扱うためのフラグ
         $data['is_replicate'] = $request->has('is_replicate');
 
+        // ★ 人数計算のロジック
+        // チーム数 × 1チームの人数 = 総参加予定人数
+        $totalExpectedParticipants = $data['max_entries'] * $data['max_team_size'];
+        $selectedTicket = Ticket::with('plan')->findOrFail($data['ticket_id']);
+        
+        // チケットの収容人数（max_capacity）と比較
+        if ($totalExpectedParticipants > $selectedTicket->plan->max_capacity) {
+            return back()->withErrors([
+                'max_entries' => "現在の設定では最大 {$totalExpectedParticipants} 名となります。選択したチケットのプラン上限（{$selectedTicket->plan->max_capacity}名）を超えています。"
+            ])->withInput();
+        }
+
+        // ビューに渡すデータに計算済みの総人数も含めておくと確認画面で親切です
+        $data['total_participants'] = $totalExpectedParticipants;
+
+        return view('admin.events.confirm', [
+            'data' => $data,
+            'selectedTicket' => $selectedTicket
+        ]);
+        
         // 4. チケット情報の取得
         $selectedTicket = Ticket::with('plan')->findOrFail($data['ticket_id']);
         if ($data['max_participants'] > $selectedTicket->plan->max_capacity) {
@@ -122,7 +144,8 @@ class AdminEventController extends Controller
         'event_date'        => 'required|date',
         'entry_deadline'    => 'required|date',
         'published_at'      => 'nullable|date',
-        'max_participants'  => 'required|integer|min:1',
+        'max_entries'  => 'required|integer|min:1',
+        'max_team_size' => 'required|integer|in:1,2',
         'allow_waitlist'    => 'required|in:0,1',
         'instruction_label' => 'nullable|string|max:100',
         'classes'           => 'required|array',
@@ -142,6 +165,14 @@ class AdminEventController extends Controller
     // 検証済みデータを取得
     $data = $validator->validated();
 
+    // チケット上限チェック用の計算
+    $totalCapacity = $data['max_entries'] * $data['max_team_size'];
+    $selectedTicket = Ticket::with('plan')->findOrFail($data['ticket_id']);
+    if ($totalCapacity > $selectedTicket->plan->max_capacity) {
+        return back()->withErrors([
+            'max_entries' => "最大収容人数({$totalCapacity}名)がチケット上限({$selectedTicket->plan->max_capacity}名)を超えています。"
+        ])->withInput();
+    }
     // 2. チケット取得
     $ticketId = $data['ticket_id']; // $data から取るのが安全
     $ticket = Ticket::with('plan')->findOrFail($ticketId);
@@ -159,6 +190,9 @@ class AdminEventController extends Controller
             // A. イベント作成
             $eventData = \Illuminate\Support\Arr::except($data, ['classes', 'groups']);
             $eventData['admin_id'] = auth('admin')->id();
+            $eventData['max_entries'] = $data['max_entries'];
+            $eventData['max_team_size'] = $data['max_team_size'];
+            $eventData['max_participants'] = $data['max_entries'] * $data['max_team_size'];
             $event = Event::create($eventData);
 
             // B. クラス保存
@@ -337,7 +371,7 @@ class AdminEventController extends Controller
             $data = $request->validate([
                 'title' => 'required|string|max:100',
                 'description' => 'nullable|string',
-                'classes' => 'required|array|min:1', // ★クラスを追加
+                'classes' => 'required|array|min:1',
                 'groups'            => 'nullable|array',
                 'groups.*'          => 'exists:groups,id',
             ]);
@@ -368,7 +402,7 @@ class AdminEventController extends Controller
             'event_date'       => 'required|date|after_or_equal:now',
             'entry_deadline'   => 'required|date|before:event_date',
             'published_at'     => 'nullable|date',
-            'max_participants' => 'required|integer|min:1',
+            'max_entries' => 'required|integer|min:1',
             'allow_waitlist'   => 'required|boolean',
             'classes'          => 'required|array', // クラスを追加
             'classes.*'        => 'string',

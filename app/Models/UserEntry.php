@@ -18,17 +18,24 @@ class UserEntry extends Model
     protected $fillable = [
         'representative_user_id',  // エントリーチーム
         'event_id',
-        'last_name',       // name から分割
-        'first_name',      // name から分割
-        'last_name_kana',  // フリガナも保存しておくと名簿順ソートが楽になります
-        'first_name_kana', // フリガナも保存
+        'last_name',
+        'first_name',
+        'last_name_kana',
+        'first_name_kana',
+        'team_name',
         'gender',
         'status',
+        'is_confirmed',
+        'pending_until',
         'waitlist_until',
         'user_answer',
         'class',
         ];        
     
+        // protected $casts = [
+        //     'pending_until' => 'datetime',
+        //     'waitlist_until'    => 'datetime',
+        // ];
     /* ============================================================
      * モデルイベント：保存・更新・削除時に満員チェックを自動化
      * ============================================================ */
@@ -90,6 +97,12 @@ class UserEntry extends Model
     /* =====================
      * リレーション
      * ===================== */
+    // 代表者ユーザーへのリレーション
+    public function representative(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'representative_user_id');
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'representative_user_id');
@@ -98,12 +111,6 @@ class UserEntry extends Model
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
-    }
-
-    // 代表者ユーザーへのリレーション
-    public function representative(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'representative_user_id');
     }
 
     // チームに属するメンバーたちへのリレーション（新設）
@@ -202,8 +209,10 @@ class UserEntry extends Model
     protected function casts(): array
     {
         return [
+            'pending_until'  => 'datetime',
             'waitlist_until' => 'datetime',
-            'class' => PlayerClass::class,
+            'class'          => PlayerClass::class,
+            'is_confirmed'   => 'boolean',
         ];
     }
 
@@ -222,5 +231,27 @@ class UserEntry extends Model
                 'class',
             ])
             ->logOnlyDirty();
+    }
+
+    public function getStatusLabelAttribute()
+    {
+        return match($this->status) {
+            'pending'   => '回答待ち',
+            'entry'     => 'エントリー中',
+            'waitlist'  => 'キャンセル待ち',
+            'cancelled' => 'キャンセル済み',
+            default     => '不明',
+        };
+    }
+
+    public function getStatusColorAttribute()
+    {
+        return match($this->status) {
+            'pending'   => 'bg-blue-100 text-blue-700 border-blue-200',
+            'entry'     => 'bg-user text-white border-transparent', // 既存のuserカラー
+            'waitlist'  => 'bg-orange-100 text-orange-700 border-orange-200',
+            'cancelled' => 'bg-gray-100 text-gray-500 border-gray-200',
+            default     => 'bg-white text-gray-400 border-gray-200',
+        };
     }
 }

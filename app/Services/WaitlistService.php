@@ -46,6 +46,9 @@ class WaitlistService
 
         // B. 【新規追加】イベント自体のエントリー期限が過ぎた場合の一括処理
         $this->handleEventDeadlineReached();
+
+        // C. 【新規追加】チーム招待の仮押さえ期限（pending）のチェック
+        $this->handleExpiredPendingEntries();
     }
 
     /**
@@ -108,6 +111,28 @@ class WaitlistService
                 ]);
                 event(new WaitlistPromoted($entry));
             }
+        }
+    }
+    
+    /**
+     * チーム招待の回答期限が切れたエントリーを処理
+     */
+    private function handleExpiredPendingEntries(): void
+    {
+        $expiredPending = UserEntry::where('status', 'pending')
+            ->whereNotNull('pending_until')
+            ->where('pending_until', '<=', now())
+            ->get();
+
+        foreach ($expiredPending as $entry) {
+            // 既存のキャンセル・繰り上げロジックを再利用
+            // 理由を 'pending_expired' とすることで、通知等の切り分けが可能
+            $this->cancelAndPromote($entry, 'pending_expired');
+            
+            \Log::info("ペア招待期限切れによる自動キャンセル: Entry ID {$entry->id}");
+            
+            // 必要に応じて招待期限切れ専用のイベントを発行（通知用など）
+            // event(new \App\Events\InviteExpired($entry));
         }
     }
 }

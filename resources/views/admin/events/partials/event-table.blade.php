@@ -71,30 +71,43 @@
                     </div>
                 @endif
 
+                <div class="text-sm text-gray-700 mb-1">
+                    形式：{{ $event->max_team_size == 2 ? 'チームエントリー（2名1組）' : '個人エントリー（1名）' }}
+                </div>
+                <div class="text-sm text-gray-700 mb-1">
+                    募集枠数：{{ $event->max_entries }} {{ $event->max_team_size == 2 ? 'チーム' : '名' }}</span>
+                </div>
 
-                <div class="text-sm mt-2">
-                    参加数：
-                    @if ($isPast)
-                        {{ $event->entry_count }} / {{ $event->max_participants }}
-                        @if ($event->waitlist_count > 0)
-                            <span>
-                                （WL：{{ $event->waitlist_count }}）
-                            </span>
-                        @endif
-                    @else
-                        <a 
-                            href="{{ route('admin.events.participants.index', $event->id) }}" 
-                            @click.stop
-                            class="text-blue-600 underline hover:text-blue-800"
-                        >
-                            {{ $event->entry_count }} / {{ $event->max_participants }}
-                            @if ($event->waitlist_count > 0)
-                                <span>
-                                    （WL：{{ $event->waitlist_count }}）
-                                </span>
+               {{-- カード内の参加数表示部分 --}}
+                <div class="text-sm mt-2 p-2 bg-gray-50 rounded border border-gray-100">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">参加状況:</span>
+                        <div class="font-bold">
+                            @php
+                                // チーム単位の進捗を計算（チームなら entry_count / 2）
+                                // ※ エントリー時にチームID等で管理している場合はそのカウント
+                                $currentEntries = ($event->max_team_size == 2) ? ($event->entry_count / 2) : $event->entry_count;
+                            @endphp
+
+                            @if ($isPast)
+                                {{ $currentEntries }} / {{ $event->max_entries }} {{ $event->max_team_size == 2 ? 'チーム' : '名' }}
+                            @else
+                                <a href="{{ route('admin.events.participants.index', $event->id) }}" 
+                                @click.stop
+                                class="text-blue-600 underline hover:text-blue-800">
+                                    {{ $currentEntries }} / {{ $event->max_entries }} {{ $event->max_team_size == 2 ? 'チーム' : '名' }}
+                                </a>
                             @endif
-                        </a>
-                    @endif
+                        </div>
+                    </div>
+                    
+                    {{-- 内訳（総人数） --}}
+                    <div class="text-[10px] text-gray-500 text-right mt-1">
+                        （計 {{ $event->entry_count }}名 / 最大 {{ $event->max_participants }}名）
+                        @if ($event->waitlist_count > 0)
+                            <span class="text-red-500 ml-1">WL: {{ $event->waitlist_count }}</span>
+                        @endif
+                    </div>
                 </div>
 
             </div>
@@ -115,56 +128,65 @@
                     <p><span class="font-bold w-20 inline-block">公開日：</span>{{ $event->published_at ? $event->published_at->isoFormat('YYYY/MM/DD（ddd）HH:mm') : '未設定' }}</p>
                 </div>
 
-                <div class="bg-blue-50 p-3 rounded mb-4 text-sm">
-                    <p class="font-bold text-blue-800 mb-1">【使用チケット】</p>
-                    @if($event->ticket && $event->ticket->plan)
-                        <p>{{ $event->ticket->plan->display_name }} (ID: {{ $event->ticket_id }})</p>
-                        <p class="text-xs text-gray-500">上限：{{ $event->ticket->plan->max_capacity }}名</p>
-                    @else
-                        <p class="text-red-500">チケットが紐付いていません</p>
-                    @endif
-                </div>
-
                 <div class="bg-gray-50 p-3 rounded mb-4 text-sm">
                     <p class="font-bold mb-1 text-gray-800">【募集クラス】</p>
                     <div class="flex flex-wrap gap-2">
                         @forelse($event->eventClasses as $class)
-                            <span class="bg-white border px-2 py-1 rounded shadow-sm">{{ $class->class_name }}</span>
+                        <span class="bg-white border px-2 py-1 rounded shadow-sm">{{ $class->class_name }}</span>
                         @empty
-                            <span class="text-red-500">クラス設定なし</span>
+                        <span class="text-red-500">クラス設定なし</span>
                         @endforelse
                     </div>
                 </div>
-
-                <div class="bg-blue-50 p-3 rounded mb-4 text-sm border border-blue-100">
-                    <p class="font-bold mb-1 text-blue-800 flex items-center">
-                        【参加可能なグループ］
-                    </p>
-                    <div class="flex flex-wrap gap-2">
-                        @forelse($event->requiredGroups as $group)
-                            <div class="bg-white px-2 py-1 rounded shadow-sm border border-blue-200">
-                                <span class="font-bold text-blue-700">{{ $group->name }}</span>
-                                <span class="text-[10px] text-gray-500 ml-1">({{ $group->rank_name }})</span>
-                            </div>
-                        @empty
-                            <span class="text-gray-500 italic">制限なし（誰でも参加可能）</span>
-                        @endforelse
+                
+                <div class="grid grid-cols-1 gap-2 mb-4 text-sm">
+                    <p><span class="font-bold w-20 inline-block">形式：</span>
+                    <span class="px-2 py-0.5 rounded {{ $event->max_team_size == 2 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700' }}">
+                        {{ $event->max_team_size == 2 ? 'チームエントリー（2名1組）' : '個人エントリー（1名）' }}
+                    </span>
+                    <p><span class="font-bold w-20 inline-block">募集枠数：</span>{{ $event->max_entries }} チーム</p>
+                </p>
+            </div>
+            <!-- グループの情報（完成しているが表示しない）消さないこと！！！！ -->
+            <!-- <div class="bg-blue-50 p-3 rounded mb-4 text-sm border border-blue-100">
+                <p class="font-bold mb-1 text-blue-800 flex items-center">
+                    【参加可能なグループ］
+                </p>
+                <div class="flex flex-wrap gap-2">
+                    @forelse($event->requiredGroups as $group)
+                    <div class="bg-white px-2 py-1 rounded shadow-sm border border-blue-200">
+                        <span class="font-bold text-blue-700">{{ $group->name }}</span>
+                        <span class="text-[10px] text-gray-500 ml-1">({{ $group->rank_name }})</span>
                     </div>
+                    @empty
+                    <span class="text-gray-500 italic">制限なし（誰でも参加可能）</span>
+                    @endforelse
                 </div>
-
-    @if($event->instruction_label)
-        <div class="mb-4 text-sm">
-            <p class="font-bold text-gray-800">【追加質問項目】</p>
-            <p class="p-2 bg-yellow-50 rounded border border-yellow-100">{{ $event->instruction_label }}</p>
-        </div>
-    @endif
-
-    <div class="text-sm text-gray-700 space-y-2 break-words border-t pt-4">
-        <p class="font-bold">【イベント詳細説明】</p>
-        <div class="p-2 bg-gray-50 rounded whitespace-pre-wrap">{!! e($event->description) !!}</div>
-    </div>
-
-    <div class="mt-6 text-right">
+            </div> -->
+            
+            @if($event->instruction_label)
+            <div class="mb-4 text-sm">
+                <p class="font-bold text-gray-800">【追加質問項目】</p>
+                <p class="p-2 bg-yellow-50 rounded border border-yellow-100">{{ $event->instruction_label }}</p>
+            </div>
+            @endif
+            
+            <div class="text-sm text-gray-700 space-y-2 break-words border-t pt-4">
+                <p class="font-bold">【イベント詳細説明】</p>
+                <div class="p-2 bg-gray-50 rounded whitespace-pre-wrap">{!! e($event->description) !!}</div>
+            </div>
+            
+            <div class="bg-blue-50 p-3 rounded mb-4 text-sm">
+                <p class="font-bold text-blue-800 mb-1">【使用チケット】</p>
+                @if($event->ticket && $event->ticket->plan)
+                    <p>{{ $event->ticket->plan->display_name }} (ID: {{ $event->ticket_id }})</p>
+                    <p class="text-xs text-gray-500">上限：{{ $event->ticket->plan->max_capacity }}名</p>
+                @else
+                    <p class="text-red-500">チケットが紐付いていません</p>
+                @endif
+            </div>
+    
+            <div class="mt-6 text-right">
         <button class="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700" @click="openModal = null">
             閉じる
         </button>

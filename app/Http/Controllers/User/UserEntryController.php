@@ -21,7 +21,7 @@ class UserEntryController extends Controller
     }
 
     /**
-     * 🟢 エントリー一覧
+     * エントリー一覧
      */
     public function index()
     {
@@ -62,61 +62,59 @@ class UserEntryController extends Controller
     {
         $user = auth()->user();
 
-        // バリデーション
+        // 1. バリデーション
         $request->validate([
             'class' => 'required|string', 
             'user_answer' => 'nullable|string|max:500',
+            'partner_id' => 'nullable|exists:users,id', // パートナーが送られてきた場合
         ]);
 
-        // 重複チェック
+        // 2. 重複チェック
         $existing = UserEntry::where('representative_user_id', $user->id)
             ->where('event_id', $event->id)
+            ->where('status', '!=', 'cancelled')
             ->first();
 
-        if ($existing && $existing->status !== 'cancelled') {
+        if ($existing) {
             return back()->with('error', 'すでにエントリー済みです。');
         }
 
-        // 満員判定
-        $entryCount = $event->entry_count; // Eventモデルで定義したアクセサを利用
+        // 3. 満員判定（この時点での枠確保）
+        $entryCount = $event->entry_count;
         $isFull = $entryCount >= $event->max_participants;
 
         if ($isFull && !$event->allow_waitlist) {
             return back()->with('error', '定員に達しているためエントリーできません。');
         }
 
-        $status = $isFull ? 'waitlist' : 'entry';
+        // 4. 期限の計算ロジック
+        // 有効期限 = Min ( 24時間後, エントリー締切 )
+        $limit = now()->addHours(24);
+        $deadline = $event->entry_end_date; // Eventモデルにこのカラムがある前提
+        $pendingUntil = ($deadline && $limit->gt($deadline)) ? $deadline : $limit;
 
-        // キャンセル待ち期限の処理
-        $waitlistUntil = null;
-        if ($status === 'waitlist' && $request->input('waitlist_until')) {
-            $waitlistUntil = \Carbon\Carbon::parse($request->input('waitlist_until'));
-            $waitlistUntil = min($waitlistUntil, $event->event_date);
-        }
+        // 5. ステータス決定
+        // パートナーがいる場合は一旦 'pending'、いなければ即 'entry'/'waitlist'
+        $hasPartner = $request->filled('partner_id');
+        $finalStatus = $isFull ? 'waitlist' : 'entry';
+        $currentStatus = $hasPartner ? 'pending' : $finalStatus;
 
-        return DB::transaction(function () use ($request, $event, $user, $status, $waitlistUntil) {
-            // --- データの保存 (1人チームとして) ---
+        return DB::transaction(function () use ($request, $event, $user, $currentStatus, $pendingUntil, $hasPartner) {
             
             // 1. 親レコード (UserEntry) の作成
-            // updateOrCreate を使用して、既存のレコード（キャンセル済みなど）があれば更新する
-            $entry = UserEntry::updateOrCreate(
-                [
-                    'event_id' => $event->id,
-                    'representative_user_id' => $user->id,
-                ],
-                [
-                    'team_name' => null,
-                    'status' => $status,
-                    'waitlist_until' => $waitlistUntil,
-                    'user_answer' => $request->input('user_answer'),
-                ]
-            );
+            $entry = UserEntry::create([
+                'event_id' => $event->id,
+                'representative_user_id' => $user->id,
+                'status' => $currentStatus,
+                'is_confirmed' => !$hasPartner, // パートナーがいなければ即確定
+                'pending_until' => $hasPartner ? $pendingUntil : null,
+                'user_answer' => $request->input('user_answer'),
+            ]);
 
-            // 2. 子レコード (EntryMember) の作成
-            // 既存のメンバーがいるかもしれないので、一度削除して作り直すか、updateOrCreateにする
-            $entry->members()->delete(); // 1人エントリーなら消して作り直すのが確実
+            // 2. メンバー登録 (リーダー：自分)
             $entry->members()->create([
                 'user_id' => $user->id,
+                'invite_status' => 'approved', // リーダーは常に承認済み
                 'last_name' => $user->last_name,
                 'first_name' => $user->first_name,
                 'last_name_kana' => $user->last_name_kana,
@@ -125,9 +123,27 @@ class UserEntryController extends Controller
                 'class' => $request->input('class'),
             ]);
 
-            $message = $status === 'entry'
-                ? "「{$event->title}」にエントリーしました！"
-                : "「{$event->title}」のキャンセル待ちに登録されました。";
+            // 3. メンバー登録 (パートナー：相手)
+            if ($hasPartner) {
+                $partner = \App\Models\User::find($request->partner_id);
+                $entry->members()->create([
+                    'user_id' => $partner->id,
+                    'invite_status' => 'pending', // 相手はまだ「招待中」
+                    'last_name' => $partner->last_name,
+                    'first_name' => $partner->first_name,
+                    // 他のプロフィール情報は相手が受諾時に入力してもらうため、ここでは最小限
+                ]);
+
+                // ここでパートナーへ通知を送る（後ほど実装）
+                // Notification::send($partner, new PairInvitationNotification($entry));
+            }
+
+            // メッセージの組み立て
+            if ($hasPartner) {
+                $message = "{$partner->full_name} さんに招待を送りました。相手が受諾するまでエントリーは完了しません（期限: " . $pendingUntil->format('m/d H:i') . "まで）";
+            } else {
+                $message = $currentStatus === 'entry' ? "エントリーが完了しました！" : "キャンセル待ちに登録されました。";
+            }
                 
             return redirect()
                 ->route('user.events.show', $event->id)
@@ -135,21 +151,23 @@ class UserEntryController extends Controller
         });
     }
 
-    public function cancel(Event $event, $entryId, \App\Services\WaitlistService $service)
+    public function cancel(Request $request, $eventId, $entryId)
     {
-        $entry = UserEntry::findOrFail($entryId);
+        $user = auth()->user();
+        // 自分が「代表者」または「メンバー」であるエントリーを取得
+        $entry = UserEntry::where('id', $entryId)
+            ->where(function($query) use ($user) {
+                $query->where('representative_user_id', $user->id)
+                    ->orWhereHas('members', function($q) use ($user) {
+                        $q->where('user_id', $user->id);
+                    });
+            })
+            ->firstOrFail(); // 自分が関わっていないエントリーならここで403相当(404)になる
 
-        // 自分のエントリー（代表者）であることを確認
-        if ($entry->representative_user_id !== auth()->id()) {
-            abort(403);
-        }
+        // キャンセル処理（ステータス更新）
+        $entry->update(['status' => 'cancelled']);
 
-        // WaitlistService 内も既に representative_user_id を見るように修正済みであれば
-        // このままサービスを呼び出すだけでOKです
-        $service->cancelAndPromote($entry);
-
-        return redirect()
-            ->route('user.events.show', $event->id)
+        return redirect()->route('user.events.show', $eventId)
             ->with('message', 'エントリーをキャンセルしました。');
     }
 
@@ -183,5 +201,67 @@ class UserEntryController extends Controller
         }
 
         return back()->with('message', 'キャンセル待ち期限を更新しました。');
+    }
+
+    public function respond(Request $request, Event $event, UserEntry $entry)
+    {
+        $user = auth()->user();
+        $answer = $request->input('answer'); // 'approve' or 'reject'
+
+        // 1. 招待されている本人かつ、まだ回答待ち(pending)であることを厳密にチェック
+        $member = $entry->members()
+            ->where('user_id', $user->id)
+            ->where('invite_status', 'pending')
+            ->first();
+
+        if (!$member) {
+            return back()->with('error', 'この招待は無効か、すでに回答済みです。');
+        }
+
+        // 2. 辞退（reject）の場合>エントリー全体をキャンセルし、枠を解放する
+        if ($answer === 'reject') {
+            $entry->update(['status' => 'cancelled']);
+
+            return redirect()->route('user.events.index')
+                ->with('message', '招待を辞退しました。このエントリーは取り消されました。');
+        }
+
+        // 3. 承諾（approve）の場合
+        $request->validate([
+            'class' => 'required|string',
+        ]);
+
+        DB::transaction(function () use ($entry, $member, $request) {
+            // メンバー情報の更新
+            $member->update([
+                'invite_status' => 'approved',
+                'class' => $request->class,
+                'last_name' => auth()->user()->last_name,
+                'first_name' => auth()->user()->first_name,
+            ]);
+
+            // 2. ★ここがポイント：
+        // 自分を更新した後、まだ 'pending' のままのメンバーが他にいないか数える
+        $pendingCount = $entry->members()->where('invite_status', 'pending')->count();
+
+        // デバッグ用：ログを確認（storage/logs/laravel.log に出ます）
+        \Log::info("Entry ID: {$entry->id}, Remaining Pending: {$pendingCount}");
+
+            // 全員が承諾（approved）したかチェック
+            $isAllApproved = !$entry->members()->where('invite_status', 'pending')->exists();
+
+            if ($isAllApproved) {
+                // 全員揃ったので、最新の定員状況を確認してステータスを確定
+                $isFull = $entry->event->entry_count >= $entry->event->max_participants;
+                
+                $entry->update([
+                    'status' => $isFull ? 'waitlist' : 'entry',
+                    'is_confirmed' => true,
+                    'pending_until' => null, // 期限を解除
+                ]);
+            }
+        });
+
+        return redirect()->route('user.events.show', $event->id)->with('message', '招待を承諾しました！');
     }
 }

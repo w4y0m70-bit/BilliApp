@@ -18,7 +18,7 @@
 
         @forelse ($participants as $participant)
             @php
-                // 最初のメンバーを取得（個人エントリーなら本人、ペアなら代表者）
+                // 最初のメンバーを取得（個人エントリーなら本人、チームなら代表者）
                 $member = $participant->members->first();
             @endphp
             <tbody x-data="{ openMessage: false }" class="border-b border-gray-200">

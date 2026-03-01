@@ -19,7 +19,9 @@ class Event extends Model
         'event_date',
         'entry_deadline',
         'published_at',
-        'max_participants',
+        'max_participants', // 計算後の総人数
+        'max_entries',      // 募集枠数
+        'max_team_size',    // チーム人数
         'allow_waitlist',
         'admin_id',
         'ticket_id',
@@ -86,8 +88,8 @@ class Event extends Model
     // 定員に達しているかを判定（少し効率化）
     public function isFull()
     {
-        // 既に定義したアクセサ（getEntryCountAttribute）を利用するとコードがスッキリします
-        return $this->entry_count >= $this->max_participants;
+        // エントリー済みの「枠数（チーム数）」と「最大募集枠数」を比較
+        return $this->entry_count >= $this->max_entries;
     }
 
     public function ticket()
@@ -108,6 +110,8 @@ class Event extends Model
                         'entry_deadline',
                         'published_at',
                         'max_participants',
+                        'max_entries',
+                        'max_team_size',
                         'allow_waitlist',
                         'admin_id',
                         'ticket_id',
@@ -119,5 +123,19 @@ class Event extends Model
     {
         // group_event 中間テーブルを介してGroupモデルと紐付け
         return $this->belongsToMany(Group::class, 'group_event');
+    }
+
+    public function isUserJoined($userId)
+    {
+        if (!$userId) return false;
+        
+        return $this->userEntries()
+            ->where('status', '!=', 'cancelled')
+            ->where(function($q) use ($userId) {
+                $q->where('representative_user_id', $userId)
+                ->orWhereHas('members', function($m) use ($userId) {
+                    $m->where('user_id', $userId);
+                });
+            })->exists();
     }
 }

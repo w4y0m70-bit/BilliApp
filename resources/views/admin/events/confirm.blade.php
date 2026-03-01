@@ -72,10 +72,22 @@
                 {{-- 実際にstoreに送るためのhiddenデータ --}}
                 <input type="hidden" name="published_at" value="{{ $data['published_at'] }}">
             </div>
-            {{-- 最大人数 --}}
-            <div>
-                <label class="block text-sm font-medium text-gray-500">最大参加者数</label>
-                <div class="mt-1 text-gray-900 font-bold">{{ $data['max_participants'] ?? '' }} 名</div>
+            {{-- 募集枠数とチーム構成 --}}
+            <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg border">
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">募集枠数（チーム数）</label>
+                    <div class="mt-1 text-lg font-bold text-gray-900">{{ $data['max_entries'] ?? '' }} 枠</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">1枠あたりの人数</label>
+                    <div class="mt-1 text-lg font-bold text-gray-900">{{ $data['max_team_size'] ?? 1 }} 名</div>
+                </div>
+                <div class="border-l pl-4">
+                    <label class="block text-sm font-medium text-blue-600">合計最大参加人数</label>
+                    <div class="mt-1 text-xl font-extrabold text-blue-900">
+                        {{ ($data['max_entries'] ?? 0) * ($data['max_team_size'] ?? 1) }} 名
+                    </div>
+                </div>
             </div>
 
             {{-- キャンセル待ち --}}
@@ -161,11 +173,11 @@
             <input type="hidden" name="event_date" value="{{ $data['event_date'] }}">
             <input type="hidden" name="entry_deadline" value="{{ $data['entry_deadline'] }}">
             <input type="hidden" name="published_at" value="{{ $data['published_at'] }}">
-            <input type="hidden" name="max_participants" value="{{ $data['max_participants'] }}">
+            <input type="hidden" name="max_entries" value="{{ $data['max_entries'] }}">
+            <input type="hidden" name="max_team_size" value="{{ $data['max_team_size'] }}">
             <input type="hidden" name="allow_waitlist" value="{{ $data['allow_waitlist'] ?? 0 }}">
             <input type="hidden" name="description" value="{{ $data['description'] }}">
             <input type="hidden" name="instruction_label" value="{{ $data['instruction_label'] }}">
-
             @if(!empty($data['classes']))
                 @foreach($data['classes'] as $class)
                     <input type="hidden" name="classes[]" value="{{ $class }}">

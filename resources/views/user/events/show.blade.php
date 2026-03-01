@@ -6,7 +6,12 @@
 @php
     $currentUser = Auth::user() ?? \App\Models\User::first();
     $userEntry = $event->userEntries()
-        ->where('representative_user_id', $currentUser->id)
+        ->where(function($query) use ($currentUser) {
+            $query->where('representative_user_id', $currentUser->id)
+                  ->orWhereHas('members', function($q) use ($currentUser) {
+                      $q->where('user_id', $currentUser->id);
+                  });
+        })
         ->where('status', '!=', 'cancelled')
         ->latest('created_at')
         ->first();
@@ -21,6 +26,15 @@
     $canEntry = !$isDeadlinePast && (!$isFull || ($isFull && $canWaitlist));
     
     $status = $userEntry->status ?? null;
+    // 自分が「招待されている側（未回答）」のレコードを取得
+    $invitationEntry = $event->userEntries()
+        ->whereHas('members', function($q) use ($currentUser) {
+            $q->where('user_id', $currentUser->id)->where('invite_status', 'pending');
+        })
+        ->where('status', 'pending')
+        ->first();
+
+    $isInvited = (bool)$invitationEntry;
 @endphp
 
 {{-- セッションメッセージ用モーダル（自動オープン） --}}
@@ -43,7 +57,46 @@
 </div>
 
 <div class="bg-white shadow rounded-lg p-6">
+    {{-- ★ 招待されている場合のみ表示 --}}
+    @if($isInvited)
+        <div class="mb-6 bg-blue-50 border-2 border-blue-200 rounded-xl p-5 shadow-sm">
+            <div class="flex items-center gap-2 mb-3 text-blue-800">
+                <span class="material-symbols-outlined font-bold">group_add</span>
+                <h3 class="text-lg font-bold">チーム出場の招待が届いています</h3>
+            </div>
+            
+            <p class="text-sm text-gray-700 mb-4">
+                <strong>{{ $invitationEntry->representative->full_name }}</strong> さんからチームの招待を受けています。<br>
+                回答期限：<span class="text-red-600 font-bold">{{ $invitationEntry->pending_until->format('m/d H:i') }}</span>
+            </p>
 
+            <form action="{{ route('user.entries.respond', ['event' => $event->id, 'entry' => $invitationEntry->id]) }}" method="POST">
+                @csrf
+                <div class="space-y-4">
+                    {{-- クラス選択など、パートナーも入力が必要な項目 --}}
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">あなたの出場クラス <span class="text-red-500">*</span></label>
+                        <select name="class" required class="w-full border-gray-300 rounded-md shadow-sm focus:border-user focus:ring-user">
+                            <option value="">選択してください</option>
+                            @foreach($event->eventClasses as $class)
+                                <option value="{{ $class->class_name }}">{{ $class->class_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-3 mt-4">
+                        <button type="submit" name="answer" value="approve" class="flex-1 bg-user text-white font-bold py-3 rounded-lg hover:bg-user-dark transition shadow-md">
+                            招待を承諾してエントリー
+                        </button>
+                        
+                        <button type="submit" name="answer" value="reject" onclick="return confirm('招待を辞退しますか？')" class="sm:w-1/3 bg-white text-red-600 border border-red-200 font-bold py-3 rounded-lg hover:bg-red-50 transition">
+                            辞退する
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    @endif
     {{-- 主催者とグループ --}}
     <div x-data="{ showOrganizer: false }">
         <div class="flex justify-between items-start mb-1">
