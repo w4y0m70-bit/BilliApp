@@ -44,17 +44,21 @@ class UserEntryController extends Controller
         }
 
         // すでにエントリー済みかチェック
-        $existing = UserEntry::where('representative_user_id', auth()->id()) // user_idから変更
-            ->where('event_id', $event->id)
-            ->where('status', '!=', 'cancelled')
-            ->first();
+        $existing = UserEntry::where('event_id', $event->id)
+            ->whereIn('status', ['entry', 'waitlist', 'pending']) // ★有効なステータスだけを探す
+            ->where(function($query) use ($user) {
+                $query->where('representative_user_id', $user->id)
+                    ->orWhereHas('members', function($q) use ($user) {
+                        $q->where('user_id', $user->id);
+                    });
+            })
+            ->exists(); // 存在するかどうかだけチェック
 
         if ($existing) {
-            return redirect()->route('user.events.show', $event->id)->with('error', 'すでにエントリー済みです。');
+            return back()->with('error', 'すでに有効なエントリーがあります。');
         }
 
         $event->load('eventClasses');
-
         return view('user.events.create', compact('event', 'user'));
     }
 
@@ -70,18 +74,23 @@ class UserEntryController extends Controller
         ]);
 
         // 2. 重複チェック
-        $existing = UserEntry::where('representative_user_id', $user->id)
-            ->where('event_id', $event->id)
-            ->where('status', '!=', 'cancelled')
-            ->first();
+        $existing = UserEntry::where('event_id', $event->id)
+            ->whereIn('status', ['entry', 'waitlist', 'pending']) // ★有効なステータスだけを探す
+            ->where(function($query) use ($user) {
+                $query->where('representative_user_id', $user->id)
+                    ->orWhereHas('members', function($q) use ($user) {
+                        $q->where('user_id', $user->id);
+                    });
+            })
+            ->exists(); // 存在するかどうかだけチェック
 
         if ($existing) {
-            return back()->with('error', 'すでにエントリー済みです。');
+            return back()->with('error', 'すでに有効なエントリーがあります。');
         }
 
         // 3. 満員判定（この時点での枠確保）
         $entryCount = $event->entry_count;
-        $isFull = $entryCount >= $event->max_participants;
+        $isFull = $event->entry_count >= $event->max_entries;
 
         if ($isFull && !$event->allow_waitlist) {
             return back()->with('error', '定員に達しているためエントリーできません。');

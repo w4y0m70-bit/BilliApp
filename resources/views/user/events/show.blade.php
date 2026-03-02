@@ -203,6 +203,64 @@
             </div>
         @endif
 
+        {{-- エントリーメンバー --}}
+        @if($userEntry)
+            <div class="mt-6 border-t pt-4">
+                <h3 class="text-sm font-bold text-gray-600 mb-3 flex items-center">
+                    <span class="material-symbols-outlined text-sm mr-1">group</span>
+                    エントリーメンバー
+                </h3>
+                
+                <div class="space-y-3">
+                    @foreach($userEntry->members as $member)
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <div class="flex items-center gap-3">
+                                {{-- 状態アイコン --}}
+                                @if($member->invite_status === 'approved')
+                                    <span class="material-symbols-outlined text-green-500" title="承諾済み">check_circle</span>
+                                @else
+                                    <span class="material-symbols-outlined text-yellow-500 animate-pulse" title="回答待ち">pending</span>
+                                @endif
+
+                                <div>
+                                    <p class="text-sm font-bold text-gray-800">
+                                        {{ $member->user->full_name }}
+                                        @if($member->invite_status === 'pending')
+                                            <span class="text-[10px] text-orange-500 font-normal ml-1">(回答待ち)</span>
+                                        @endif
+                                    </p>
+                                    <p class="text-[10px] text-gray-500">
+                                        クラス：{{ $member->class ?? '未決定' }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {{-- 状態ラベル --}}
+                            <div>
+                                @if($member->invite_status === 'approved')
+                                    <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded border border-green-200">
+                                        参加確定
+                                    </span>
+                                @else
+                                    <span class="text-[10px] font-bold text-yellow-600 bg-yellow-50 px-2 py-1 rounded border border-yellow-200">
+                                        回答待ち
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                
+                {{-- 全員揃っていない場合の補足メッセージ（代表者のみ表示） --}}
+                @if($userEntry->status === 'pending' && $userEntry->representative_user_id === auth()->id())
+                    <p class="mt-3 text-xs text-red-500 font-bold flex items-center">
+                        <span class="material-symbols-outlined text-xs mr-1">info</span>
+                        パートナーが承諾するとエントリーが完了します。
+                    </p>
+                @endif
+            </div>
+        @endif
+        
         {{-- ■ エントリーボタン --}}
         <div class="flex justify-end items-center gap-3 pt-4 border-t">
             @if(!$userEntry)

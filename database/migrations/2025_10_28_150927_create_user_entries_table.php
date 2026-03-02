@@ -24,9 +24,6 @@ return new class extends Migration {
             $table->dateTime('pending_until')->nullable();
             $table->dateTime('waitlist_until')->nullable();  //  キャンセル待ち期限
             $table->timestamps();
-
-            // 同じイベントに同じ人が複数チームの代表者として申し込めないようにする場合（任意）
-            $table->unique(['event_id', 'representative_user_id']);
         });
     }
 
