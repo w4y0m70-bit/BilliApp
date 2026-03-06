@@ -47,20 +47,29 @@ document.addEventListener('DOMContentLoaded', function() {
      * 3. 送信時バリデーション
      */
     eventForm.onsubmit = function(e) {
-        // A. チケット定員チェック (max_participants と ticket の連動)
-        if (ticketSelect && maxParticipantsInput) {
+        // A. チケット定員チェック (チーム数 × 1チームの人数 で計算)
+        const maxEntriesInput = document.getElementById('max_entries');
+        const teamSizeInput = document.querySelector('input[name="max_team_size"]:checked');
+
+        if (ticketSelect && maxEntriesInput && teamSizeInput) {
             const selectedOption = ticketSelect.options[ticketSelect.selectedIndex];
+            
             if (selectedOption && selectedOption.value !== "") {
                 const capacity = Number(selectedOption.getAttribute('data-capacity'));
-                const inputVal = Number(maxParticipantsInput.value);
-                if (!isNaN(capacity) && inputVal > capacity) {
-                    alert('【定員オーバー】\n選択したチケットの定員（' + capacity + '名）を超えています。');
+                const entries = Number(maxEntriesInput.value);
+                const teamSize = Number(teamSizeInput.value);
+                const totalParticipants = entries * teamSize;
+
+                if (!isNaN(capacity) && totalParticipants > capacity) {
+                    alert('【定員オーバー】\n' +
+                          '総人数 (' + totalParticipants + '名) が、選択したチケットのプラン上限 (' + capacity + '名) を超えています。\n' +
+                          'チーム数または1チームあたりの人数を調整してください。');
                     return false;
                 }
             }
         }
 
-        // B. 日付整合性チェック
+        // B. 日付整合性チェック (変更なし)
         if (eventInput && deadlineInput) {
             const eventDate = new Date(eventInput.value);
             const deadline = new Date(deadlineInput.value);

@@ -90,6 +90,7 @@ class UserEntryController extends Controller
 
         // 3. 満員判定（この時点での枠確保）
         $entryCount = $event->entry_count;
+        // $event->entry_count が「現在確定しているチーム数」を返す前提
         $isFull = $event->entry_count >= $event->max_entries;
 
         if ($isFull && !$event->allow_waitlist) {
@@ -106,9 +107,10 @@ class UserEntryController extends Controller
         // パートナーがいる場合は一旦 'pending'、いなければ即 'entry'/'waitlist'
         $hasPartner = $request->filled('partner_id');
         $finalStatus = $isFull ? 'waitlist' : 'entry';
+        // パートナーがいる場合は回答待ち(pending)だが、枠は確保(またはキャンセル待ち枠)される
         $currentStatus = $hasPartner ? 'pending' : $finalStatus;
 
-        return DB::transaction(function () use ($request, $event, $user, $currentStatus, $pendingUntil, $hasPartner) {
+        return DB::transaction(function () use ($request, $event, $user, $currentStatus, $hasPartner, $pendingUntil) {
             
             // 1. 親レコード (UserEntry) の作成
             $entry = UserEntry::create([
@@ -256,17 +258,19 @@ class UserEntryController extends Controller
         // デバッグ用：ログを確認（storage/logs/laravel.log に出ます）
         \Log::info("Entry ID: {$entry->id}, Remaining Pending: {$pendingCount}");
 
-            // 全員が承諾（approved）したかチェック
+            // 全員が承諾したかチェック
             $isAllApproved = !$entry->members()->where('invite_status', 'pending')->exists();
 
             if ($isAllApproved) {
-                // 全員揃ったので、最新の定員状況を確認してステータスを確定
-                $isFull = $entry->event->entry_count >= $entry->event->max_participants;
+                // ★ 修正：最新の「チーム枠数」を確認
+                // 自分たちの枠はすでに pending としてカウントされているはずですが、
+                // 他のキャンセル待ち繰り上げとの競合を防ぐため再チェック
+                $isFull = $event->entry_count > $event->max_entries; // 自分を含めて超えていないか
                 
                 $entry->update([
                     'status' => $isFull ? 'waitlist' : 'entry',
                     'is_confirmed' => true,
-                    'pending_until' => null, // 期限を解除
+                    'pending_until' => null,
                 ]);
             }
         });

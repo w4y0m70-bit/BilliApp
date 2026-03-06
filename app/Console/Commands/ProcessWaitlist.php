@@ -21,18 +21,24 @@ class ProcessWaitlist extends Command
             ->where('waitlist_until', '<', $now)
             ->update(['status' => 'expired']);
 
-        // イベントごとに空席繰り上げ
-        $events = Event::with(['userEntries' => fn($q) => $q->where('status','waitlist')])->get();
+        // 全イベントを取得
+        $events = Event::all();
 
         foreach ($events as $event) {
-            $entryCount = $event->userEntries()->where('status','entry')->count();
+            // 1. 現在の「確定枠(entry)」のチーム数（レコード数）をカウント
+            // ※もし「回答待ち(pending)」も枠を占有する仕様なら whereIn に含める
+            $entryCount = $event->userEntries()
+                ->whereIn('status', ['entry', 'pending'])
+                ->count();
 
-            $availableSlots = $event->max_participants - $entryCount;
+            // 2. 空き「枠数」を計算 (max_participants ではなく max_entries を使用)
+            $availableSlots = $event->max_entries - $entryCount;
 
             if ($availableSlots > 0) {
+                // 3. 空いた枠数分だけ、キャンセル待ちから取得
                 $nextEntries = $event->userEntries()
-                    ->where('status','waitlist')
-                    ->orderBy('updated_at')
+                    ->where('status', 'waitlist')
+                    ->orderBy('updated_at', 'asc')
                     ->limit($availableSlots)
                     ->get();
 
@@ -41,6 +47,9 @@ class ProcessWaitlist extends Command
                         'status' => 'entry',
                         'waitlist_until' => null,
                     ]);
+                    
+                    // ここで繰り上げ通知メールなどを送るイベントを発火させても良いですね
+                    $this->info("Event ID {$event->id}: Entry ID {$entry->id} を繰り上げました。");
                 }
             }
         }

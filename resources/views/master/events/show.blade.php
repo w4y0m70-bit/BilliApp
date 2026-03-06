@@ -30,11 +30,8 @@
                     </div>
                     <div>
                         <dt class="text-sm text-gray-500">参加状況</dt>
-                        <dd class="text-base">
-                            <span class="text-xl font-bold">{{ $event->entry_count }}</span> / {{ $event->max_participants }} 名
-                            @if($event->waitlist_count > 0)
-                                <span class="text-orange-500 text-sm ml-2">(キャンセル待ち: {{ $event->waitlist_count }}名)</span>
-                            @endif
+                        <dd class="mt-1">
+                            <x-event.entry-status :event="$event" />
                         </dd>
                     </div>
                     <div class="md:col-span-3">
@@ -46,81 +43,15 @@
 
             <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6">
                 <h3 class="text-lg font-medium mb-4">参加者・エントリー名簿</h3>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                {{-- 幅を最小限に --}}
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-10">#</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-10 text-center">クラス</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">名前</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">申込日時</th>
-                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            @php
-                                $sortedEntries = $event->userEntries()->sortedList()->get();
-                                $entryNo = 1;
-                                $wlNo = 1;
-                            @endphp
-
-                            @forelse($sortedEntries as $entry)
-                            <tr class="{{ $entry->status === 'waitlist' ? 'bg-orange-50/50 dark:bg-orange-900/10' : '' }}">
-                                {{-- 1. 番号表示 --}}
-                                <td class="px-4 py-4 text-sm font-mono">
-                                    @if($entry->status === 'entry')
-                                        {{ $entryNo++ }}
-                                    @elseif($entry->status === 'waitlist')
-                                        <span class="text-orange-600 font-bold">wl{{ $wlNo++ }}</span>
-                                    @else
-                                        <span class="text-gray-400">-</span>
-                                    @endif
-                                </td>
-
-                                {{-- 2. クラス表示 --}}
-                                <td class="px-4 py-4 text-sm text-center">
-                                    <span class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-[10px] font-bold border border-gray-200 dark:border-gray-600">
-                                        {{ $entry->class ? $entry->class->shortLabel() : '未設定' }}
-                                    </span>
-                                </td>
-
-                                {{-- 3. 名前（一本化したメソッドを使用） --}}
-                                <td class="px-4 py-4 text-sm font-bold">
-                                    @php
-                                        $genderColorClass = $entry->gender === '女性' ? 'text-pink-700' : ($entry->representative_user_id ? 'text-gray-900 dark:text-white' : 'text-blue-600 dark:text-blue-400');
-                                    @endphp
-                                    
-                                    <span class="{{ $genderColorClass }}">
-                                        {{ $entry->getDisplayNameByFormat('admin') }}
-                                    </span>
-                                </td>
-
-                                {{-- 4. 申込日時 --}}
-                                <td class="px-4 py-4 text-sm text-gray-500 whitespace-nowrap">
-                                    {{ $entry->updated_at->format('m/d H:i') }}
-                                </td>
-
-                                {{-- 5. 操作 --}}
-                                <td class="px-4 py-4 text-sm text-right whitespace-nowrap">
-                                    @if($entry->representative_user_id)
-                                        <a href="{{ route('master.users.show', $entry->representative_user_id) }}" class="text-indigo-600 hover:underline">詳細</a>
-                                    @else
-                                        <span class="text-gray-400 text-[10px]">GUEST</span>
-                                    @endif
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="5" class="px-4 py-10 text-center text-gray-500">
-                                    エントリーはありません。
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+                {{-- ★ 修正：チーム制対応のリストコンポーネントを使用 --}}
+                {{-- ※ 管理者向けの表示として 'mode="master"' などのプロパティを渡すと便利です --}}
+                <x-event.participant-list 
+                    :event="$event" 
+                    :participants="$event->userEntries()->sortedList()->get()" 
+                    mode="master" 
+                />
             </div>
+            
             <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
                 <h3 class="text-red-700 dark:text-red-400 text-lg font-medium mb-2">管理アクション</h3>
                 <p class="text-sm text-red-600 dark:text-red-400 mb-4">このイベントを強制的に削除します。この操作は取り消せません。</p>

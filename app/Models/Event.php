@@ -60,7 +60,7 @@ class Event extends Model
     {
         // 「エントリー（チーム）の数」をカウントする
         // これで 1人チームも 2人チームも「1枠」として計算されます
-        return $this->userEntries()->where('status', 'entry')->count();
+        return $this->userEntries()->whereIn('status', ['entry', 'pending'])->count();
     }
 
     // キャンセル待ち人数を算出

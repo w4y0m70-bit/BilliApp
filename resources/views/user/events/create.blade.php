@@ -66,10 +66,15 @@
         @endif
 
         {{-- 3. キャンセル待ち設定 --}}
-        @if($event->entry_count >= $event->max_participants)
-            <div class="bg-yellow-50 p-3 rounded text-sm text-yellow-800 border border-yellow-200">
-                <span class="material-icons text-sm align-middle">hourglass_empty</span>
-                現在満員のため、<strong>キャンセル待ち</strong>としての登録となります。
+        @if($event->entry_count >= $event->max_entries)
+            <div class="bg-orange-50 p-4 rounded-lg text-sm text-orange-800 border border-orange-200 flex items-start gap-3">
+                <span class="material-icons text-orange-500">info</span>
+                <div>
+                    <p class="font-bold">現在キャンセル待ちでの受付となります</p>
+                    <p class="mt-1 text-xs opacity-90">
+                        エントリー枠（{{ $event->max_entries }} {{ $event->max_team_size > 1 ? 'チーム' : '名' }}）が満員のため、欠員が出た場合のみ繰り上げとなります。
+                    </p>
+                </div>
             </div>
         @endif
 

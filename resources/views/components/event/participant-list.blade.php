@@ -1,10 +1,11 @@
 @props([
     'participants', 
-    'mode' => 'user', // 'admin' または 'user'
+    'mode' => 'user', // 'admin', 'master', 'user'
 ])
 
 @php
-    $isAdmin = $mode === 'admin';
+    $isAdmin = in_array($mode, ['admin', 'master']);
+    $isMaster = $mode === 'master';
 @endphp
 
 <div class="bg-white shadow rounded-xl overflow-hidden border border-gray-200">
@@ -37,25 +38,33 @@
                         @endif
                         <td class="px-5 py-3 text-sm">
                             <div class="flex items-center gap-2">
-                                {{-- 招待状態（管理者の時のみ表示して分かりやすくする） --}}
                                 @if($isAdmin)
                                     <span class="material-symbols-outlined text-sm {{ $member->invite_status === 'approved' ? 'text-green-500' : 'text-yellow-500 animate-pulse' }}">
                                         {{ $member->invite_status === 'approved' ? 'check_circle' : 'pending' }}
                                     </span>
                                 @endif
 
-                                <span class="font-bold {{ $member->gender === '女性' ? 'text-pink-700' : 'text-gray-800' }}">
-                                    @if($isAdmin)
-                                        {{ $member->full_name }} 
-                                        @if($member->user) <span class="text-xs font-normal text-gray-500">({{ $member->user->account_name }})</span> @endif
-                                    @else
-                                        {{ $member->user->account_name ?? $member->full_name }}
+                                <div class="flex flex-col">
+                                    <span class="font-bold {{ $member->gender === '女性' ? 'text-pink-700' : 'text-gray-800' }}">
+                                        @if($isAdmin)
+                                            <span class="text-gray-800">
+                                                {{ $member->full_name }}
+                                                @if(!$member->user_id)
+                                                    <span class="text-[10px] text-gray-400">(ゲスト)</span>
+                                                @endif
+                                            </span>
+                                            @if($member->user) 
+                                                <span class="text-xs font-normal text-gray-500">({{ $member->user->account_name }})</span> 
+                                            @endif
+                                        @else
+                                            {{ $member->user->account_name ?? $member->full_name }}
+                                        @endif
+                                    </span>
+                                    
+                                    @if($participant->event->max_team_size > 1 && $member->user_id === $participant->representative_user_id)
+                                        <span class="w-fit text-[9px] bg-indigo-500 text-white px-1.5 rounded-full mt-0.5">代表</span>
                                     @endif
-                                </span>
-                                
-                                @if($participant->event->max_team_size > 1 && $member->user_id === $participant->representative_user_id)
-                                    <span class="text-[9px] bg-user text-white px-1 rounded-full">代表</span>
-                                @endif
+                                </div>
                             </div>
                         </td>
                         <td class="px-5 py-3 text-sm">

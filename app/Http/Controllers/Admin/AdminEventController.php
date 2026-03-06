@@ -1,5 +1,5 @@
 <?php
-//  イベント関係（作成・編集・閲覧）
+// イベント関係（作成・編集・閲覧）
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -60,71 +60,46 @@ class AdminEventController extends Controller
     // 確認ページ
     public function confirm(Request $request)
     {
-        // 1. バリデーション実行（$validator変数をここで確実に定義します）
+        // 1. バリデーション
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'id'                => 'nullable|exists:events,id',
             'title'             => 'required|string|max:100',
             'ticket_id'         => 'required|exists:tickets,id',
             'event_date'        => 'required|date|after_or_equal:now', 
-            'entry_deadline'    => 'required|date|before:event_date', // 締切は開催日より前
+            'entry_deadline'    => 'required|date|before:event_date',
             'published_at'      => 'nullable|date',
-            'max_entries'  => 'required|integer|min:1',
+            'max_entries'       => 'required|integer|min:1',
+            'max_team_size'     => 'required|integer|in:1,2',
             'allow_waitlist'    => 'nullable|boolean',
             'description'       => 'nullable|string',
             'classes'           => 'required|array|min:1', 
             'instruction_label' => 'nullable|string|max:100',
             'groups'            => 'nullable|array',
             'groups.*'          => 'exists:groups,id',
-            'max_entries'      => 'required|integer|min:1', // チーム枠数
-            'max_team_size' => 'required|integer|in:1,2', // 1チームあたりの人数
         ]);
 
-        // バリデーション失敗時は、以前の「入力画面」にエラーを持って戻る
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        // 3. 検証済みデータを取得
         $data = $validator->validated();
-
-        // 複製時は ID を持っているが、新規作成として扱うためのフラグ
         $data['is_replicate'] = $request->has('is_replicate');
 
-        // ★ 人数計算のロジック
-        // チーム数 × 1チームの人数 = 総参加予定人数
-        $totalExpectedParticipants = $data['max_entries'] * $data['max_team_size'];
+        // 2. チケット上限チェック（ここが唯一の真実）
         $selectedTicket = Ticket::with('plan')->findOrFail($data['ticket_id']);
-        
-        // チケットの収容人数（max_capacity）と比較
+        $totalExpectedParticipants = $data['max_entries'] * $data['max_team_size'];
+
         if ($totalExpectedParticipants > $selectedTicket->plan->max_capacity) {
             return back()->withErrors([
-                'max_entries' => "現在の設定では最大 {$totalExpectedParticipants} 名となります。選択したチケットのプラン上限（{$selectedTicket->plan->max_capacity}名）を超えています。"
+                'max_entries' => "プラン上限（{$selectedTicket->plan->max_capacity}名）に対し、設定が {$totalExpectedParticipants} 名となっています。"
             ])->withInput();
         }
 
-        // ビューに渡すデータに計算済みの総人数も含めておくと確認画面で親切です
+        // ビューへ渡す準備
         $data['total_participants'] = $totalExpectedParticipants;
-
-        return view('admin.events.confirm', [
-            'data' => $data,
-            'selectedTicket' => $selectedTicket
-        ]);
-        
-        // 4. チケット情報の取得
-        $selectedTicket = Ticket::with('plan')->findOrFail($data['ticket_id']);
-        if ($data['max_participants'] > $selectedTicket->plan->max_capacity) {
-            return back()->withErrors(['max_participants' => "チケットのプラン上限を超えています。"])->withInput();
-        }
-
-        // 5. 定員チェック（以前のロジック）
-        if ($data['max_participants'] > $selectedTicket->plan->max_capacity) {
-            return back()->withErrors([
-                'max_participants' => "チケットのプラン上限を超えています。"
-            ])->withInput();
-        }
-
-        // 6. 公開済み判定
         $data['isPast'] = isset($data['published_at']) && \Carbon\Carbon::parse($data['published_at'])->isPast();
+
+        // ※ ここから下にあった「4. チケット情報の取得」「5. 定員チェック」の重複は削除します
 
         return view('admin.events.confirm', [
             'data' => $data,
@@ -255,38 +230,38 @@ class AdminEventController extends Controller
         return view('admin.events.index', compact('publishedEvents', 'unpublishedEvents', 'pastEvents'));
     }
 
-    public function participants(Event $event)
-    {
-        // ここで sortedList() を使い、DBの時点で updated_at 順にする
-        $entries = $event->userEntries()
-            ->sortedList() 
-            ->with('user')
-            ->get();
+    // public function participants(Event $event)
+    // {
+    //     // ここで sortedList() を使い、DBの時点で updated_at 順にする
+    //     $entries = $event->userEntries()
+    //         ->sortedList() 
+    //         ->with('user')
+    //         ->get();
 
-        $participants = $entries->map(function ($entry) {
-            return [
-                'id'         => $entry->id,
-                'status'     => $entry->status,
-                'full_name'  => $entry->getDisplayNameByFormat('admin'),
-                'gender'     => $entry->gender,
-                'class'      => $entry->class?->value,
-                'order'      => $entry->order, // ここでモデルの getOrderAttribute が呼ばれる
-                'updated_at' => $entry->updated_at->toDateTimeString(), // デバッグ用に含める
-            ];
-        });
+    //     $participants = $entries->map(function ($entry) {
+    //         return [
+    //             'id'         => $entry->id,
+    //             'status'     => $entry->status,
+    //             'full_name'  => $entry->getDisplayNameByFormat('admin'),
+    //             'gender'     => $entry->gender,
+    //             'class'      => $entry->class?->value,
+    //             'order'      => $entry->order, // ここでモデルの getOrderAttribute が呼ばれる
+    //             'updated_at' => $entry->updated_at->toDateTimeString(), // デバッグ用に含める
+    //         ];
+    //     });
 
-        return response()->json($participants);
-    }
+    //     return response()->json($participants);
+    // }
 
-    public function showParticipants(Event $event) 
-    {
-        $participants = $event->userEntries()
-            ->sortedList() 
-            ->with('user')
-            ->get();
+    // public function showParticipants(Event $event) 
+    // {
+    //     $participants = $event->userEntries()
+    //         ->sortedList() 
+    //         ->with('user')
+    //         ->get();
 
-        return view('admin.participants.index', compact('event', 'participants'));
-    }
+    //     return view('admin.participants.index', compact('event', 'participants'));
+    // }
 
     // --- 編集画面表示 ---
     public function edit(Event $event)

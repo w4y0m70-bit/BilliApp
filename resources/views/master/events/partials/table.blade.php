@@ -17,17 +17,29 @@
                     @foreach($events as $event)
                     <tr class="{{ $type === 'past' ? 'opacity-75' : '' }}">
                         <td class="px-4 py-4 text-sm">
-                            <span class="{{ $type === 'upcoming' ? 'font-bold' : '' }}">
-                                {{ $event->event_date->format('Y/m/d H:i') }}
-                            </span>
-                        </td>
-                        <td class="px-4 py-4 text-sm font-bold">{{ $event->title }}</td>
-                        <td class="px-4 py-4 text-sm">{{ $event->organizer->name ?? '---' }}</td>
-                        <td class="px-4 py-4 text-sm">
-                            {{ $event->entry_count }} / {{ $event->max_participants }}
-                        </td>
-                        <td class="px-4 py-4 text-sm text-right">
-                            <a href="{{ route('master.events.show', $event) }}" class="text-blue-600 hover:underline">詳細</a>
+                            <div class="flex items-center gap-1">
+                                {{-- 現在の確定チーム数 --}}
+                                <span class="font-bold text-gray-900 dark:text-gray-100">
+                                    {{ $event->entry_count }}
+                                </span>
+                                <span class="text-gray-400">/</span>
+                                {{-- 最大チーム数 --}}
+                                <span class="text-gray-600 dark:text-gray-400">
+                                    {{ $event->max_entries }}
+                                </span>
+                                <span class="text-[10px] text-gray-500 ml-1">
+                                    {{ $event->max_team_size == 2 ? 'ペア' : '名' }}
+                                </span>
+                            </div>
+                            
+                            {{-- キャンセル待ちがある場合のみバッジを表示 --}}
+                            @if($event->waitlist_count > 0)
+                                <div class="mt-1">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-800">
+                                        WL: {{ $event->waitlist_count }}
+                                    </span>
+                                </div>
+                            @endif
                         </td>
                     </tr>
                     @endforeach

@@ -123,7 +123,8 @@
         @foreach ($events as $event)
             @php
                 $currentUser = Auth::user();
-                // 自分が代表者、またはメンバーとして含まれるエントリーを探す
+                
+                // 1. 自分のエントリー情報を取得
                 $userEntry = $event->userEntries()
                     ->where(function($query) use ($currentUser) {
                         $query->where('representative_user_id', $currentUser->id)
@@ -136,28 +137,22 @@
                     ->first();
 
                 $status = $userEntry->status ?? null;
-                $isFull = $event->entry_count >= $event->max_participants;
+                
+                // 2. 満員・締切判定のロジックを整理
+                $isTeamEvent = $event->max_team_size > 1;
+                $maxCapacity = $event->max_entries; // チーム数ベース
+                $currentEntries = $event->entry_count; // 確定済みチーム数
+                
+                $isFull = $currentEntries >= $maxCapacity;
                 $isDeadlinePast = $event->entry_deadline->isPast();
 
-                // 自分が「招待されている最中（未回答）」かどうかの判定
+                // 3. 自分が招待中（未回答）かどうかの判定
                 $isInvited = $event->userEntries()
                     ->whereHas('members', function($q) use ($currentUser) {
                         $q->where('user_id', $currentUser->id)->where('invite_status', 'pending');
                     })
                     ->where('status', 'pending')
                     ->exists();
-
-                // ★ 単位と分母のロジックを修正
-                // チームサイズが1より大きければ「チーム」、1なら「人」
-                $isTeamEvent = $event->max_team_size > 1;
-                $unit = $isTeamEvent ? 'チーム' : '人';
-
-                // 分母を max_entries に変更
-                $maxCapacity = $event->max_entries; 
-
-                // エントリー数（分子）と定員（分母）の比較で満員判定
-                $isFull = $event->entry_count >= $maxCapacity;
-                $isDeadlinePast = $event->entry_deadline->isPast();
             @endphp
 
             {{-- カード部分 --}}

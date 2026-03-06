@@ -4,7 +4,9 @@
 
 @section('content')
 @php
-    $currentUser = Auth::user() ?? \App\Models\User::first();
+    $currentUser = Auth::user();
+    
+    // 1. 自分のエントリー情報を取得
     $userEntry = $event->userEntries()
         ->where(function($query) use ($currentUser) {
             $query->where('representative_user_id', $currentUser->id)
@@ -16,17 +18,25 @@
         ->latest('created_at')
         ->first();
 
+    // 2. 満員・締切・エントリー可否の判定ロジック
+    $maxCapacity = $event->max_entries; // 【修正】チーム数ベースに変更
+    $currentEntries = $event->entry_count; // 【修正】確定済みチーム数
+    
+    $isFull = $currentEntries >= $maxCapacity;
+    $canWaitlist = $event->allow_waitlist;
+    $isDeadlinePast = $event->entry_deadline->isPast();
+    
+    // エントリーボタンを出せるかどうか
+    $canEntry = !$isDeadlinePast && (!$isFull || ($isFull && $canWaitlist));
+    
+    $status = $userEntry->status ?? null;
+
+    // 3. キャンセル待ち期限のデフォルト値
     $waitlistDefault = $userEntry && $userEntry->waitlist_until
         ? $userEntry->waitlist_until->format('Y-m-d\TH:i')
         : $event->entry_deadline->format('Y-m-d\TH:i');
 
-    $isFull = $event->entry_count >= $event->max_participants;
-    $canWaitlist = $event->allow_waitlist;
-    $isDeadlinePast = $event->entry_deadline->isPast();
-    $canEntry = !$isDeadlinePast && (!$isFull || ($isFull && $canWaitlist));
-    
-    $status = $userEntry->status ?? null;
-    // 自分が「招待されている側（未回答）」のレコードを取得
+    // 4. 自分が「招待されている側（未回答）」のレコードを取得
     $invitationEntry = $event->userEntries()
         ->whereHas('members', function($q) use ($currentUser) {
             $q->where('user_id', $currentUser->id)->where('invite_status', 'pending');

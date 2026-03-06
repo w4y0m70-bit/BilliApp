@@ -32,6 +32,9 @@ class WaitlistService
         });
     }
     
+    /**
+     * 定期実行（Cron）用：各種期限切れのチェック
+     */
     public function handleExpiredWaitlist(): void
     {
         // A. ユーザー個別の期限切れ（既存の処理）
@@ -50,89 +53,106 @@ class WaitlistService
         // C. 【新規追加】チーム招待の仮押さえ期限（pending）のチェック
         $this->handleExpiredPendingEntries();
     }
-
-    /**
-     * イベントのエントリー期限が過ぎたキャンセル待ちを処理
-     */
-    private function handleEventDeadlineReached(): void
-    {
-        // ステータスが waitlist かつ、紐づくイベントの entry_deadline（または event_date）を過ぎているものを取得
-        // ※ カラム名は DB 設計に合わせて調整してください（例: entry_limit_date など）
-        $entriesWithReachedDeadline = UserEntry::where('status', 'waitlist')
-            ->whereHas('event', function ($query) {
-                $query->where('entry_deadline', '<=', now()); 
-            })
-            ->get();
-
-        foreach ($entriesWithReachedDeadline as $entry) {
-            DB::transaction(function () use ($entry) {
-                // ステータスをキャンセルに更新
-                $entry->update(['status' => 'cancelled']);
-
-                // 今回作成した「期限終了」のイベントを発行
-                // これにより SendWaitlistDeadlineNotification リスナーが起動します
-                event(new \App\Events\WaitlistDeadlineReached($entry));
-
-                \Log::info("イベント期限到達による自動キャンセル: Entry ID {$entry->id}");
-            });
-        }
-    }
     
     /**
      * 空き枠がある場合に次の方を繰り上げる
-     */
+    */
     private function promoteNext(int $eventId): void
     {
         $event = Event::find($eventId);
         if (!$event) return;
-
-        $currentCount = UserEntry::where('event_id', $eventId)
-            ->where('status', 'entry')
-            ->count();
-
-        $availableSlots = $event->max_participants - $currentCount;
-
+        
+        // ★ 修正：現在枠を確保しているのは 'entry' と 'pending' の両方
+        $currentOccupiedCount = UserEntry::where('event_id', $eventId)
+        ->whereIn('status', ['entry', 'pending'])
+        ->count();
+        
+        // ★ 修正：チーム枠数(max_entries)で空きを計算
+        $availableSlots = $event->max_entries - $currentOccupiedCount;
+        
         if ($availableSlots > 0) {
             $nextEntries = UserEntry::where('event_id', $eventId)
-                ->where('status', 'waitlist')
-                // ★追加：期限が切れていない人だけを繰り上げ対象にする
-                ->where(function($query) {
-                    $query->whereNull('waitlist_until')
-                          ->orWhere('waitlist_until', '>', now());
+            ->where('status', 'waitlist')
+            ->where(function($query) {
+                $query->whereNull('waitlist_until')
+                ->orWhere('waitlist_until', '>', now());
                 })
-                ->orderBy('updated_at')
+                ->orderBy('updated_at') // 申し込み順
                 ->limit($availableSlots)
                 ->get();
-
-            foreach ($nextEntries as $entry) {
-                $entry->update([
-                    'status' => 'entry',
-                    'waitlist_until' => null,
-                ]);
-                event(new WaitlistPromoted($entry));
+                
+                foreach ($nextEntries as $entry) {
+                    $entry->update([
+                        'status' => 'entry',
+                        'waitlist_until' => null,
+                        ]);
+                        event(new WaitlistPromoted($entry));
+                        Log::info("繰り上げ成功: Entry ID {$entry->id} (Event ID {$eventId})");
+                }
             }
         }
-    }
     
     /**
-     * チーム招待の回答期限が切れたエントリーを処理
-     */
-    private function handleExpiredPendingEntries(): void
+     * イベント締切によるキャンセル待ちの一括終了
+    */
+    private function handleEventDeadlineReached(): void
     {
-        $expiredPending = UserEntry::where('status', 'pending')
-            ->whereNotNull('pending_until')
-            ->where('pending_until', '<=', now())
+        $entriesWithReachedDeadline = UserEntry::where('status', 'waitlist')
+        ->whereHas('event', function ($query) {
+            $query->where('entry_deadline', '<=', now()); 
+            })
             ->get();
+            
+            foreach ($entriesWithReachedDeadline as $entry) {
+                DB::transaction(function () use ($entry) {
+                    $entry->update(['status' => 'cancelled']);
+                    event(new \App\Events\WaitlistDeadlineReached($entry));
+                    Log::info("イベント締切による自動キャンセル: Entry ID {$entry->id}");
+                    });
+                    }
+                    }
 
-        foreach ($expiredPending as $entry) {
-            // 既存のキャンセル・繰り上げロジックを再利用
-            // 理由を 'pending_expired' とすることで、通知等の切り分けが可能
-            $this->cancelAndPromote($entry, 'pending_expired');
-            
-            \Log::info("ペア招待期限切れによる自動キャンセル: Entry ID {$entry->id}");
-            
-            // 必要に応じて招待期限切れ専用のイベントを発行（通知用など）
-            // event(new \App\Events\InviteExpired($entry));
-        }
-    }
+                    /**
+                     * チーム招待の回答期限が切れたエントリーを処理
+                    */
+                    private function handleExpiredPendingEntries(): void
+                    {
+                        $expiredPending = UserEntry::where('status', 'pending')
+                        ->whereNotNull('pending_until')
+                        ->where('pending_until', '<=', now())
+                        ->get();
+                        
+                        foreach ($expiredPending as $entry) {
+                            // キャンセルして、空いた枠に次の人を繰り上げる
+                            $this->cancelAndPromote($entry, 'pending_expired');
+                            Log::info("ペア招待期限切れによる自動キャンセル: Entry ID {$entry->id}");
+                            }
+                            }
+
+    /**
+     * イベントのエントリー期限が過ぎたキャンセル待ちを処理
+     */
+    // private function handleEventDeadlineReached(): void
+    // {
+    //     // ステータスが waitlist かつ、紐づくイベントの entry_deadline（または event_date）を過ぎているものを取得
+    //     // ※ カラム名は DB 設計に合わせて調整してください（例: entry_limit_date など）
+    //     $entriesWithReachedDeadline = UserEntry::where('status', 'waitlist')
+    //         ->whereHas('event', function ($query) {
+    //             $query->where('entry_deadline', '<=', now()); 
+    //         })
+    //         ->get();
+
+    //     foreach ($entriesWithReachedDeadline as $entry) {
+    //         DB::transaction(function () use ($entry) {
+    //             // ステータスをキャンセルに更新
+    //             $entry->update(['status' => 'cancelled']);
+
+    //             // 今回作成した「期限終了」のイベントを発行
+    //             // これにより SendWaitlistDeadlineNotification リスナーが起動します
+    //             event(new \App\Events\WaitlistDeadlineReached($entry));
+
+    //             \Log::info("イベント期限到達による自動キャンセル: Entry ID {$entry->id}");
+    //         });
+    //     }
+    // }
 }
