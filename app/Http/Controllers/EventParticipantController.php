@@ -14,7 +14,7 @@ class EventParticipantController extends Controller
     {
         // ステータスを entry -> waitlist の順にし、それぞれ更新順(updated_at)で取得
         $participants = $event->userEntries()
-            ->with('user')
+            ->with(['user', 'members'])
             ->whereIn('status', ['entry', 'waitlist'])
             ->orderByRaw("FIELD(status, 'entry', 'waitlist')") // statusの順序を指定
             ->orderBy('updated_at', 'asc')
@@ -38,8 +38,16 @@ class EventParticipantController extends Controller
             'first_name_kana' => 'nullable|string|max:255', // フリガナも受けるなら追加
             'gender'          => 'nullable|string|max:10',
             'class'           => 'nullable|string|max:50',
-            'status'          => 'required|in:entry,waitlist'
         ]);
+
+        // 1. 現在の「有効なエントリー（チーム）」数をカウント
+        // entry だけでなく pending（承認待ち）も含めて「枠確保」として扱う
+        $currentEntriesCount = $event->userEntries()
+            ->whereIn('status', ['entry', 'pending'])
+            ->count();
+
+        // 2. 定員チェック（チーム数/枠数である max_entries と比較）
+        $status = ($currentEntriesCount < $event->max_entries) ? 'entry' : 'waitlist';
 
         $entry = new UserEntry();
         $entry->fill([
@@ -60,15 +68,16 @@ class EventParticipantController extends Controller
         $entry->save();
 
         // 通知ロジック
-        if ($data['status'] === 'entry') {
-            $countAfter = $countBefore + 1;
+        // if ($data['status'] === 'entry') {
+        //     $countAfter = $countBefore + 1;
             
-            // 定員に達したか判定
-            if ($countBefore < $event->max_participants && $countAfter >= $event->max_participants) {
-                event(new \App\Events\EventFull($event));
-            }
-        }
+        //     // 定員に達したか判定
+        //     if ($countBefore < $event->max_participants && $countAfter >= $event->max_participants) {
+        //         event(new \App\Events\EventFull($event));
+        //     }
+        // }
 
-        return response()->json(['message' => 'ゲストを登録しました']);
+        $message = ($status === 'entry') ? 'ゲストを登録しました' : '定員に達したため、キャンセル待ちとして登録しました';
+        return response()->json(['message' => $message]);
     }
 }

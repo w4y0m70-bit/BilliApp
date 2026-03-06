@@ -80,36 +80,10 @@
 
                {{-- カード内の参加数表示部分 --}}
                 <div class="text-sm mt-2 p-2 bg-gray-50 rounded border border-gray-100">
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-600">参加状況:</span>
-                        <div class="font-bold">
-                            @php
-                                // 修正：人数(entry_count)ではなく、有効なエントリー(チーム)のレコード数を取得
-                                // status が 'cancelled' 以外のものを「1チーム」としてカウントします
-                                $currentTeams = $event->userEntries()
-                                    ->whereIn('status', ['entry', 'waitlist', 'pending'])
-                                    ->count();
-                            @endphp
-
-                            @if ($isPast)
-                                {{ $currentTeams }} / {{ $event->max_entries }} {{ $event->max_team_size == 2 ? 'チーム' : '名' }}
-                            @else
-                                <a href="{{ route('admin.events.participants.index', $event->id) }}" 
-                                @click.stop
-                                class="text-blue-600 underline hover:text-blue-800">
-                                    {{ $currentTeams }} / {{ $event->max_entries }} {{ $event->max_team_size == 2 ? 'チーム' : '名' }}
-                                </a>
-                            @endif
-                        </div>
-                    </div>
-                    
-                    {{-- 内訳（総人数） --}}
-                    <div class="text-[10px] text-gray-500 text-right mt-1">
-                        （実数 {{ $event->entry_count }}名 / 最大 {{ $event->max_participants }}名）
-                        @if ($event->waitlist_count > 0)
-                            <span class="text-red-500 ml-1">WL: {{ $event->waitlist_count }}</span>
-                        @endif
-                    </div>
+                    <x-event.entry-status 
+                        :event="$event" 
+                        :href="route('admin.events.participants.index', $event->id)" 
+                    />
                 </div>
 
             </div>

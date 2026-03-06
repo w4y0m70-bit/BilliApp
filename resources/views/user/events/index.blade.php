@@ -300,18 +300,11 @@
                 {{-- 参加状況 --}}
                 <div class="flex items-center mb-1">
                     <p class="text-sm text-gray-700 mt-1">
-                        <strong>参加数：</strong>
-                        <a href="{{ route('user.events.participants', $event->id) }}" class="text-blue-600 hover:underline font-bold">
-                            {{ $event->entry_count }}
-                            ／{{ $event->max_entries }}{{ $unit }}
-                            （
-                            @if($event->allow_waitlist)
-                                WL：{{ $event->waitlist_count }}
-                            @else
-                                ✕
-                            @endif
-                            ）
-                        </a>
+                        <strong>参加状況：</strong>
+                        <x-event.entry-status 
+                            :event="$event" 
+                            :href="route('user.events.participants', $event->id)" 
+                        />
                     </p>
                     <x-help help-key="user.events.participants" />
                 </div>

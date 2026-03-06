@@ -28,13 +28,21 @@
         <div class="flex justify-between items-center">
             <p class="text-gray-700">
                 エントリー：
-                {{-- JavaScriptを使わず、PHP側で直接カウントします --}}
-                <span class="font-bold text-lg">{{ $participants->where('status', 'entry')->count() }}</span>
+                {{-- $participants は UserEntry のコレクションなので、count() するだけでチーム数になります --}}
+                <span class="font-bold text-lg text-user">
+                    {{ $participants->where('status', 'entry')->count() }}
+                </span>
                 /
-                {{ $event->max_participants }}
-                （キャンセル待ち：
-                <span class="font-bold">{{ $participants->where('status', 'waitlist')->count() }}</span>
-                ）
+                {{-- 人数ではなく「募集枠数（チーム数）」を表示 --}}
+                {{ $event->max_entries }} {{ $event->max_team_size == 2 ? 'チーム' : '名' }}
+                
+                <span class="text-sm ml-2 text-gray-500">
+                    （キャンセル待ち：
+                    <span class="font-bold">
+                        {{ $participants->where('status', 'waitlist')->count() }}
+                    </span>
+                    ）
+                </span>
             </p>
             <div class="flex items-center gap-1">
                 <x-help help-key="admin.participants.add_guest" />
@@ -47,10 +55,9 @@
 
     <div class="overflow-x-auto">
         <div id="participant-table-container">
-            <x-participant-list 
+            <x-event.participant-list 
                 :participants="$participants" 
-                :isAdmin="true" 
-                nameFormat="admin" 
+                mode="admin"
             />
         </div>
     </div>

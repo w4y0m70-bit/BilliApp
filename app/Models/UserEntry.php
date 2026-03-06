@@ -46,24 +46,17 @@ class UserEntry extends Model
         static::saved(function ($entry) {
             $event = $entry->event;
 
-            // 1. すでに通知済みなら絶対に送らない（最優先ストッパー）
-            if (!$event || $event->notified_at !== null) {
-                return;
-            }
+            // 通知済みチェックなどは維持
+            if (!$event || $event->notified_at !== null) return;
+            if ($entry->status !== 'entry') return;
 
-            // 2. 今回の保存で「ステータスが entry になった（または entry のまま保存された）」場合のみ対象
-            // ※キャンセル待ち(waitlist)が増えただけの時は、ここで処理を終える
-            if ($entry->status !== 'entry') {
-                return;
-            }
+            // レコード数（＝チーム数）をカウント
+            $currentTeamCount = $event->userEntries()
+                ->whereIn('status', ['entry', 'pending']) // 回答待ちも枠を占有するとみなす
+                ->count();
 
-            // 3. 現在の「確定枠(entry)」の人数をカウント
-            $currentCount = $event->userEntries()->where('status', 'entry')->count();
-
-            // 4. 定員チェック（ちょうど満員になった時のみ送る）
-            // $currentCount > $event->max_participants を含めないことで、
-            // 万が一のオーバー時にも連打されるのを防ぎます。
-            if ($currentCount == $event->max_participants) {
+            // 通知
+            if ($currentTeamCount >= $event->max_entries) {
                 event(new \App\Events\EventFull($event));
             }
         });
@@ -166,8 +159,8 @@ class UserEntry extends Model
     {
         return $this->event->userEntries()
             ->where('status', $this->status)
-            // 自分の更新日時より前に、同じステータスになった人の数を数える
-            ->where('updated_at', '<=', $this->updated_at)
+            // 申し込み順（作成日）で数えるのが最も公平です
+            ->where('created_at', '<=', $this->created_at)
             ->count();
     }
 
