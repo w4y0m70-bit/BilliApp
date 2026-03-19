@@ -71,7 +71,7 @@
 <div class="mb-4">
     <div class="flex items-center mb-1">
         <label class="font-medium">募集人数（またはチーム数）</label>
-        <!-- {{-- <x-help help-key="admin.events.max_entries" /> --}} -->
+        <x-help help-key="admin.events.max_entries" />
     </div>
     <input type="number" name="max_entries" id="max_entries" 
         value="{{ old('max_entries', $event->max_entries ?? '') }}" 
@@ -83,7 +83,7 @@
 <div class="mb-4">
     <div class="flex items-center mb-1">
         <label class="font-medium">エントリー形式</label>
-        <!-- {{-- <x-help help-key="admin.events.entry_type" /> --}} -->
+        <x-help help-key="admin.events.entry_type" />
     </div>
     <div class="flex gap-6 bg-gray-50 p-3 rounded-lg border">
         <label class="flex items-center gap-2 cursor-pointer">
@@ -120,9 +120,9 @@
         <x-help help-key="admin.events.allow_waitlist" />
     </div>
     <div class="flex gap-6">
-        <label><input type="radio" name="allow_waitlist" value="1" class="class=text-admin focus:ring-admin" 
+        <label><input type="radio" name="allow_waitlist" value="1" class="text-admin focus:ring-admin" 
         {{ old('allow_waitlist', $event->allow_waitlist ?? 1) == 1 ? 'checked' : '' }}> 有</label>
-        <label><input type="radio" name="allow_waitlist" value="0" class="class=text-admin focus:ring-admin" 
+        <label><input type="radio" name="allow_waitlist" value="0" class="text-admin focus:ring-admin" 
         {{ old('allow_waitlist', $event->allow_waitlist ?? 1) == 0 ? 'checked' : '' }}> 無</label>
     </div>
     <small class="text-gray-500">公開後は変更できません</small>

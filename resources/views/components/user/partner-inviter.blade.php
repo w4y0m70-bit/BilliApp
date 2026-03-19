@@ -16,10 +16,13 @@
     $unit = $event->max_team_size == 2 ? 'チーム' : '名';
 @endphp
 <div class="p-4 bg-user/5 border border-user/20 rounded-xl space-y-4">
-    <label class="block font-bold text-user text-sm flex items-center gap-1">
-        <span class="material-icons text-sm">person_add</span>
-        パートナーを招待する
-    </label>
+    <div class="flex items-center">
+        <label class="block font-bold text-user text-sm flex items-center gap-1">
+            <span class="material-icons text-sm">person_add</span>
+            パートナーを招待する
+        </label>
+        <x-help help-key="user.events.invite" />
+    </div>
 
     {{-- A. パートナーを選択した状態 --}}
     <template x-if="selectedUser">

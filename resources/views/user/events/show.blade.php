@@ -161,6 +161,7 @@
                         —
                     @endif
                 </span>
+                <x-help help-key="user.events.waitlist_until" />
                </div>
         </div>
 
@@ -192,13 +193,13 @@
                 </x-slot>
 
                 <x-slot name="trigger">
-                    <button
-                        type="button"
-                        @click="open = true"
-                        class="mt-1 text-center w-full text-gray-600 underline"
-                    >
-                        キャンセル待ち期限の設定・変更をする
-                    </button>
+                        <button
+                            type="button"
+                            @click="open = true"
+                            class="mt-1 text-center w-full text-gray-600 underline"
+                        >
+                            キャンセル待ち期限の設定・変更をする
+                        </button>
                 </x-slot>
             </x-modal>
         @endif
@@ -220,6 +221,7 @@
                 <h3 class="text-sm font-bold text-gray-600 mb-3 flex items-center">
                     <span class="material-symbols-outlined text-sm mr-1">group</span>
                     エントリーメンバー
+                    <x-help help-key="user.events.members" />
                 </h3>
                 
                 @php
