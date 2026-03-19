@@ -1,151 +1,107 @@
 @props([
     'participants', 
-    'mode' => 'user', // 'admin', 'master', 'user'
+    'mode' => 'user', 
 ])
 
 @php
     $isAdmin = in_array($mode, ['admin', 'master']);
-    $isMaster = $mode === 'master';
 @endphp
 
-<div class="bg-white shadow rounded-xl overflow-hidden border border-gray-200">
-    {{-- ■ デスクトップ用：テーブル表示 (md以上) --}}
-    <div class="hidden md:block overflow-x-auto">
-        <table class="min-w-full leading-normal text-left">
-            <thead>
-                <tr class="bg-gray-100 border-b text-xs font-semibold text-gray-600 uppercase">
-                    <th class="px-4 py-3 w-16 text-center">No.</th>
-                    <th class="px-5 py-3">
-                        {{ $isAdmin ? '氏名（アカウント名）' : 'アカウント名' }}
-                    </th>
-                    <th class="px-5 py-3 w-32">クラス</th>
-                    @if($isAdmin)
-                        <th class="px-4 py-3 w-24 text-center">回答</th>
-                        <th class="px-5 py-3 w-16 text-center">操作</th>
-                    @endif
-                </tr>
-            </thead>
-            @foreach ($participants as $participant)
-                <tbody x-data="{ openMessage: false }" class="border-b-2 border-gray-200">
-                    @foreach($participant->members as $index => $member)
-                    <tr class="{{ $participant->status === 'waitlist' ? 'bg-orange-50' : 'bg-white' }} {{ $index > 0 ? 'border-t border-gray-100' : '' }}">
-                        @if($index === 0)
-                            <td rowspan="{{ $participant->members->count() }}" class="px-4 py-3 text-sm font-bold text-center border-r border-gray-100 bg-gray-50/50">
-                                <span class="{{ $participant->status === 'waitlist' ? 'text-orange-600' : '' }}">
-                                    {{ $participant->status === 'entry' ? '' : 'WL-' }}{{ $participant->order }}
-                                </span>
-                            </td>
-                        @endif
-                        <td class="px-5 py-3 text-sm">
-                            <div class="flex items-center gap-2">
-                                @if($isAdmin)
-                                    <span class="material-symbols-outlined text-sm {{ $member->invite_status === 'approved' ? 'text-green-500' : 'text-yellow-500 animate-pulse' }}">
-                                        {{ $member->invite_status === 'approved' ? 'check_circle' : 'pending' }}
-                                    </span>
-                                @endif
-
-                                <div class="flex flex-col">
-                                    <span class="font-bold {{ $member->gender === '女性' ? 'text-pink-700' : 'text-gray-800' }}">
-                                        @if($isAdmin)
-                                            <span class="text-gray-800">
-                                                {{ $member->full_name }}
-                                                @if(!$member->user_id)
-                                                    <span class="text-[10px] text-gray-400">(ゲスト)</span>
-                                                @endif
-                                            </span>
-                                            @if($member->user) 
-                                                <span class="text-xs font-normal text-gray-500">({{ $member->user->account_name }})</span> 
-                                            @endif
-                                        @else
-                                            {{ $member->user->account_name ?? $member->full_name }}
-                                        @endif
-                                    </span>
-                                    
-                                    @if($participant->event->max_team_size > 1 && $member->user_id === $participant->representative_user_id)
-                                        <span class="w-fit text-[9px] bg-indigo-500 text-white px-1.5 rounded-full mt-0.5">代表</span>
-                                    @endif
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-5 py-3 text-sm">
-                            {{ ($member->class instanceof \App\Enums\PlayerClass) ? $member->class->shortLabel() : ($member->class ?? '—') }}
-                        </td>
-                        @if($index === 0 && $isAdmin)
-                            <td rowspan="{{ $participant->members->count() }}" class="px-4 py-3 text-center border-l border-gray-100">
-                                @if(!empty($participant->user_answer))
-                                    <button @click="openMessage = !openMessage" class="text-indigo-500 hover:text-indigo-700">
-                                        <span class="material-symbols-outlined">chat</span>
-                                    </button>
-                                @else <span class="text-gray-300">-</span> @endif
-                            </td>
-                            <td rowspan="{{ $participant->members->count() }}" class="px-5 py-3 text-center border-l border-gray-100">
-                                <button onclick="window.globalCancelEntry({{ $participant->event_id }}, {{ $participant->id }})" class="text-red-400 hover:text-red-600 transition">
-                                    <span class="material-symbols-outlined text-lg">delete</span>
-                                </button>
-                            </td>
-                        @endif
-                    </tr>
-                    @endforeach
-                    @if($isAdmin)
-                        <tr x-show="openMessage" x-cloak class="bg-indigo-50/30">
-                            <td colspan="5" class="px-8 py-3 text-sm italic text-gray-700 whitespace-pre-wrap">{{ $participant->user_answer }}</td>
-                        </tr>
-                    @endif
-                </tbody>
-            @endforeach
-        </table>
-    </div>
-
-    {{-- ■ スマホ用：カード形式 (md未満) --}}
-    <div class="md:hidden divide-y divide-gray-200">
-        @foreach ($participants as $participant)
-            <div x-data="{ openMessage: false }" class="p-4 {{ $participant->status === 'waitlist' ? 'bg-orange-50' : 'bg-white' }}">
-                <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs font-bold px-2 py-1 rounded {{ $participant->status === 'waitlist' ? 'bg-orange-200 text-orange-700' : 'bg-gray-100 text-gray-600' }}">
-                        {{ $participant->status === 'entry' ? 'No.' : 'WL-' }}{{ $participant->order }}
-                    </span>
-                    @if($isAdmin)
-                        <div class="flex gap-3">
-                            @if(!empty($participant->user_answer))
-                                <button @click="openMessage = !openMessage" class="text-indigo-500"><span class="material-symbols-outlined text-xl">chat</span></button>
-                            @endif
-                            <button onclick="window.globalCancelEntry({{ $participant->event_id }}, {{ $participant->id }})" class="text-red-500">
-                                <span class="material-symbols-outlined text-xl">delete</span>
-                            </button>
-                        </div>
-                    @endif
+<div class="flex flex-col gap-1">
+    @foreach ($participants as $participant)
+        <div x-data="{ openMessage: false, showAdmin: false }" 
+             @mouseenter="showAdmin = true" 
+             @mouseleave="showAdmin = false"
+             class="relative flex bg-white border {{ $participant->status === 'waitlist' ? 'border-orange-200 bg-orange-50/50' : 'border-gray-200 shadow-sm' }} rounded-md overflow-hidden">
+            
+            {{-- 1. 左端：No. & 操作エリア（WL-10でも折り返さない幅 w-12） --}}
+            <div class="relative flex-shrink-0 w-12 flex flex-col items-center justify-center border-r {{ $participant->status === 'waitlist' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-400' }}">
+                {{-- 通常時：No./WL表示 --}}
+                <div x-show="!showAdmin || !{{ $isAdmin ? 'true' : 'false' }}" class="flex items-center justify-center font-black text-xs tracking-tighter whitespace-nowrap">
+                    {{ in_array($participant->status, ['entry', 'pending']) ? '' : 'WL-' }}{{ $participant->order }}
                 </div>
 
-                <div class="space-y-2">
-                    @foreach($participant->members as $member)
-                        <div class="flex justify-between items-center bg-white/50 p-2 rounded border border-gray-100">
-                            <div class="flex items-center gap-2">
-                                <div class="flex flex-col">
-                                    <span class="text-sm font-bold {{ $member->gender === '女性' ? 'text-pink-700' : 'text-gray-800' }}">
-                                        @if($isAdmin)
-                                            {{ $member->full_name }}
-                                        @else
-                                            {{ $member->user->account_name ?? $member->full_name }}
-                                        @endif
-                                        @if($participant->event->max_team_size > 1 && $member->user_id === $participant->representative_user_id)
-                                            <span class="text-[8px] bg-user text-white px-1 rounded-full align-middle ml-1">代表</span>
-                                        @endif
-                                    </span>
-                                    @if($isAdmin && $member->user)
-                                        <span class="text-[10px] text-gray-500">{{ $member->user->account_name }}</span>
-                                    @endif
-                                </div>
-                            </div>
-                            <span class="text-xs font-semibold bg-gray-100 px-2 py-1 rounded text-gray-600">
-                                {{ ($member->class instanceof \App\Enums\PlayerClass) ? $member->class->shortLabel() : ($member->class ?? 'ー') }}
-                            </span>
-                        </div>
-                    @endforeach
-                </div>
+                {{-- ホバー時：操作ボタン --}}
                 @if($isAdmin)
-                    <div x-show="openMessage" x-cloak class="mt-2 p-3 bg-indigo-50 rounded text-xs text-gray-700 italic border border-indigo-100">{{ $participant->user_answer }}</div>
+                    <div x-show="showAdmin" x-cloak class="absolute inset-0 flex items-center justify-center bg-gray-800 text-white gap-2">
+                        <button onclick="window.globalCancelEntry({{ $participant->event_id }}, {{ $participant->id }})" class="hover:text-red-400 transition-colors">
+                            <span class="material-symbols-outlined text-base">delete</span>
+                        </button>
+                        @if(!empty($participant->user_answer))
+                            <button @click.stop="openMessage = !openMessage" class="hover:text-indigo-400 transition-colors">
+                                <span class="material-symbols-outlined text-base">chat_bubble</span>
+                            </button>
+                        @endif
+                    </div>
                 @endif
             </div>
-        @endforeach
-    </div>
+
+            {{-- 2. 右側：コンテンツエリア --}}
+            <div class="flex-grow flex flex-col divide-y divide-gray-100 min-w-0">
+                
+                {{-- チーム名行（天地を詰めつつ視認性確保） --}}
+                @if($participant->team_name)
+                    <div class="bg-gray-50/50 px-2 py-0.5 flex items-center">
+                        <span class="text-[11px] font-black text-gray-600 truncate leading-tight">
+                            <span class="text-[8px] font-normal mr-1 text-gray-400 uppercase">Team:</span>{{ $participant->team_name }}
+                        </span>
+                    </div>
+                @endif
+
+                {{-- メンバー行 --}}
+                @foreach($participant->members as $member)
+                    <div class="flex items-center h-8 px-2 gap-1.5 hover:bg-gray-50/40 transition-colors">
+                        
+                        {{-- ステータスアイコン（さらに小さく控えめに） --}}
+                        <div class="flex-shrink-0 flex items-center justify-center w-3.5">
+                            @if($member->invite_status === 'approved')
+                                <span class="material-symbols-outlined text-green-500 text-sm" title="承認済み">check_circle</span>
+                            @else
+                                <span class="material-symbols-outlined text-amber-400 text-sm animate-pulse" title="承認待ち">pending</span>
+                            @endif
+                        </div>
+
+                        {{-- 氏名（性別色分け） --}}
+                        <div class="flex-grow min-w-0 flex items-baseline gap-1">
+                            <span class="text-sm font-bold truncate {{ $member->gender === '女性' ? 'text-pink-600' : 'text-gray-800' }}">
+                                {{ $isAdmin ? $member->full_name : ($member->user->account_name ?? $member->full_name) }}
+                            </span>
+                            @if($isAdmin && $member->user)
+                                <span class="text-[10px] text-gray-400 font-normal truncate">({{ $member->user->account_name }})</span>
+                            @endif
+                            @if($participant->event->max_team_size > 1 && 
+                                $member->user_id &&
+                                $member->user_id === $participant->representative_user_id)
+                                <span class="text-[8px] text-indigo-500 font-bold px-0.5 border border-indigo-200 rounded-[2px] leading-none flex-shrink-0">代表</span>
+                            @endif
+                        </div>
+
+                        {{-- クラス（右端で縦を揃える） --}}
+                        <div class="flex-shrink-0 w-8 flex justify-end">
+                            <span class="text-[10px] font-black text-gray-500 bg-gray-100 px-1 py-0.5 rounded-sm min-w-[20px] text-center leading-none">
+                                @php
+                                    $val = $member->class;
+                                    if ($val instanceof \App\Enums\PlayerClass) echo $val->shortLabel();
+                                    elseif ($enum = \App\Enums\PlayerClass::tryFrom($val)) echo $enum->shortLabel();
+                                    else echo $val ?? '-';
+                                @endphp
+                            </span>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            {{-- 管理者メモ・オーバーレイ --}}
+            <div x-show="openMessage" x-cloak 
+                 class="absolute inset-0 z-20 bg-gray-900/95 backdrop-blur-sm text-white p-3 flex flex-col justify-center">
+                <div class="flex justify-between items-center mb-1 border-b border-gray-700 pb-1">
+                    <span class="text-[9px] font-bold tracking-widest text-gray-400 uppercase">Admin Memo</span>
+                    <button @click="openMessage = false" class="text-xs p-1 hover:bg-white/20 rounded">×</button>
+                </div>
+                <div class="text-[11px] leading-snug overflow-y-auto max-h-full py-1">
+                    {{ $participant->user_answer }}
+                </div>
+            </div>
+        </div>
+    @endforeach
 </div>

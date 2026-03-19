@@ -18,6 +18,8 @@ return new class extends Migration {
             // エントリー全体の管理用（以前のものを継続）
             $table->text('user_answer')->nullable(); 
             $table->enum('status', ['entry', 'waitlist', 'cancelled', 'pending'])->default('entry');
+            $table->dateTime('applied_at')->nullable();
+            $table->integer('order')->nullable();
             // チーム全員が承諾したかどうか
             $table->boolean('is_confirmed')->default(false);
             // 仮押さえの有効期限（24時間後 or 締切時刻）

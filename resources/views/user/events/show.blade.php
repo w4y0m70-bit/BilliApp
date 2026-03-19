@@ -41,14 +41,15 @@
         ->whereHas('members', function($q) use ($currentUser) {
             $q->where('user_id', $currentUser->id)->where('invite_status', 'pending');
         })
-        ->where('status', 'pending')
+        ->whereIn('status', ['pending', 'waitlist'])
+        ->latest()
         ->first();
 
     $isInvited = (bool)$invitationEntry;
 @endphp
 
 {{-- セッションメッセージ用モーダル（自動オープン） --}}
-<div x-data="{ open: false }" x-init="open = {{ session('message') || session('error') ? 'true' : 'false' }}">
+<div x-data="{ open: {{ session('message') || session('error') ? 'true' : 'false' }} }">
     <template x-if="open">
         <div class="fixed inset-0 flex justify-center items-center bg-black bg-opacity-40 z-50">
             <div class="bg-white p-6 rounded-lg shadow-lg w-80">
@@ -66,8 +67,8 @@
     </template>
 </div>
 
-<div class="bg-white shadow rounded-lg p-6">
-    {{-- ★ 招待されている場合のみ表示 --}}
+<div class="bg-white shadow rounded-lg p-6" x-data="Object.assign(pairSearch(), { searching: false })">
+        {{-- ★ 招待されている場合のみ表示 --}}
     @if($isInvited)
         <div class="mb-6 bg-blue-50 border-2 border-blue-200 rounded-xl p-5 shadow-sm">
             <div class="flex items-center gap-2 mb-3 text-blue-800">
@@ -86,7 +87,7 @@
                     {{-- クラス選択など、パートナーも入力が必要な項目 --}}
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">あなたの出場クラス <span class="text-red-500">*</span></label>
-                        <select name="class" required class="w-full border-gray-300 rounded-md shadow-sm focus:border-user focus:ring-user">
+                        <select name="class" class="w-full border-gray-300 rounded-md shadow-sm focus:border-user focus:ring-user">
                             <option value="">選択してください</option>
                             @foreach($event->eventClasses as $class)
                                 <option value="{{ $class->class_name }}">{{ $class->class_name }}</option>
@@ -164,44 +165,43 @@
         </div>
 
         {{-- ■ キャンセル待ち期限（waitlist） --}}
-        @if($userEntry && $userEntry->status === 'waitlist')
-<x-modal
-    title="キャンセル待ち期限の設定"
-    confirm-text="保存"
-    confirm-color="bg-user"
-    :confirm-action="route('user.entries.update', ['event' => $event->id, 'entry' => $userEntry->id])"
->
-    <x-slot name="form">
-        <input
-            type="datetime-local"
-            name="waitlist_until"
-            class="border rounded px-3 py-2 w-full mb-4"
-            value="{{ $waitlistDefault }}"
-        >
+        {{-- 自分が代表者、かつキャンセル待ち状態の場合のみ表示 --}}
+        @if($userEntry && $userEntry->status === 'waitlist' && $userEntry->representative_user_id === $currentUser->id)
+            <x-modal
+                title="キャンセル待ち期限の設定"
+                confirm-text="保存"
+                confirm-color="bg-user"
+                :confirm-action="route('user.entries.update', ['event' => $event->id, 'entry' => $userEntry->id])"
+            >
+                <x-slot name="form">
+                    <input
+                        type="datetime-local"
+                        name="waitlist_until"
+                        class="border rounded px-3 py-2 w-full mb-4"
+                        value="{{ $waitlistDefault }}"
+                    >
 
-        <button
-            type="submit"
-            name="clear"
-            value="1"
-            class="bg-gray-300 text-gray-800 px-3 py-2 rounded hover:bg-gray-400 mb-2 w-full"
-        >
-            キャンセル待ち期限を設定しない
-        </button>
-    </x-slot>
+                    <button
+                        type="submit"
+                        name="clear"
+                        value="1"
+                        class="bg-gray-300 text-gray-800 px-3 py-2 rounded hover:bg-gray-400 mb-2 w-full"
+                    >
+                        キャンセル待ち期限を設定しない
+                    </button>
+                </x-slot>
 
-    <x-slot name="trigger">
-        <button
-            type="button"
-            @click="open = true"
-            class="mt-1 text-center w-full text-gray-600 underline"
-        >
-            キャンセル待ち期限の設定・変更をする
-        </button>
-    </x-slot>
-</x-modal>
-@endif
-
-
+                <x-slot name="trigger">
+                    <button
+                        type="button"
+                        @click="open = true"
+                        class="mt-1 text-center w-full text-gray-600 underline"
+                    >
+                        キャンセル待ち期限の設定・変更をする
+                    </button>
+                </x-slot>
+            </x-modal>
+        @endif
 
         {{-- ■ イベント概要 --}}
         @if(!empty($event->description))
@@ -212,6 +212,7 @@
                 </p>
             </div>
         @endif
+</form>
 
         {{-- エントリーメンバー --}}
         @if($userEntry)
@@ -221,6 +222,9 @@
                     エントリーメンバー
                 </h3>
                 
+                @php
+                    $isRepresentative = ($userEntry->representative_user_id === $currentUser->id);
+                @endphp
                 <div class="space-y-3">
                     @foreach($userEntry->members as $member)
                         <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
@@ -246,7 +250,16 @@
                             </div>
 
                             {{-- 状態ラベル --}}
-                            <div>
+                            <div class="flex items-center gap-2">
+                                @if($isRepresentative && $member->user_id !== $currentUser->id && $member->invite_status === 'pending')
+                                    <form action="{{ route('user.entries.invite.cancel', ['event' => $event->id, 'entry' => $userEntry->id, 'member' => $member->id]) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" onclick="return confirm('招待を取り消しますか？')" class="text-[10px] text-red-500 hover:underline font-bold border border-red-200 bg-white px-2 py-1 rounded">
+                                            招待取消
+                                        </button>
+                                    </form>
+                                @endif
                                 @if($member->invite_status === 'approved')
                                     <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded border border-green-200">
                                         参加確定
@@ -260,6 +273,20 @@
                         </div>
                     @endforeach
                 </div>
+
+                @php
+                    $isRepresentative = ($userEntry->representative_user_id === $currentUser->id);
+                    $currentMemberCount = $userEntry->members->count();
+                @endphp
+
+                @if($event->max_team_size > 1 && $isRepresentative && $currentMemberCount < $event->max_team_size)
+                    <div class="mt-4 pt-4 border-t border-dashed border-gray-200">
+                        <x-user.partner-inviter 
+                            :event="$event" 
+                            :entry="$userEntry"
+                        />
+                    </div>
+                @endif
                 
                 {{-- 全員揃っていない場合の補足メッセージ（代表者のみ表示） --}}
                 @if($userEntry->status === 'pending' && $userEntry->representative_user_id === auth()->id())
@@ -302,33 +329,64 @@
                 戻る
             </a>
         </div>
-    </form>
 
-    {{-- ■ キャンセルボタン（モーダル化） --}}
-    @if($userEntry)
-        <x-modal
-            title="確認"
-            confirm-text="エントリーをキャンセルする"
-            confirm-color="bg-red-600"
-            :confirm-action="route('user.entries.cancel', ['event' => $event->id, 'entryId' => $userEntry->id])"
-        >
-            このイベントのエントリーをキャンセルしますか？
-            @if($event->waitlist_count > 0)
-                <br>現在キャンセル待ちの人がいます。再度エントリーするとキャンセル待ちの最後に登録されます。
-            @endif
-            <x-slot name="trigger">
-                <button
-                    type="button"
-                    @click="open = true"
-                    class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition mt-3"
+    {{-- ■ キャンセル・辞退セクション --}}
+    <div class="mt-8 border-t pt-6">
+        @if($userEntry)
+            @php
+                $isRepresentative = ($userEntry->representative_user_id === $currentUser->id);
+                $isTeamEvent = ($event->max_team_size > 1);
+            @endphp
+
+            {{-- ケースA: キャンセル権限がある場合（個人、またはチームの代表者） --}}
+            @if(!$isTeamEvent || $isRepresentative)
+                <x-modal
+                    title="エントリーのキャンセル"
+                    confirm-text="キャンセルする"
+                    confirm-color="bg-red-600"
+                    :confirm-action="route('user.entries.cancel', ['event' => $event->id, 'entryId' => $userEntry->id])"
                 >
-                    エントリーをキャンセル
-                </button>
-                <span help-key="user.events.cancel" class="inline-block ml-2">
-                    <x-help help-key="user.events.cancel" />
-                </span>
-            </x-slot>
-        </x-modal>
-    @endif
+                    <div class="text-sm text-gray-600">
+                        <p>このイベントのエントリーを取り消しますか？</p>
+                        @if($isTeamEvent)
+                            <p class="mt-2 text-red-500 font-bold">※チーム全体のエントリーが削除されます。</p>
+                        @endif
+                    </div>
+                    
+                    <x-slot name="trigger">
+                        <button type="button" @click="open = true" class="bg-red-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-red-700 transition shadow-md">
+                            エントリーをキャンセル
+                        </button>
+                    </x-slot>
+                </x-modal>
+
+            {{-- ケースB: チームのパートナー（招待された側）の場合 --}}
+            @elseif($isTeamEvent && !$isRepresentative)
+                <x-modal
+                    title="チームの辞退"
+                    confirm-text="辞退する"
+                    confirm-color="bg-orange-600"
+                    :confirm-action="route('user.entries.respond', ['event' => $event->id, 'entry' => $userEntry->id])"
+                >
+                    <x-slot name="form">
+                        {{-- ★ ここで POST を明示し、PATCH への自動変換を防ぐ --}}
+                        @method('POST') 
+                        <input type="hidden" name="answer" value="reject">
+                    </x-slot>
+
+                    <div class="text-sm text-gray-600">
+                        <p>このチームから辞退しますか？</p>
+                        <p class="mt-2 text-red-500 font-bold">※あなたが辞退してもチーム枠は維持され、代表者は別の人を誘い直すことができます。</p>
+                    </div>
+                    
+                    <x-slot name="trigger">
+                        <button type="button" @click="open = true" class="bg-orange-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-orange-600 transition shadow-md">
+                            このチームを辞退する
+                        </button>
+                    </x-slot>
+                </x-modal>
+            @endif
+        @endif
+    </div>
 </div>
 @endsection

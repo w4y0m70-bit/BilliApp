@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Casts\Attribute; // 追加
 use App\Models\User;
 use App\Models\Event;
+use App\Models\EntryMember;
 use App\Enums\PlayerClass;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
@@ -25,17 +26,21 @@ class UserEntry extends Model
         'team_name',
         'gender',
         'status',
+        'order',
+        'applied_at',
         'is_confirmed',
         'pending_until',
         'waitlist_until',
         'user_answer',
         'class',
-        ];        
+    ];        
     
-        // protected $casts = [
-        //     'pending_until' => 'datetime',
-        //     'waitlist_until'    => 'datetime',
-        // ];
+    protected $casts = [
+        'pending_until' => 'datetime',
+        'waitlist_until'    => 'datetime',
+        'applied_at'    => 'datetime',
+    ];
+
     /* ============================================================
      * モデルイベント：保存・更新・削除時に満員チェックを自動化
      * ============================================================ */
@@ -153,26 +158,33 @@ class UserEntry extends Model
 
     /**
      * 2. 表示順（No.）の取得
-     * ※ステータスごとの連番を返す
      */
     public function getOrderAttribute(): int
     {
+        if (!$this->applied_at) return 0; // created_at ではなく applied_at を見る
+
+        $isWaitlist = ($this->status === 'waitlist');
+        $targetStatuses = $isWaitlist ? ['waitlist'] : ['entry', 'pending'];
+
         return $this->event->userEntries()
-            ->where('status', $this->status)
-            // 申し込み順（作成日）で数えるのが最も公平です
-            ->where('created_at', '<=', $this->created_at)
+            ->whereIn('status', $targetStatuses)
+            ->where(function($q) {
+                $q->where('applied_at', '<', $this->applied_at)
+                ->orWhere(function($q2) {
+                    $q2->where('applied_at', $this->applied_at)
+                        ->where('id', '<=', $this->id);
+                });
+            })
             ->count();
     }
 
     /**
      * システム共通の参加者並び替えルール
-     * 1. ステータス順（entry が先）
-     * 2. ステータスが確定した順（updated_at）
      */
     public function scopeSortedList($query)
     {
-        return $query->orderByRaw("FIELD(status, 'entry', 'waitlist', 'cancelled') ASC")
-            ->orderBy('updated_at', 'asc');
+        return $query->orderByRaw("FIELD(status, 'entry', 'pending', 'waitlist', 'cancelled') ASC")
+            ->orderBy('applied_at', 'asc');
     }
 
     /* =====================
@@ -180,23 +192,29 @@ class UserEntry extends Model
      * ===================== */
     public function getWaitlistPositionAttribute(): ?int
     {
+        // statusがwaitlistでないなら絶対に出さない
         if ($this->status !== 'waitlist') {
             return null;
         }
 
-        $ids = $this->event->userEntries()
-            ->where('status', 'waitlist')
-            ->where(function ($q) {
-                $q->whereNull('waitlist_until')
-                  ->orWhere('waitlist_until', '>', now());
-            })
-            ->orderBy('updated_at')
-            ->pluck('id')
-            ->toArray();
+        // イベント情報が取れない場合は計算不可
+        if (!$this->event) {
+            return null;
+        }
 
-        $pos = array_search($this->id, $ids, true);
+        $max = (int) $this->event->max_entries;
+        $currentOrder = (int) $this->order;
 
-        return $pos === false ? null : $pos + 1;
+        // orderがまだ割り当てられていない(0やnull)場合は、暫定的に末尾とみなす
+        if ($currentOrder <= 0) {
+            return null; 
+        }
+
+        // 計算: 申し込み順 - 定員
+        $position = $currentOrder - $max;
+
+        // もし1以下なら、キャンセル待ちの「1番目」として扱う
+        return $position > 0 ? $position : 1;
     }
 
     protected function casts(): array
@@ -246,5 +264,30 @@ class UserEntry extends Model
             'cancelled' => 'bg-gray-100 text-gray-500 border-gray-200',
             default     => 'bg-white text-gray-400 border-gray-200',
         };
+    }
+
+    /**
+     * 招待中のパートナーを取り消す
+     */
+    public function cancelInvitation(Request $request, $eventId, $entryId, $memberId)
+    {
+        // 該当する招待レコードを取得
+        // ※ セキュリティのため、現在のユーザーがそのエントリーの代表者であることを確認
+        $member = EntryMember::where('id', $memberId)
+            ->where('entry_id', $entryId)
+            ->whereHas('entry', function($query) {
+                $query->where('representative_user_id', auth()->id());
+            })
+            ->firstOrFail();
+
+        // 招待中（pending）であるか確認
+        if ($member->invite_status !== 'pending') {
+            return back()->with('error', '既に応答済みの招待は取り消せません。');
+        }
+
+        // レコード削除
+        $member->delete();
+
+        return back()->with('message', '招待を取り消しました。');
     }
 }

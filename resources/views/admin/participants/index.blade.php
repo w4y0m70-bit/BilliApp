@@ -5,7 +5,7 @@
 @section('content')
 <div class="px-4">
 <div 
-    x-data="participantManager({{ $event->id }}, {{ $event->max_participants }})"
+    x-data="participantManager({{ $event->id }}, {{ $event->max_entries }}, {{ $event->max_team_size }})"
     class="space-y-3"
 >
     <div>
@@ -62,61 +62,49 @@
         </div>
     </div>
 
+    {{-- モーダル内フォーム --}}
     <div x-show="openModal" x-cloak class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-        <div @click.away="openModal = false" class="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
-            <h3 class="text-xl font-bold mb-4">ゲストエントリー登録</h3>
+        <div @click.away="openModal = false" class="bg-white rounded-lg p-6 w-full max-w-2xl shadow-lg max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-bold mb-4">ゲストエントリー登録（チーム）</h3>
 
+            {{-- モーダル内フォーム --}}
             <form @submit.prevent="addGuest">
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block mb-1 font-medium text-sm">姓<span class="text-red-500 ml-1">*</span></label>
-                        <input type="text" x-model="guest.last_name" class="border rounded w-full px-3 py-2" placeholder="例: 山田" required>
-                    </div>
-                    <div>
-                        <label class="block mb-1 font-medium text-sm">名<span class="text-red-500 ml-1">*</span></label>
-                        <input type="text" x-model="guest.first_name" class="border rounded w-full px-3 py-2" placeholder="例: 太郎" required>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block mb-1 font-medium text-sm">セイ（カナ）</label>
-                        <input type="text" x-model="guest.last_name_kana" class="border rounded w-full px-3 py-2" placeholder="ヤマダ">
-                    </div>
-                    <div>
-                        <label class="block mb-1 font-medium text-sm">メイ（カナ）</label>
-                        <input type="text" x-model="guest.first_name_kana" class="border rounded w-full px-3 py-2" placeholder="タロウ">
-                    </div>
-                </div>
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">性別<span class="text-red-500 ml-1">*</span></label>
-                    <div class="flex gap-4">
-                        <template x-for="(label, value) in {'男性':'男性', '女性':'女性', '未回答':'回答しない'}" :key="value">
-                            <label class="inline-flex items-center">
-                                <input type="radio" 
-                                    name="guest_gender" 
-                                    :value="value" 
-                                    x-model="guest.gender" 
-                                    class="text-blue-600 focus:ring-blue-500">
-                                <span class="ml-2 text-sm text-gray-600" x-text="label"></span>
-                            </label>
-                        </template>
-                    </div>
+                    <label class="block mb-1 font-bold text-admin text-sm">チーム名（任意）</label>
+                    <input type="text" x-model="guest.team_name" class="border rounded w-full px-3 py-2" placeholder="チーム◯◯">
                 </div>
 
-                <div class="mb-4">
-                    <label class="block mb-1 font-medium text-sm">クラス</label>
-                    <select x-model="guest.class" class="border rounded w-full px-3 py-2">
-                        <option value="">選択してください</option>
-                        @foreach(\App\Enums\PlayerClass::cases() as $classOption)
-                            <option value="{{ $classOption->value }}">{{ $classOption->label() }}</option>
-                        @endforeach
-                    </select>
+                <div class="space-y-4 border-t pt-4">
+                    {{-- 最初から max_team_size 分の入力欄が表示される --}}
+                    <template x-for="(member, index) in guest.members" :key="index">
+                        <div class="p-3 bg-gray-50 rounded border border-gray-200">
+                            <p class="text-xs font-bold text-gray-500 mb-2" x-text="'メンバー ' + (index + 1) + (index === 0 ? '（代表者）' : '')"></p>
+                            
+                            <div class="grid grid-cols-2 gap-3 mb-2">
+                                <input type="text" x-model="member.last_name" class="border rounded px-2 py-1 text-sm" placeholder="姓" required>
+                                <input type="text" x-model="member.first_name" class="border rounded px-2 py-1 text-sm" placeholder="名" required>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <select x-model="member.gender" class="border rounded px-2 py-1 text-sm" required>
+                                    <option value="男性">男性</option>
+                                    <option value="女性">女性</option>
+                                    <option value="未回答">回答しない</option>
+                                </select>
+                                <select x-model="member.class" class="border rounded px-2 py-1 text-sm">
+                                    <option value="">クラス選択</option>
+                                    @foreach(\App\Enums\PlayerClass::cases() as $classOption)
+                                        <option value="{{ $classOption->value }}">{{ $classOption->label() }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
-                <div class="flex justify-end gap-3">
-                    <button type="button" @click="openModal=false" class="px-4 py-2 rounded border text-gray-600 hover:bg-gray-100">閉じる</button>
-                    <button type="submit" class="bg-admin text-white px-4 py-2 rounded hover:bg-admin-dark">登録</button>
+                <div class="flex justify-end gap-3 mt-6 border-t pt-4">
+                    <button type="button" @click="openModal=false" class="px-4 py-2 rounded border text-sm">閉じる</button>
+                    <button type="submit" class="bg-admin text-white px-6 py-2 rounded font-bold text-sm">登録する</button>
                 </div>
             </form>
         </div>
@@ -156,36 +144,39 @@
 };
 
     // 2. Alpine.js 用のマネージャー関数
-    function participantManager(eventId, maxParticipants) {
-        // クラスラベル用の定数（PHPから注入）
-        const classShortLabels = {{ Js::from(
-            collect(App\Enums\PlayerClass::cases())
-                ->mapWithKeys(fn($case) => [$case->value => $case->shortLabel()])
-        ) }};
-
+    function participantManager(eventId, maxEntries, maxTeamSize) { // maxParticipantsからmaxEntries(チーム枠)へ
         return {
             openModal: false,
             participants: [],
-            guest: { last_name: '', first_name: '', gender: '', class: '' },
+            guest: { team_name: '', members: [] },
 
             init() {
+                this.resetGuestForm();
                 this.loadParticipants();
             },
-            async loadParticipants() {
-                const res = await fetch(`/admin/events/${eventId}/participants/json`);
-                const list = await res.json();
-                this.participants = list.sort((a, b) => {
-                    if (a.status !== b.status) return a.status === 'entry' ? -1 : 1;
-                    return a.order - b.order;
-                });
-            },
-            async addGuest() {
-                if (!this.guest.last_name || !this.guest.first_name || !this.guest.gender) {
-                    alert('未入力の項目があります');
-                    return;
+
+            resetGuestForm() {
+                const size = parseInt(maxTeamSize);
+                // イベントの規定人数分、空のオブジェクトを作成する
+                const initialMembers = [];
+                for (let i = 0; i < maxTeamSize; i++) {
+                    initialMembers.push({ 
+                        last_name: '', 
+                        first_name: '', 
+                        gender: '男性', 
+                        class: '' 
+                    });
                 }
-                const currentEntryCount = this.participants.filter(e => e.status === 'entry').length;
-                const status = currentEntryCount < maxParticipants ? 'entry' : 'waitlist';
+                this.guest = {
+                    team_name: '',
+                    members: initialMembers
+                };
+            },
+
+            async addGuest() {
+                // 枠数チェック
+                const currentCount = this.participants.filter(e => e.status === 'entry').length;
+                const status = currentCount < maxEntries ? 'entry' : 'waitlist';
 
                 const res = await fetch(`/admin/events/${eventId}/participants`, {
                     method: 'POST',
@@ -194,12 +185,21 @@
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
-                    body: JSON.stringify({ ...this.guest, status: status })
+                    body: JSON.stringify({ 
+                        team_name: this.guest.team_name,
+                        status: status,
+                        members: this.guest.members
+                    })
                 });
 
-                if (res.ok) window.location.reload();
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                const errorData = await res.json();
+                alert('エラーが発生しました: ' + (errorData.message || '不明なエラー'));
             }
         }
     }
+}
 </script>
 @endpush

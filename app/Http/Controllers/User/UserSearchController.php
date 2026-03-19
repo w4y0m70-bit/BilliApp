@@ -10,7 +10,7 @@ class UserSearchController extends Controller
 {
     public function search(Request $request)
     {
-        $query = $request->get('q');
+        $query = $request->get('query');
 
         // 検索文字が短い場合は空配列を返す
         if (mb_strlen($query) < 2) {

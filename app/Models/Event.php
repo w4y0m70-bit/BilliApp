@@ -39,7 +39,9 @@ class Event extends Model
     // UserEntry モデルを参照
     public function userEntries()
     {
-        return $this->hasMany(UserEntry::class)->orderBy('updated_at', 'asc');
+        return $this->hasMany(UserEntry::class)
+            ->whereIn('status', ['entry', 'pending', 'waitlist'])
+            ->orderBy('order', 'asc'); // ここを order 順に固定
     }
 
     // EventClass モデルを参照

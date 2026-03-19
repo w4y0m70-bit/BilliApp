@@ -6,128 +6,134 @@ use App\Models\Event;
 use App\Models\UserEntry;
 use App\Events\WaitlistExpired;
 use App\Events\WaitlistPromoted;
-use App\Events\EventFull;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class WaitlistService
 {
     /**
-     * キャンセル処理の本体
-     * $reason: 'user' (自己都合), 'expired' (期限切れ), 'admin' (管理者) など
+     * イベントの全参加者のステータスと順序を最新状態に同期する（★心臓部）
+     */
+    // app/Services/WaitlistService.php
+
+    public function refreshLobby(int $eventId): void
+    {
+        $event = \App\Models\Event::find($eventId);
+        if (!$event) return;
+
+        $max = $event->max_entries;
+
+        // キャンセル以外、すべてのエントリーを申込順に取得
+        // ここで 'pending' や 'waitlist' が漏れていると、WLが0になります
+        $entries = \App\Models\UserEntry::where('event_id', $eventId)
+            ->where('status', '!=', 'cancelled') 
+            ->orderBy('applied_at', 'asc')
+            ->get();
+
+        foreach ($entries as $index => $entry) {
+            $newOrder = $index + 1;
+            $oldStatus = $entry->status;
+
+            if ($newOrder <= $max) {
+                // 【定員内】
+                // 元が waitlist なら entry に昇格。
+                // 元が pending（招待中）なら、枠は確保しつつ pending を維持。
+                $newStatus = ($oldStatus === 'waitlist') ? 'entry' : $oldStatus;
+            } else {
+                // 【定員外】
+                // 定員からはみ出したら、pending であろうと強制的に waitlist。
+                // これにより「キャンセル待ちのpending」を排除し、WLカウントを正しくします。
+                $newStatus = 'waitlist';
+            }
+
+            // 強制的にDBを更新
+            \DB::table('user_entries')->where('id', $entry->id)->update([
+                'order' => $newOrder,
+                'status' => $newStatus,
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * キャンセル処理
      */
     public function cancelAndPromote(UserEntry $entry, string $reason = 'user'): void
     {
         DB::transaction(function () use ($entry, $reason) {
-            // 先にログを出さないよう、イベント発行順序を整理
+            $user = auth()->user();
+
+            // ★ パートナーによる辞退（rejected）の場合の特殊処理
+            if ($reason === 'rejected' && $entry->representative_user_id !== $user->id) {
+                // 辞退した本人のメンバーレコードを特定して削除（またはステータス変更）
+                $entry->members()->where('user_id', $user->id)->delete();
+                
+                // 親のステータスを pending に戻し、再招待を待つ状態にする
+                // ※既に waitlist だった場合は waitlist のまま維持
+                if ($entry->status === 'entry') {
+                    $entry->update(['status' => 'pending']);
+                }
+                
+                // パートナーが抜けたので、再計算のためにロビーを整理
+                $this->refreshLobby($entry->event_id);
+                return; // ここで終了（親をcancelledにしない）
+            }
+
+            // ★ 代表者によるキャンセル、または個人エントリーのキャンセルの場合（従来通り）
             $entry->update(['status' => 'cancelled']);
             
             if ($reason === 'expired') {
-                // ログを「イベント発行前」に移動
-                \Log::info("--- 期限切れイベント発行準備: ID {$entry->id} ---");
                 event(new WaitlistExpired($entry));
             }
 
-            // ここで繰り上げ処理
-            $this->promoteNext($entry->event_id);
+            // ロビー全体を整理
+            $this->refreshLobby($entry->event_id);
         });
     }
-    
+
     /**
-     * 定期実行（Cron）用：各種期限切れのチェック
+     * 定期実行（Cron）用
      */
     public function handleExpiredWaitlist(): void
     {
-        // A. ユーザー個別の期限切れ（既存の処理）
-        $expiredEntries = UserEntry::where('status', 'waitlist')
-            ->whereNotNull('waitlist_until')
-            ->where('waitlist_until', '<=', now())
-            ->get();
+        // 期限切れの waitlist や pending を抽出
+        $expiredEntries = UserEntry::where(function($q) {
+                $q->where('status', 'waitlist')->where('waitlist_until', '<=', now());
+            })->orWhere(function($q) {
+                $q->where('status', 'pending')->where('pending_until', '<=', now());
+            })->get();
 
         foreach ($expiredEntries as $entry) {
             $this->cancelAndPromote($entry, 'expired');
         }
 
-        // B. 【新規追加】イベント自体のエントリー期限が過ぎた場合の一括処理
         $this->handleEventDeadlineReached();
-
-        // C. 【新規追加】チーム招待の仮押さえ期限（pending）のチェック
-        $this->handleExpiredPendingEntries();
     }
-    
-    /**
-     * 空き枠がある場合に次の方を繰り上げる
-    */
-    private function promoteNext(int $eventId): void
-    {
-        $event = Event::find($eventId);
-        if (!$event) return;
-        
-        // ★ 修正：現在枠を確保しているのは 'entry' と 'pending' の両方
-        $currentOccupiedCount = UserEntry::where('event_id', $eventId)
-        ->whereIn('status', ['entry', 'pending'])
-        ->count();
-        
-        // ★ 修正：チーム枠数(max_entries)で空きを計算
-        $availableSlots = $event->max_entries - $currentOccupiedCount;
-        
-        if ($availableSlots > 0) {
-            $nextEntries = UserEntry::where('event_id', $eventId)
-            ->where('status', 'waitlist')
-            ->where(function($query) {
-                $query->whereNull('waitlist_until')
-                ->orWhere('waitlist_until', '>', now());
-                })
-                ->orderBy('updated_at') // 申し込み順
-                ->limit($availableSlots)
-                ->get();
-                
-                foreach ($nextEntries as $entry) {
-                    $entry->update([
-                        'status' => 'entry',
-                        'waitlist_until' => null,
-                        ]);
-                        event(new WaitlistPromoted($entry));
-                        Log::info("繰り上げ成功: Entry ID {$entry->id} (Event ID {$eventId})");
-                }
-            }
-        }
-    
-    /**
-     * イベント締切によるキャンセル待ちの一括終了
-    */
+
     private function handleEventDeadlineReached(): void
     {
-        $entriesWithReachedDeadline = UserEntry::where('status', 'waitlist')
-        ->whereHas('event', function ($query) {
-            $query->where('entry_deadline', '<=', now()); 
-            })
+        $entries = UserEntry::where('status', 'waitlist')
+            ->whereHas('event', function ($q) { $q->where('entry_deadline', '<=', now()); })
             ->get();
             
-            foreach ($entriesWithReachedDeadline as $entry) {
-                DB::transaction(function () use ($entry) {
-                    $entry->update(['status' => 'cancelled']);
-                    event(new \App\Events\WaitlistDeadlineReached($entry));
-                    Log::info("イベント締切による自動キャンセル: Entry ID {$entry->id}");
-                    });
-                    }
-                    }
+        foreach ($entries as $entry) {
+            $this->cancelAndPromote($entry, 'deadline');
+        }
+    }
 
-                    /**
-                     * チーム招待の回答期限が切れたエントリーを処理
-                    */
-                    private function handleExpiredPendingEntries(): void
-                    {
-                        $expiredPending = UserEntry::where('status', 'pending')
-                        ->whereNotNull('pending_until')
-                        ->where('pending_until', '<=', now())
-                        ->get();
-                        
-                        foreach ($expiredPending as $entry) {
-                            // キャンセルして、空いた枠に次の人を繰り上げる
-                            $this->cancelAndPromote($entry, 'pending_expired');
-                            Log::info("ペア招待期限切れによる自動キャンセル: Entry ID {$entry->id}");
-                            }
-                            }
+    /**
+     * イベントの有効な参加者を常に正しい「申込順(order)」で取得する
+     */
+    public function getOrderedParticipants(int $eventId)
+    {
+        return UserEntry::where('event_id', $eventId)
+            ->with(['members.user']) 
+            ->whereIn('status', ['entry', 'pending', 'waitlist'])
+            // ↓ FIELDによるステータス優先を削除し、純粋に order 順にする
+            ->orderBy('order', 'asc')
+            ->get();
+    }
+}
 
     /**
      * イベントのエントリー期限が過ぎたキャンセル待ちを処理
@@ -155,4 +161,3 @@ class WaitlistService
     //         });
     //     }
     // }
-}

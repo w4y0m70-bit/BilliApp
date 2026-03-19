@@ -148,10 +148,11 @@
 
                 // 3. 自分が招待中（未回答）かどうかの判定
                 $isInvited = $event->userEntries()
+                    ->whereIn('status', ['pending', 'waitlist']) // waitlist中の招待も対象に含める
                     ->whereHas('members', function($q) use ($currentUser) {
-                        $q->where('user_id', $currentUser->id)->where('invite_status', 'pending');
+                        $q->where('user_id', $currentUser->id)
+                        ->where('invite_status', 'pending');
                     })
-                    ->where('status', 'pending')
                     ->exists();
             @endphp
 
@@ -311,14 +312,19 @@
                         <span class="inline-block bg-blue-600 text-white text-sm px-3 py-1 rounded animate-bounce-short shadow-md font-bold">
                             招待が届いています
                         </span>
-                    @elseif ($status === 'pending')
+                    @elseif ($userEntry && $userEntry->members()->where('invite_status', 'pending')->exists())
                         {{-- 自分が誰かを誘って、相手の回答待ちの場合 --}}
                         <div class="space-y-1">
                             <span class="inline-block bg-yellow-500 text-white text-sm px-3 py-1 rounded font-bold shadow-sm">
                                 パートナーの回答待ち
                             </span>
+                            @if($status === 'waitlist')
+                                <p class="text-[10px] text-orange-600 font-bold">
+                                    （キャンセル待ち {{ $userEntry->waitlist_position }} 番目として招待中）
+                                </p>
+                            @endif
                             <p class="text-[10px] text-red-500 font-bold">
-                                期限：{{ $userEntry->pending_until->format('m/d H:i') }} まで
+                                期限：{{ $userEntry->pending_until?->format('m/d H:i') }} まで
                             </p>
                         </div>
                     @elseif ($status === 'entry')

@@ -78,7 +78,7 @@
             </div>
         @endif
 
-        {{-- チームエントリーの場合の検索窓（募集人数が1より大きい場合） --}}
+        <!-- {{-- チームエントリーの場合の検索窓（募集人数が1より大きい場合） --}}
         @if($event->max_team_size > 1)
             <div class="p-4 bg-user/5 border border-user/20 rounded-xl space-y-4">
                 <label class="block font-bold text-user">
@@ -131,13 +131,12 @@
                 </div>
                 <p class="text-[10px] text-gray-500">※招待した相手が承諾するまでエントリーは完了しません。</p>
             </div>
-        @endif
+        @endif -->
 
         <div class="flex flex-col gap-3 pt-4 border-t">
             <button type="submit" 
-                    :disabled="{{ $event->max_team_size > 1 ? '!selectedUser' : 'false' }}"
-                    class="w-full bg-user text-white py-3 rounded-lg font-bold hover:bg-user-dark transition disabled:bg-gray-300 disabled:cursor-not-allowed">
-                {{ $event->max_team_size > 1 ? '招待を送ってエントリー' : 'この内容でエントリーする' }}
+                    class="w-full bg-user text-white py-3 rounded-lg font-bold hover:bg-user-dark transition">
+                {{ $event->max_team_size > 1 ? 'エントリーしてパートナー選択へ' : 'この内容でエントリーする' }}
             </button>
             <a href="{{ route('user.events.show', $event->id) }}" class="text-center text-user text-sm underline">
                 戻る
@@ -146,48 +145,4 @@
     </form>
 </div>
 
-@push('scripts')
-<script>
-function pairSearch() {
-    return {
-        searchQuery: '',
-        results: [],
-        selectedUser: null,
-        searching: false,
-
-        async searchUsers() {
-            if (this.searchQuery.length < 2) {
-                this.results = [];
-                return;
-            }
-            this.searching = true;
-            try {
-                const url = `{{ route('user.users.search') }}?q=${encodeURIComponent(this.searchQuery)}`;
-                const response = await fetch(url);
-                const data = await response.json();
-                this.results = data;
-            } catch (error) {
-                console.error('Search error:', error);
-            } finally {
-                this.searching = false;
-            }
-        },
-
-        selectUser(user) {
-            this.selectedUser = {
-                id: user.id,
-                name: user.full_name,
-                account_name: user.account_name
-            };
-            this.results = [];
-            this.searchQuery = '';
-        },
-
-        clearSelection() {
-            this.selectedUser = null;
-        }
-    }
-}
-</script>
-@endpush
 @endsection

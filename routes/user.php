@@ -81,8 +81,19 @@ Route::middleware(['auth:web', 'session.lifetime:60'])->group(function () {
         ->name('entries.update');
 
     // エントリープレイヤー一覧
-    Route::get('events/{event}/participants', [EventParticipantController::class, 'index'])
+    Route::get('events/{event}/participants', [UserEventController::class, 'participants'])
     ->name('events.participants');
+
+    // 招待処理
+    Route::post('events/{event}/entries/{entry}/invite', [UserEntryController::class, 'invite'])
+    ->name('entries.invite');
+    // 特定の招待中メンバーを取り消す
+    Route::delete('events/{event}/entries/{entry}/invite/{member}/cancel', [UserEntryController::class, 'cancelInvitation'])
+    ->name('entries.invite.cancel');
+
+    // 勧誘されたユーザーの返答画面
+    Route::post('/events/{event}/entries/{entry}/respond', [UserEntryController::class, 'respond'])
+        ->name('entries.respond');
 
     // キャンセル処理
     Route::patch('/events/{event}/cancel/{entryId}', [UserEntryController::class, 'cancel'])
@@ -116,10 +127,6 @@ Route::middleware(['auth:web', 'session.lifetime:60'])->group(function () {
     Route::post('/login/line/disconnect', [UserLineAuthController::class, 'disconnect'])->name('line.disconnect');
 
     // ユーザー検索API (エントリー時のチーム検索用)
-    Route::get('/users/search', [UserSearchController::class, 'search'])
-        ->name('users.search');
+    Route::get('/search-users', [UserSearchController::class, 'search'])->name('search-users');
 
-    // 勧誘されたユーザーの返答画面
-    Route::post('/events/{event}/entries/{entry}/respond', [UserEntryController::class, 'respond'])
-        ->name('entries.respond');
 });

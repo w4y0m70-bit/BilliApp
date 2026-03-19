@@ -62,16 +62,17 @@ class UserEventController extends Controller
 
         // 5. 自分への招待（Pending）があるかチェック
         $invitations = [];
-        if ($user) {
-            $invitations = \App\Models\UserEntry::whereHas('members', function($q) use ($user) {
-                    $q->where('user_id', $user->id)
-                    ->where('invite_status', 'pending'); // 招待中のステータス
-                })
-                ->with(['event', 'representative']) // 代表者の情報も取得
-                ->where('status', 'pending')
-                ->where('pending_until', '>', $now) // 期限内のもの
-                ->get();
-        }
+            if ($user) {
+                $invitations = UserEntry::whereHas('members', function($q) use ($user) {
+                        $q->where('user_id', $user->id)
+                        ->where('invite_status', 'pending'); // 招待中のステータス
+                    })
+                    ->with(['event', 'representative'])
+                    // ↓ここを修正：pending または waitlist のものを対象にする
+                    ->whereIn('status', ['pending', 'waitlist']) 
+                    ->where('pending_until', '>', $now)
+                    ->get();
+            }
 
         // 4. 最後に並び替えてデータを取得
         $events = $query->orderBy('event_date', 'asc')->get();
@@ -84,10 +85,22 @@ class UserEventController extends Controller
 
     public function show(Event $event)
     {
-        $currentUser = Auth::user() ?? \App\Models\User::first();
+        $currentUser = Auth::user() ?? User::first();
         $userEntry = $event->userEntries()->where('representative_user_id', $currentUser->id)->first();
         $status = $userEntry ? $userEntry->status : null;
 
         return view('user.events.show', compact('event', 'userEntry', 'status'));
+    }
+
+    public function participants(Event $event)
+    {
+        $participants = $event->userEntries()
+            ->with(['user', 'members'])
+            ->whereIn('status', ['entry', 'pending', 'waitlist'])
+            ->orderByRaw("FIELD(status, 'entry', 'pending', 'waitlist')")
+            ->orderBy('applied_at', 'asc')
+            ->get();
+
+        return view('user.events.participants', compact('event', 'participants'));
     }
 }
