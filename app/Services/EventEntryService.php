@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Event;
+use App\Models\User;
 use App\Models\UserEntry;
+use App\Services\WaitlistService;
 use Illuminate\Support\Facades\DB;
 
 class EventEntryService
@@ -14,6 +16,11 @@ class EventEntryService
     public function addEntry(Event $event, array $data): UserEntry
     {
         return DB::transaction(function() use ($event, $data) {
+            // 代表者のユーザー情報を取得
+            $repUser = User::find($data['representative_user_id']);
+            // チーム名の初期値を決定
+            // 入力があればそれ、なければ「代表者の苗字」
+            $initialTeamName = $data['team_name'] ?? ($repUser ? $repUser->last_name : '未定');
             // 1. 親レコード (UserEntry) の作成
             // status は WaitlistService が整理するので一旦 'waitlist'（または初期値）で保存してOK
             $entry = UserEntry::create([
@@ -21,7 +28,7 @@ class EventEntryService
                 'representative_user_id' => $data['representative_user_id'] ?? null,
                 'status'                 => $data['status'] ?? 'waitlist', 
                 'applied_at'             => now(),
-                'team_name'              => $data['team_name'] ?? null,
+                'team_name'              => $initialTeamName,
                 'user_answer'            => $data['user_answer'] ?? null,
                 'waitlist_until'         => $data['waitlist_until'] ?? null,
                 'pending_until'          => $data['pending_until'] ?? null,
@@ -42,7 +49,7 @@ class EventEntryService
             }
 
             // 3. ★ 整理の専門家（WaitlistService）を呼んで、status と order を確定させる
-            // app(WaitlistService::class)->refreshLobby($event->id);
+            app(WaitlistService::class)->refreshLobby($event->id);
 
             return $entry->fresh(); // 最新の状態を返す
         });

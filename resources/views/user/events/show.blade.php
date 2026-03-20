@@ -217,19 +217,25 @@
 
         {{-- エントリーメンバー --}}
         @if($userEntry)
+            @php
+                $isRepresentative = ($userEntry->representative_user_id === $currentUser->id);
+                $currentMemberCount = $userEntry->members->count();
+            @endphp
+
             <div class="mt-6 border-t pt-4">
                 <h3 class="text-sm font-bold text-gray-600 mb-3 flex items-center">
                     <span class="material-symbols-outlined text-sm mr-1">group</span>
                     エントリーメンバー
                     <x-help help-key="user.events.members" />
                 </h3>
-                
-                @php
-                    $isRepresentative = ($userEntry->representative_user_id === $currentUser->id);
-                @endphp
-                <div class="space-y-3">
+
+                {{-- チーム名の表示箇所（タイトル横など） --}}
+                @if($userEntry && $event->max_team_size > 1)
+                    <p class="text-user font-bold mb-2">チーム名：{{ $userEntry->display_name }}</p>
+                @endif
+                <div class="space-y-2 mb-4">
                     @foreach($userEntry->members as $member)
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-100">
                             <div class="flex items-center gap-3">
                                 {{-- 状態アイコン --}}
                                 @if($member->invite_status === 'approved')
@@ -241,11 +247,8 @@
                                 <div>
                                     <p class="text-sm font-bold text-gray-800">
                                         {{ $member->user->full_name }}
-                                        @if($member->invite_status === 'pending')
-                                            <span class="text-[10px] text-orange-500 font-normal ml-1">(回答待ち)</span>
-                                        @endif
                                     </p>
-                                    <p class="text-[10px] text-gray-500">
+                                    <p class="text-[12px] text-gray-500">
                                         クラス：{{ $member->class ?? '未決定' }}
                                     </p>
                                 </div>
@@ -254,17 +257,22 @@
                             {{-- 状態ラベル --}}
                             <div class="flex items-center gap-2">
                                 @if($isRepresentative && $member->user_id !== $currentUser->id && $member->invite_status === 'pending')
+                                <div>    
                                     <form action="{{ route('user.entries.invite.cancel', ['event' => $event->id, 'entry' => $userEntry->id, 'member' => $member->id]) }}" method="POST" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" onclick="return confirm('招待を取り消しますか？')" class="text-[10px] text-red-500 hover:underline font-bold border border-red-200 bg-white px-2 py-1 rounded">
-                                            招待取消
-                                        </button>
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" onclick="return confirm('招待を取り消しますか？')" class="text-[10px] text-red-500 hover:underline font-bold border border-red-200 bg-white px-2 py-1 rounded">
+                                                招待取消
+                                            </button>
                                     </form>
+                                        <p class="text-[10px] text-red-500 font-bold">
+                                            期限：{{ $userEntry->pending_until?->format('m/d H:i') }} まで
+                                        </p>
+                                </div>
                                 @endif
                                 @if($member->invite_status === 'approved')
                                     <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded border border-green-200">
-                                        参加確定
+                                        参加
                                     </span>
                                 @else
                                     <span class="text-[10px] font-bold text-yellow-600 bg-yellow-50 px-2 py-1 rounded border border-yellow-200">
@@ -276,13 +284,8 @@
                     @endforeach
                 </div>
 
-                @php
-                    $isRepresentative = ($userEntry->representative_user_id === $currentUser->id);
-                    $currentMemberCount = $userEntry->members->count();
-                @endphp
-
                 @if($event->max_team_size > 1 && $isRepresentative && $currentMemberCount < $event->max_team_size)
-                    <div class="mt-4 pt-4 border-t border-dashed border-gray-200">
+                    <div class="mb-2 pt-4 border-t border-dashed border-gray-200">
                         <x-user.partner-inviter 
                             :event="$event" 
                             :entry="$userEntry"
@@ -292,11 +295,31 @@
                 
                 {{-- 全員揃っていない場合の補足メッセージ（代表者のみ表示） --}}
                 @if($userEntry->status === 'pending' && $userEntry->representative_user_id === auth()->id())
-                    <p class="mt-3 text-xs text-red-500 font-bold flex items-center">
+                    <p class="mb-4 mt-3 text-xs text-red-500 font-bold flex items-center">
                         <span class="material-symbols-outlined text-xs mr-1">info</span>
-                        パートナーが承諾するとエントリーが完了します。
+                        現在は仮エントリーです。<br>パートナーが承諾すると正式エントリーとなります。
                     </p>
                 @endif
+                                
+                @if($userEntry && $isRepresentative && $event->max_team_size > 1)
+                    <div class="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                        <form action="{{ route('user.entries.update', ['event' => $event->id, 'entry' => $userEntry->id]) }}" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            <label class="block text-xs font-bold text-blue-700 mb-1">チーム名（未入力なら自動で名前がつけられます）</label>
+                            <div class="flex gap-2">
+                                <input type="text" name="team_name" 
+                                    value="{{ $userEntry->team_name }}" 
+                                    placeholder="{{ $userEntry->display_name }}"
+                                    class="flex-1 text-sm border-blue-200 rounded px-2 py-1 focus:ring-user focus:border-user">
+                                <button type="submit" class="bg-user text-white text-xs px-3 py-1 rounded font-bold hover:bg-user-dark">
+                                    変更
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                @endif
+
             </div>
         @endif
         

@@ -5,7 +5,7 @@
 @section('content')
 <div class="px-4">
 <div 
-    x-data="participantManager({{ $event->id }}, {{ $event->max_entries }}, {{ $event->max_team_size }})"
+    x-data="participantManager({{ $event->id }}, {{ $event->max_entries ?? 0 }}, {{ $event->max_team_size }})"
     class="space-y-3"
 >
     <div>
@@ -34,7 +34,7 @@
                 </span>
                 /
                 {{-- 人数ではなく「募集枠数（チーム数）」を表示 --}}
-                {{ $event->max_entries }} {{ $event->max_team_size == 2 ? 'チーム' : '名' }}
+                {{ $event->max_entries }} {{ $event->team_size_label }}
                 
                 <span class="text-sm ml-2 text-gray-500">
                     （キャンセル待ち：
@@ -56,7 +56,9 @@
     <div class="overflow-x-auto">
         <div id="participant-table-container">
             <x-event.participant-list 
+                :event="$event" 
                 :participants="$participants" 
+                :max-entries="$event->max_entries"
                 mode="admin"
             />
         </div>
@@ -78,7 +80,7 @@
                     {{-- 最初から max_team_size 分の入力欄が表示される --}}
                     <template x-for="(member, index) in guest.members" :key="index">
                         <div class="p-3 bg-gray-50 rounded border border-gray-200">
-                            <p class="text-xs font-bold text-gray-500 mb-2" x-text="'メンバー ' + (index + 1) + (index === 0 ? '（代表者）' : '')"></p>
+                            <p class="text-xs font-bold text-gray-500 mb-2" x-text="'メンバー ' + (index + 1)"></p>
                             
                             <div class="grid grid-cols-2 gap-3 mb-2">
                                 <input type="text" x-model="member.last_name" class="border rounded px-2 py-1 text-sm" placeholder="姓" required>
@@ -152,7 +154,7 @@
 
             init() {
                 this.resetGuestForm();
-                this.loadParticipants();
+                // this.loadParticipants();
             },
 
             resetGuestForm() {

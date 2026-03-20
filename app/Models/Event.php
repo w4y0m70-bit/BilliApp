@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use App\Models\UserEntry;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
@@ -139,5 +140,20 @@ class Event extends Model
                     $m->where('user_id', $userId);
                 });
             })->exists();
+    }
+
+    /**
+     * チーム構成の表示ラベルを取得するアクセサ
+     */
+    protected function teamSizeLabel(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                // 1より大きい場合は「○名1組」、1の場合は「名」を返す
+                return $this->max_team_size > 1 
+                    ? "チーム（{$this->max_team_size}名1組）" 
+                    : "名";
+            },
+        );
     }
 }

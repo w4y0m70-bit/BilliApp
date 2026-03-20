@@ -263,6 +263,14 @@ class UserEntryController extends Controller
             abort(403);
         }
 
+        // チーム名の更新がある場合
+        if ($request->has('team_name')) {
+            $entry->team_name = $request->input('team_name');
+            $entry->save();
+            return back()->with('message', 'チーム名を更新しました。');
+        }
+
+        // キャンセル待ち期限の更新がある場合
         if ($entry->status === 'waitlist') {
             // 「期限をクリア」ボタンの処理
             if ($request->has('clear') && $request->input('clear') == 1) {
@@ -330,6 +338,25 @@ class UserEntryController extends Controller
                 // ★ 整理の専門家を呼ぶ（ここで order が決まり、必要なら entry へ昇格する）
                 $this->waitlistService->refreshLobby($entry->event_id);
             }
+            if (!$entry->members()->where('invite_status', 'pending')->exists()) {
+    
+            // 現在の名前が「代表者の苗字のみ」など、デフォルト状態かチェック
+            // もしくは、ユーザーが明示的に書き換えていない場合のみ自動更新
+            $repLastName = $entry->representative->last_name;
+            $partnerLastName = auth()->user()->last_name;
+
+            if ($entry->team_name === $repLastName || empty($entry->team_name)) {
+                $entry->team_name = "{$repLastName}・{$partnerLastName}ペア";
+            }
+
+            $entry->update([
+                'is_confirmed' => true,
+                'pending_until' => null,
+                'team_name' => $entry->team_name, // ★更新
+            ]);
+            
+            $this->waitlistService->refreshLobby($entry->event_id);
+        }
         });
 
         return redirect()->route('user.events.show', $entry->event_id)->with('message', '招待を承諾しました！');

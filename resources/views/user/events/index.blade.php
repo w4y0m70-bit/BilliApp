@@ -246,11 +246,19 @@
                     <a href="{{ route('user.events.show', $event->id) }}" class="hover:underline">
                         {{ $event->title }}
                     </a>
+                    
+                    {{-- 2名以上の場合のみ、ラベルを表示 --}}
+                    @if($event->max_team_size > 1)
+                        <span class="inline-block ml-2 px-2 py-0.5 text-xs font-bold text-white bg-user rounded-full">
+                            {{ $event->max_team_size }}名1組
+                        </span>
+                    @endif
+
                     <x-help help-key="user.events.show" />
                 </h3>
                 {{-- 募集クラス --}}
                 <div class="mt-2 flex items-start gap-1">
-                    <strong class="text-sm text-gray-700">参加資格：</strong>
+                    <strong class="text-sm text-gray-700">募集クラス：</strong>
                     <div class="flex flex-wrap gap-1">
                         @php
                             $eventClasses = $event->eventClasses;

@@ -14,18 +14,17 @@ class WaitlistService
     /**
      * イベントの全参加者のステータスと順序を最新状態に同期する（★心臓部）
      */
-    // app/Services/WaitlistService.php
 
     public function refreshLobby(int $eventId): void
     {
-        $event = \App\Models\Event::find($eventId);
+        $event = Event::find($eventId);
         if (!$event) return;
 
         $max = $event->max_entries;
 
         // キャンセル以外、すべてのエントリーを申込順に取得
         // ここで 'pending' や 'waitlist' が漏れていると、WLが0になります
-        $entries = \App\Models\UserEntry::where('event_id', $eventId)
+        $entries = UserEntry::where('event_id', $eventId)
             ->where('status', '!=', 'cancelled') 
             ->orderBy('applied_at', 'asc')
             ->get();
@@ -128,8 +127,7 @@ class WaitlistService
     {
         return UserEntry::where('event_id', $eventId)
             ->with(['members.user']) 
-            ->whereIn('status', ['entry', 'pending', 'waitlist'])
-            // ↓ FIELDによるステータス優先を削除し、純粋に order 順にする
+            ->where('status', '!=', 'cancelled')
             ->orderBy('order', 'asc')
             ->get();
     }

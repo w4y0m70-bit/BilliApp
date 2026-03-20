@@ -1,6 +1,8 @@
 @props([
+    'event',
     'participants', 
     'mode' => 'user', 
+    'maxEntries' => 0,
 ])
 
 @php
@@ -17,8 +19,19 @@
             {{-- 1. 左端：No. & 操作エリア（WL-10でも折り返さない幅 w-12） --}}
             <div class="relative flex-shrink-0 w-12 flex flex-col items-center justify-center border-r {{ $participant->status === 'waitlist' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-400' }}">
                 {{-- 通常時：No./WL表示 --}}
-                <div x-show="!showAdmin || !{{ $isAdmin ? 'true' : 'false' }}" class="flex items-center justify-center font-black text-xs tracking-tighter whitespace-nowrap">
-                    {{ in_array($participant->status, ['entry', 'pending']) ? '' : 'WL-' }}{{ $participant->order }}
+                <div class="flex items-center justify-center font-black text-xs">
+                    @php
+                        $limit = (int)$maxEntries;
+                        $order = (int)$participant->order;
+                    @endphp
+
+                    @if($order > $limit)
+                        {{-- orderが定員(2)より大きければ、一律で WL表示 --}}
+                        WL{{ $order - $limit }}
+                    @else
+                        {{-- 定員内ならそのまま 1, 2 --}}
+                        {{ $order }}
+                    @endif
                 </div>
 
                 {{-- ホバー時：操作ボタン --}}
@@ -40,7 +53,7 @@
             <div class="flex-grow flex flex-col divide-y divide-gray-100 min-w-0">
                 
                 {{-- チーム名行（天地を詰めつつ視認性確保） --}}
-                @if($participant->team_name)
+                @if($event->max_team_size >= 2 && $participant->team_name)
                     <div class="bg-gray-50/50 px-2 py-0.5 flex items-center">
                         <span class="text-[11px] font-black text-gray-600 truncate leading-tight">
                             <span class="text-[8px] font-normal mr-1 text-gray-400 uppercase">Team:</span>{{ $participant->team_name }}

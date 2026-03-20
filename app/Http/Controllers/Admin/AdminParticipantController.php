@@ -64,11 +64,9 @@ class AdminParticipantController extends Controller
         ];
 
         try {
-            // 3. ★最強の共通サービスを呼び出す！
-            // これで applied_at も確実に入り、No.0問題が解決します。
             $entry = $service->addEntry($event, $data);
 
-            $message = ($request->status === 'entry') 
+            $message = ($entry->status === 'entry')
                 ? 'ゲストチームを登録しました' 
                 : 'キャンセル待ちとして登録しました';
 

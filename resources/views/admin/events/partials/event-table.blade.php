@@ -71,11 +71,11 @@
                     </div>
                 @endif
 
-                <div class="text-sm text-gray-700 mb-1">
+                <!-- <div class="text-sm text-gray-700 mb-1">
                     形式：{{ $event->max_team_size == 2 ? 'チームエントリー（2名1組）' : '個人エントリー（1名）' }}
-                </div>
+                </div> -->
                 <div class="text-sm text-gray-700 mb-1">
-                    募集枠数：{{ $event->max_entries }} {{ $event->max_team_size == 2 ? 'チーム' : '名' }}</span>
+                    募集枠数：{{ $event->max_entries }} {{ $event->team_size_label }}
                 </div>
 
                {{-- カード内の参加数表示部分 --}}

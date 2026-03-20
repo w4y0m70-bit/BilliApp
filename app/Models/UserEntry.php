@@ -157,34 +157,14 @@ class UserEntry extends Model
     }
 
     /**
-     * 2. 表示順（No.）の取得
-     */
-    public function getOrderAttribute(): int
-    {
-        if (!$this->applied_at) return 0; // created_at ではなく applied_at を見る
-
-        $isWaitlist = ($this->status === 'waitlist');
-        $targetStatuses = $isWaitlist ? ['waitlist'] : ['entry', 'pending'];
-
-        return $this->event->userEntries()
-            ->whereIn('status', $targetStatuses)
-            ->where(function($q) {
-                $q->where('applied_at', '<', $this->applied_at)
-                ->orWhere(function($q2) {
-                    $q2->where('applied_at', $this->applied_at)
-                        ->where('id', '<=', $this->id);
-                });
-            })
-            ->count();
-    }
-
-    /**
      * システム共通の参加者並び替えルール
      */
     public function scopeSortedList($query)
     {
-        return $query->orderByRaw("FIELD(status, 'entry', 'pending', 'waitlist', 'cancelled') ASC")
-            ->orderBy('applied_at', 'asc');
+        // FIELD(status...) を削除し、シンプルに order 順にする
+        return $query->where('status', '!=', 'cancelled')
+                    ->orderBy('order', 'asc')
+                    ->orderBy('applied_at', 'asc');
     }
 
     /* =====================
@@ -289,5 +269,59 @@ class UserEntry extends Model
         $member->delete();
 
         return back()->with('message', '招待を取り消しました。');
+    }
+
+    /**
+     * 1. 【共通ロジック】現在の状態からチーム名を生成する
+     * 内部でのみ使うので private または protected にします
+     */
+    protected function generateTeamName(): string
+    {
+        // メンバーのリレーションをロード（なければ読み込む）
+        $this->loadMissing('members.user');
+
+        $names = $this->members->map(function($member) {
+            return $member->user->account_name ?? '名無し';
+        })->filter()->toArray();
+
+        $count = count($names);
+
+        if ($count === 2) {
+            return "{$names[0]}・{$names[1]}ペア";
+        }
+
+        if ($count >= 3) {
+            return "チーム {$names[0]}";
+        }
+
+        // 代表者1人の場合、またはメンバーがまだ取れない場合
+        return $names[0] ?? ($this->full_name ?: '未定');
+    }
+
+    /**
+     * 2. 【ミューテータ】保存時に空なら自動生成してDBに入れる
+     */
+    protected function teamName(): Attribute
+    {
+        return Attribute::make(
+            set: function ($value) {
+                // 入力があればそれを使う、空なら共通ロジックで生成
+                return !empty($value) ? $value : $this->generateTeamName();
+            },
+        );
+    }
+
+    /**
+     * 3. 【アクセサ】表示用の出し分け（既存のものを修正）
+     */
+    public function getDisplayNameAttribute()
+    {
+        // DBに値（team_name）があればそれを返す
+        if (!empty($this->team_name)) {
+            return $this->team_name;
+        }
+
+        // 万が一DBが空の場合も、共通ロジックを呼ぶ
+        return $this->generateTeamName();
     }
 }

@@ -47,7 +47,8 @@
                 {{-- ※ 管理者向けの表示として 'mode="master"' などのプロパティを渡すと便利です --}}
                 <x-event.participant-list 
                     :event="$event" 
-                    :participants="$event->userEntries()->sortedList()->get()" 
+                    :participants="$event->userEntries()->where('status', '!=', 'cancelled')->orderBy('order', 'asc')->get()"
+                    :max-entries="$event->max_entries"
                     mode="master" 
                 />
             </div>

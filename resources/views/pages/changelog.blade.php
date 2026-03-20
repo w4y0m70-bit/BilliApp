@@ -15,30 +15,31 @@
                 <div class="absolute left-0 top-1.5 w-6 h-6 bg-blue-500 rounded-full border-4 border-white shadow"></div>
                 <div class="flex items-center gap-3 mb-2">
                     <span class="font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-sm">
-                        <v0 class="93"></v0>v0.964-beta</span>
+                        <v0 class="93"></v0>v0.97-beta</span>
+                    <span class="text-sm text-gray-400">2026.03.20</span>
+                </div>
+                <h3 class="font-bold text-gray-800 mb-2">LINE登録・ペアエントリー対応</h3>
+                <ul class="list-disc ml-5 space-y-1 text-xs text-gray-600">
+                    <li>LINEでのアカウント登録ができるようになりました（ユーザーのみ）</li>
+                    <li>ペアマッチなど、チームでのエントリーに対応しました</li>
+                    <li>インターフェースの微調整をしました</li>
+                </ul>
+            </div>
+
+            {{-- 過去のバージョン --}}
+            <div class="relative pl-10">
+                <div class="absolute left-0 top-1.5 w-6 h-6 bg-gray-300 rounded-full border-4 border-white shadow"></div>
+                <div class="flex items-center gap-3 mb-2 text-gray-400">
+                    <span class="font-mono font-bold px-2 py-0.5 rounded text-sm bg-gray-100">v0.964-beta</span>
                     <span class="text-sm text-gray-400">2026.02.23</span>
                 </div>
-                <h3 class="font-bold text-gray-800 mb-2">不具合修正</h3>
+                <h3 class="font-bold text-gray-700 mb-2">不具合修正</h3>
                 <ul class="list-disc ml-5 space-y-1 text-xs text-gray-600">
                     <li>エントリー順序を正しく表示できるようになりました</li>
                     <li>管理者ページ／ゲスト追加の不具合を修正しました</li>
                     <li>通知に関する不具合を修正しました</li>
                 </ul>
             </div>
-
-            {{-- 過去のバージョン --}}
-            <!-- <div class="relative pl-10">
-                <div class="absolute left-0 top-1.5 w-6 h-6 bg-gray-300 rounded-full border-4 border-white shadow"></div>
-                <div class="flex items-center gap-3 mb-2 text-gray-400">
-                    <span class="font-mono font-bold px-2 py-0.5 rounded text-sm bg-gray-100">v0.90-beta</span>
-                    <span class="text-sm">2026.01.25</span>
-                </div>
-                <h3 class="font-bold text-gray-700 mb-2 text-sm">管理者向け機能の充実</h3>
-                <ul class="list-disc ml-5 space-y-1 text-xs leading-relaxed text-gray-500">
-                    <li>「いつ、誰が操作したか」を管理者が確認できるログ機能を追加しました</li>
-                    <li>管理者画面の使い勝手を向上させました</li>
-                </ul>
-            </div> -->
 
             {{-- 最初のバージョン --}}
             <div class="relative pl-10">
