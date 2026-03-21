@@ -45,6 +45,12 @@ class WaitlistService
                 $newStatus = 'waitlist';
             }
 
+            // ステータスが waitlist から entry に変わった場合のみイベントを送る
+            if ($oldStatus === 'waitlist' && $newStatus === 'entry') {
+                event(new WaitlistPromoted($entry));
+                Log::info("キャンセル待ちから昇格: Entry ID {$entry->id}");
+            }
+
             // 強制的にDBを更新
             \DB::table('user_entries')->where('id', $entry->id)->update([
                 'order' => $newOrder,

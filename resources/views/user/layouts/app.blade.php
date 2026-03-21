@@ -17,9 +17,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 </head>
 
-<body class="bg-gray-100 min-h-screen font-sans text-gray-900">
+<body class="bg-gray-100 h-screen flex flex-col font-sans text-gray-900 overflow-hidden">
 
-    <header class="bg-user text-white p-4 flex flex-wrap md:flex-row justify-between items-center gap-y-3">
+    <header class="bg-user text-white p-4 flex flex-wrap md:flex-row justify-between items-center gap-y-3 shrink-0">
         <div class="flex items-center w-full md:w-auto mb-2 md:mb-0">
             <a href="{{ url('/') }}">
                 <span class="material-icons">home</span>
@@ -30,7 +30,6 @@
         </div>
 
         <nav class="bg-gray-800 text-white px-2 py-2 flex items-center gap-1 rounded shadow w-full md:w-auto overflow-x-auto whitespace-nowrap">
-
             <a href="{{ route('user.events.index') }}"
             class="flex flex-col items-center min-w-[70px] hover:bg-gray-700 px-2 py-1 rounded transition flex-shrink-0">
                 <span class="material-icons text-xl">event</span>
@@ -48,7 +47,7 @@
                 <span class="material-icons text-xl">group</span>
                 <span class="text-[10px] mt-0.5">グループ</span>
             </a> -->
-
+            
             <form method="POST" action="{{ route('user.logout') }}" class="ml-auto flex-shrink-0">
                 @csrf
                 <button type="submit"
@@ -57,17 +56,19 @@
                     <span class="text-[10px] mt-0.5">ログアウト</span>
                 </button>
             </form>
-
         </nav>
     </header>
 
-    <main class="container mx-auto py-6">
+    <main class="flex-1 overflow-y-auto container mx-auto py-6 px-4">
         @yield('content')
     </main>
 
-    <footer class="bg-gray-800 text-white text-center p-3 mt-10">
-        <p>© {{ date('Y') }} Billents</p>
+    <footer class="bg-gray-800 text-white text-center py-1 shrink-0">
+        <p class="text-xs">© {{ date('Y') }} Billents</p>
     </footer>
+    <!-- <footer class="bg-gray-800 text-white text-center p-3 shrink-0">
+        <p>© {{ date('Y') }} Billents</p>
+    </footer> -->
 
     @stack('scripts')
 

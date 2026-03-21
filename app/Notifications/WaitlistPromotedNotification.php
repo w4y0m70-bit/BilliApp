@@ -50,8 +50,8 @@ class WaitlistPromotedNotification extends Notification
             ->line("キャンセル待ちをしていただいていた以下のイベントについて、空きが出たため参加が確定いたしました！")
             ->line("----------------------------------")
             ->line("［{$organizerName}］")
-            ->line("■{$eventName}")
-            ->line("■{$eventDate}")
+            ->line("■イベント名：{$eventName}")
+            ->line("■イベント日時：{$eventDate}")
             ->line("----------------------------------")
             ->action('イベント詳細を見る', url('/user/events/' . $event->id))
             ->line('当日のご来場をお待ちしております。');
