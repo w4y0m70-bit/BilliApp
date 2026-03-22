@@ -83,7 +83,10 @@
                 <label class="block font-bold mb-4 border-b pb-2 text-gray-700 text-sm">通知設定</label>
                 
                 @php
-                    $adminNotificationTypes = ['event_full' => 'イベントが満員時に通知'];
+                    $adminNotificationTypes = [
+                        'event_full'     => 'イベントが満員時に通知',
+                        'event_deadline' => 'エントリー締切時に最終報告を通知'
+                    ];
                     $notificationVias = ['mail' => 'メール', 'line' => 'LINE'];
                 @endphp
 

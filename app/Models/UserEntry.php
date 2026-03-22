@@ -51,18 +51,25 @@ class UserEntry extends Model
         static::saved(function ($entry) {
             $event = $entry->event;
 
-            // 通知済みチェックなどは維持
-            if (!$event || $event->notified_at !== null) return;
+            // 🌟 修正ポイント：ログテーブルを使って二重送信を防止
+            if (!$event || $event->hasBeenNotified('event_full', $event->admin_id)) {
+                return;
+            }
+
+            // エントリー確定時のみ判定
             if ($entry->status !== 'entry') return;
 
-            // レコード数（＝チーム数）をカウント
+            // チーム数をカウント
             $currentTeamCount = $event->userEntries()
-                ->whereIn('status', ['entry', 'pending']) // 回答待ちも枠を占有するとみなす
+                ->whereIn('status', ['entry', 'pending'])
                 ->count();
 
-            // 通知
+            // 定員に達していたらイベントを発行
             if ($currentTeamCount >= $event->max_entries) {
                 event(new \App\Events\EventFull($event));
+                
+                // 🌟 重要：イベント発行直後にログを記録（これで次は skip される）
+                $event->markAsNotified('event_full', $event->admin_id);
             }
         });
     }

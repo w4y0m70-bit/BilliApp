@@ -75,7 +75,8 @@
                 <div class="space-y-3">
                     @php
                         $adminNotificationTypes = [
-                            'event_full' => 'イベント満員時の通知',
+                            'event_full'     => 'イベント満員時の通知',
+                            'event_deadline' => 'エントリー締切時の通知',
                         ];
                         $viaLabels = ['mail' => 'メール', 'line' => 'LINE'];
                     @endphp

@@ -27,14 +27,12 @@ class Event extends Model
         'admin_id',
         'ticket_id',
         'instruction_label',
-        'notified_at',
     ];
 
     protected $casts = [
         'event_date' => 'datetime',
         'entry_deadline' => 'datetime',
         'published_at' => 'datetime',
-        'notified_at' => 'datetime',
     ];
 
     // UserEntry モデルを参照
@@ -155,5 +153,31 @@ class Event extends Model
                     : "名";
             },
         );
+    }
+
+    /**
+     * 特定の通知が送信済みかチェックする
+     */
+    public function hasBeenNotified(string $type, $adminId): bool
+    {
+        return \App\Models\NotificationLog::where('notifiable_type', \App\Models\Admin::class)
+            ->where('notifiable_id', $adminId)
+            ->where('event_id', $this->id)
+            ->where('type', $type)
+            ->exists();
+    }
+
+    /**
+     * 通知ログを記録する
+     */
+    public function markAsNotified(string $type, $adminId): void
+    {
+        \App\Models\NotificationLog::create([
+            'notifiable_type' => \App\Models\Admin::class,
+            'notifiable_id' => $adminId,
+            'event_id' => $this->id,
+            'type' => $type,
+            'sent_at' => now(),
+        ]);
     }
 }

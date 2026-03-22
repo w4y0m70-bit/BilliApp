@@ -3,31 +3,33 @@
 namespace App\Console\Commands;
 
 use App\Models\Event;
-use App\Events\EventPublished;
+use App\Models\NotificationLog;
+use App\Models\Admin;
 use Illuminate\Console\Command;
 
 class SendPublishedEventNotifications extends Command
 {
-    // コマンド名（php artisan events:send-notifications で実行可能に）
     protected $signature = 'events:send-notifications';
     protected $description = '公開日時を過ぎたイベントの通知を送信します';
 
     public function handle()
     {
-        // 1. 公開済み、かつ「通知日時が空」のものだけを取得
-        $events = \App\Models\Event::where('published_at', '<=', now())
-            ->whereNull('notified_at')
-            ->get();
+        // 1. 公開日時を過ぎているイベントを取得
+        $events = Event::where('published_at', '<=', now())->get();
 
         foreach ($events as $event) {
-            // ★ 重要：まず最初に「通知済み」にしてしまう（二重送信防止の定石）
-            $event->notified_at = now();
-            $event->save();
+            // 2. すでに「公開通知(event_published)」がログに記録されているかチェック
+            if ($event->hasBeenNotified('event_published', $event->admin_id)) {
+                continue; 
+            }
 
-            // その後でイベントを発行
+            // 3. 通知ログを記録（二重送信防止）
+            $event->markAsNotified('event_published', $event->admin_id);
+
+            // 4. イベントを発行（リスナー側でユーザーへのLINE/メールが飛ぶ）
             event(new \App\Events\EventPublished($event));
 
-            $this->info("Event ID {$event->id} の通知を処理しました。");
+            $this->info("Event ID {$event->id} の公開通知をログに記録し、処理しました。");
         }
     }
 }

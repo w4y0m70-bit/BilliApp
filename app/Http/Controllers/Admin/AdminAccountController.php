@@ -66,13 +66,15 @@ class AdminAccountController extends Controller
             
             $admin->update(collect($validated)->except('email')->toArray());
             
-            // 4. 通知設定の更新
-            $notificationTypes = ['event_full']; 
-            $notificationVias  = ['mail', 'line'];
+            // 4. 通知設定の更新（動的版）
+            $vias = ['mail', 'line'];
+            // 定義済みの通知タイプ一覧（ここだけはマスターとして持っておくのが安全）
+            $allTypes = ['event_full', 'event_deadline']; 
 
-            foreach ($notificationTypes as $type) {
-                foreach ($notificationVias as $via) {
+            foreach ($allTypes as $type) {
+                foreach ($vias as $via) {
                     $enabled = isset($request->notifications[$type][$via]);
+                    
                     $admin->notificationSettings()->updateOrCreate(
                         ['type' => $type, 'via' => $via],
                         ['enabled' => $enabled]

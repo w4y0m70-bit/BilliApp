@@ -115,16 +115,50 @@ class WaitlistService
         $this->handleEventDeadlineReached();
     }
 
-    private function handleEventDeadlineReached(): void
+    /**
+     * エントリー期限が過ぎた時の処理
+     */
+    public function handleEventDeadlineReached(): void
     {
-        $entries = UserEntry::where('status', 'waitlist')
-            ->whereHas('event', function ($q) { $q->where('entry_deadline', '<=', now()); })
+        // 1. 期限が過ぎた公開中のイベントを取得
+        $events = \App\Models\Event::where('entry_deadline', '<=', now())
+            ->where('published_at', '<=', now())
             ->get();
-            
-        foreach ($entries as $entry) {
-            $this->cancelAndPromote($entry, 'deadline');
+
+        foreach ($events as $event) {
+            $admin = $event->organizer;
+            if (!$admin) continue;
+
+            // 2. ログテーブルをチェック（'event_deadline' が未送信か確認）
+            if ($event->hasBeenNotified('event_deadline', $admin->id)) {
+                continue;
+            }
+
+            try {
+                // 3. 通知実行（Notificationクラス内でLINE/メール判定）
+                $admin->notify(new \App\Notifications\Admin\EventDeadlineReachedNotification($event));
+
+                // 4. ログに記録（これで二重送信されなくなる）
+                $event->markAsNotified('event_deadline', $admin->id);
+
+                \Log::info("管理者通知完了: Event ID {$event->id} (Type: event_deadline)");
+
+            } catch (\Throwable $e) {
+                \Log::error("管理者締切通知エラー: " . $e->getMessage());
+            }
         }
     }
+
+    // private function handleEventDeadlineReached(): void
+    // {
+    //     $entries = UserEntry::where('status', 'waitlist')
+    //         ->whereHas('event', function ($q) { $q->where('entry_deadline', '<=', now()); })
+    //         ->get();
+            
+    //     foreach ($entries as $entry) {
+    //         $this->cancelAndPromote($entry, 'deadline');
+    //     }
+    // }
 
     /**
      * イベントの有効な参加者を常に正しい「申込順(order)」で取得する
@@ -137,6 +171,7 @@ class WaitlistService
             ->orderBy('order', 'asc')
             ->get();
     }
+
 }
 
     /**
