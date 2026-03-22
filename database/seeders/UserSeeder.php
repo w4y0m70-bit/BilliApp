@@ -15,6 +15,7 @@ class UserSeeder extends Seeder
             'first_name' => 'ユーザー',
             'last_name_kana'  => 'テスト',
             'first_name_kana' => 'ユーザー',
+            'account_name' => 'テストアカウント',
             'email'    => 'stade_roland_garros19761@ezweb.ne.jp',
             'password' => Hash::make('00000000'),
         ]);

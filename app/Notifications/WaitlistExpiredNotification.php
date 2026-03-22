@@ -5,11 +5,11 @@ namespace App\Notifications;
 use App\Services\LineService;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use App\Models\User;
 
 class WaitlistExpiredNotification extends Notification
 {
     public $entry;
-    public $shouldSendLine = false;
 
     public function __construct($entry)
     {
@@ -21,26 +21,26 @@ class WaitlistExpiredNotification extends Notification
      */
     public function via($notifiable)
     {
-        // 1. まず、本当に User モデルが来ているかチェック
-        if (!$notifiable instanceof \App\Models\User) {
-            \Log::error("WaitlistExpiredNotification: Notifiable is not a User instance.");
+        if (!$notifiable instanceof User) {
             return [];
         }
 
         $channels = [];
 
-        // 2. 判定を「存在チェック」から「直接取得」に変えてデバッグしやすくする
-        // type を 'waitlist_updates' に統合している前提
-        $mailSetting = $notifiable->notificationSettings()
+        // 通知設定を一括取得（クエリ回数を減らすため）
+        $settings = $notifiable->notificationSettings()
             ->where('type', 'waitlist_updates')
-            ->where('via', 'mail')
-            ->first();
+            ->where('enabled', true)
+            ->get();
 
-        if ($mailSetting && $mailSetting->enabled) {
+        // メールの判定
+        if ($settings->where('via', 'mail')->isNotEmpty() && $notifiable->email) {
             $channels[] = 'mail';
-        } else {
-            // なぜ届かないのか、ログで理由を特定する（確認できたら消してOK）
-            \Log::info("通知スキップ理由(User:{$notifiable->id}): " . ($mailSetting ? "enabledがFALSE" : "設定レコードなし"));
+        }
+
+        // LINEの判定（設定があれば、この場で送信メソッドを呼ぶ）
+        if ($settings->where('via', 'line')->isNotEmpty()) {
+            $this->sendLineNotification($notifiable);
         }
 
         return $channels;
@@ -52,20 +52,14 @@ class WaitlistExpiredNotification extends Notification
     public function toMail($notifiable)
     {
         $event = $this->entry->event;
-        
-        // 1. 各種情報の取得
-        $eventName = $event->title;
-        // モデルで event_date が datetime にキャストされているので format が使えます
+        $eventName = $event->title ?? 'イベント';
         $eventDate = $event->event_date ? $event->event_date->format('Y/m/d H:i') : '未定';
-        // リレーション名は organizer。Adminモデルの name プロパティを取得
         $organizerName = $event->organizer->name ?? '主催者';
+        $userName = $notifiable->account_name ?? ($notifiable->full_name() ?: '利用者');
 
-        // 2. LINE 送信処理はapp/Listeners/SendWaitlistExpiredNotification.phpで行う
-
-        // 3. メール送信
         return (new MailMessage)
             ->subject("【{$eventName}】キャンセル待ち期限切れのお知らせ")
-            ->greeting("{$memberName} 様")
+            ->greeting("{$notifiable->$userName} 様")
             ->line("キャンセル待ちをしていただいていた以下のイベントについて、期限内に空きが出なかったため、エントリーが自動キャンセルされました。")
             ->line("----------------------------------")
             ->line("［{$organizerName}］")
@@ -74,5 +68,32 @@ class WaitlistExpiredNotification extends Notification
             ->line("----------------------------------")
             ->action('イベント詳細を見る', url('/user/events/' . $event->id))
             ->line('またのご利用をお待ちしております。');
+    }
+
+    /**
+     * LINE送信用の独自メソッド
+     */
+    protected function sendLineNotification($notifiable)
+    {
+        $lineAccount = $notifiable->socialAccounts()
+            ->where('provider', 'line')
+            ->first();
+            
+        $lineId = $lineAccount ? $lineAccount->provider_id : null;
+
+        if (!empty($lineId)) {
+            $event = $this->entry->event;
+            $organizerName = $event->organizer->name ?? '主催者';
+            $eventName = $event->title ?? 'イベント';
+            $eventDate = $event->event_date ? $event->event_date->format('Y/m/d H:i') : '未定';
+
+            $message = "【キャンセル待ち期限切れ】\n"
+                    . "キャンセル待ちをしていただいていた以下のイベントについて、期限内に空きが出なかったため、エントリーが自動キャンセルされました。\n\n"
+                    . "［{$organizerName}］\n"
+                    . "■{$eventName}\n"
+                    . "■開催日：{$eventDate}\n";
+
+            app(LineService::class)->push($lineId, $message);
+        }
     }
 }
