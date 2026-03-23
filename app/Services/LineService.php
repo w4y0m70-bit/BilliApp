@@ -75,7 +75,7 @@ class LineService
                 'messages' => [
                     [
                         'type' => 'template',
-                        'altText' => '重要なお知らせがあります',
+                        'altText' => $altText, // ポップアップメッセージのタイトル
                         'template' => [
                             'type' => 'buttons',
                             'text' => $text,

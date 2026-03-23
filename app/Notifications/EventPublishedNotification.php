@@ -6,9 +6,12 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 use App\Models\Event;
 use App\Services\LineService;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Bus\Queueable;
 
 class EventPublishedNotification extends Notification
 {
+    use Queueable;
     protected $event;
 
     public function __construct(Event $event)
@@ -66,23 +69,27 @@ class EventPublishedNotification extends Notification
      */
     protected function sendLineNotification($notifiable)
     {
-        $lineAccount = $notifiable->socialAccounts()
-            ->where('provider', 'line')
-            ->first();
-            
-        $lineId = $lineAccount ? $lineAccount->provider_id : null;
+        // Userモデルの場合、直接 provider_id を持っているか、
+        // socialAccountsリレーションの最初の1つから取得します。
+        $lineId = $notifiable->provider_id 
+                ?? $notifiable->socialAccounts()->where('provider', 'line')->first()?->provider_id;
 
-        if (!empty($lineId)) {
+        if ($lineId) {
             $organizerName = $this->event->organizer->name ?? '主催者';
+            $url = url('/user/events/' . $this->event->id);
+
             $message = "【イベント公開のお知らせ】\n\n"
                      . "新しいイベントが公開されました！\n\n"
                      . "［{$organizerName}］\n"
                      . "■イベント名：{$this->event->title}\n"
                      . "■開催日：" . ($this->event->event_date ? $this->event->event_date->format('Y/m/d H:i') : '未定') . "\n\n"
-                     . "詳細はこちら：\n" . url('/user/events/' . $this->event->id);
+                     . "詳細はこちら：\n" . $url;
 
-            // 直接サービスを呼び出す
-            app(LineService::class)->push($lineId, $message);
+            try {
+                app(LineService::class)->push($lineId, $message);
+            } catch (\Exception $e) {
+                \Log::error("User向けLINE送信失敗 (ID:{$notifiable->id}): " . $e->getMessage());
+            }
         }
     }
 }

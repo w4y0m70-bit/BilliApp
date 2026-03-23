@@ -39,7 +39,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'phone',
         'account_name',
         'class',
-        'notification_type',
+        // 'notification_type',
         'role',
     ];
 
@@ -110,12 +110,22 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(NotificationSetting::class);
     }
 
-    public function shouldNotify(string $type): bool
+    /**
+     * 指定した通知種別に対して、有効な配送チャンネル（mail, line）を返す
+     */
+    public function notificationChannels(string $type): array
     {
+        // 指定された type（例: team_invitations）で enabled が true のレコードを取得
         return $this->notificationSettings()
             ->where('type', $type)
             ->where('enabled', true)
-            ->exists();
+            ->pluck('via') // 'mail' や 'line' を抽出
+            ->toArray();   // ['mail', 'line'] のような配列で返す
+    }
+
+    public function shouldNotify(string $type): bool
+    {
+        return !empty($this->notificationChannels($type));
     }
 
     public function userEntries()
@@ -161,6 +171,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function socialAccounts(): HasMany
     {
         return $this->hasMany(UserSocialAccount::class);
+    }
+
+    /**
+     * LINEのプロバイダーIDを取得する
+     */
+    public function getLineProviderId(): ?string
+    {
+        return $this->socialAccounts()
+            ->where('provider', 'line')
+            ->first()?->provider_id;
     }
     
 }

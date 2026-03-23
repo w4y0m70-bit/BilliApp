@@ -89,6 +89,7 @@
                         $notificationTypes = [
                             'event_published' => '新規イベント公開',
                             'waitlist_updates' => 'キャンセル待ち（繰り上げ・自動終了）',
+                            'team_invitations' => 'チーム（招待・承諾・拒否・期限切れ）',
                         ];
                         $viaLabels = ['mail' => 'メール', 'line' => 'LINE'];
                     @endphp

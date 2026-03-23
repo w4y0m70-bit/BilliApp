@@ -47,8 +47,11 @@ class WaitlistService
 
             // ステータスが waitlist から entry に変わった場合のみイベントを送る
             if ($oldStatus === 'waitlist' && $newStatus === 'entry') {
-                event(new WaitlistPromoted($entry));
-                Log::info("キャンセル待ちから昇格: Entry ID {$entry->id}");
+                if ($entry->user) {
+                    // 直接通知を「着火」する
+                    $entry->user->notify(new \App\Notifications\WaitlistPromotedNotification($entry));
+                }
+                \Log::info("キャンセル待ちから昇格（通知送信）: Entry ID {$entry->id}");
             }
 
             // 強制的にDBを更新
@@ -101,17 +104,54 @@ class WaitlistService
      */
     public function handleExpiredWaitlist(): void
     {
-        // 期限切れの waitlist や pending を抽出
-        $expiredEntries = UserEntry::where(function($q) {
-                $q->where('status', 'waitlist')->where('waitlist_until', '<=', now());
-            })->orWhere(function($q) {
-                $q->where('status', 'pending')->where('pending_until', '<=', now());
-            })->get();
+        // --- 1. キャンセル待ち期限切れ (waitlist_until) の処理 ---
+        $expiredWaitlists = UserEntry::where('status', 'waitlist')
+            ->where('waitlist_until', '<=', now())
+            ->get();
 
-        foreach ($expiredEntries as $entry) {
-            $this->cancelAndPromote($entry, 'expired');
+        foreach ($expiredWaitlists as $entry) {
+            try {
+                \DB::transaction(function () use ($entry) {
+                    // 🌟 'expired' ではなく、DBで許可されている 'cancelled' を使う
+                    $entry->update(['status' => 'cancelled']);
+                    
+                    if ($entry->user) {
+                        // 通知の内容は「期限切れ」として送る（これでユーザーには正しく伝わります）
+                        $entry->user->notify(new \App\Notifications\WaitlistExpiredNotification($entry));
+                    }
+
+                    // 枠が空いたので繰り上げを実行
+                    $this->refreshLobby($entry->event_id);
+                });
+                \Log::info("Entry ID {$entry->id} を期限切れ（cancelled）として更新しました");
+            } catch (\Exception $e) {
+                \Log::error("Entry ID {$entry->id} の更新中にエラー: " . $e->getMessage());
+            }
         }
 
+        // --- 2. パートナー未承諾 (pending) の期限切れ処理 ---
+        $expiredPendings = UserEntry::where('status', 'pending')
+            ->where(function($query) {
+                $query->where('pending_until', '<=', now())
+                    ->orWhereHas('event', function($q) {
+                        $q->where('entry_deadline', '<=', now());
+                    });
+            })->get();
+
+        foreach ($expiredPendings as $entry) {
+            DB::transaction(function () use ($entry) {
+                $entry->update(['status' => 'cancelled']);
+                
+                // 🌟 ユーザーへ通知：パートナー未承諾によるキャンセル（必要であれば新設）
+                // $entry->user->notify(new \App\Notifications\PartnerResponseTimeoutNotification($entry));
+                
+                // 枠が空くので繰り上げを実行
+                $this->refreshLobby($entry->event_id);
+            });
+            \Log::info("パートナー未承諾による自動キャンセル: Entry ID {$entry->id}");
+        }
+
+        // --- 3. 管理者通知と、キャンセル待ちのまま締切を迎えた人への通知 ---
         $this->handleEventDeadlineReached();
     }
 

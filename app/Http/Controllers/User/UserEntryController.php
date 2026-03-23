@@ -14,6 +14,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\TeamInvitationNotification;
+use App\Notifications\EventFullNotification;
+use App\Notifications\InvitationApprovedNotification;
+use App\Notifications\InvitationRejectedNotification;
 
 class UserEntryController extends Controller
 {
@@ -91,9 +95,10 @@ class UserEntryController extends Controller
             return back()->with('error', 'すでに有効なエントリーがあります。');
         }
 
-        // 3. パートナー有無と満員判定に基づくステータス決定
+        // 3. 判定用の事前データ取得
         $hasPartner = $request->filled('partner_id');
-        $isFull = $event->entry_count >= $event->max_entries;
+        $oldCount = $event->entry_count;
+        $isFull = $oldCount >= $event->max_entries;
 
         if ($isFull && !$event->allow_waitlist) {
             return back()->with('error', '定員に達しているためエントリーできません。');
@@ -147,14 +152,36 @@ class UserEntryController extends Controller
         // 8. メッセージ組み立てとリダイレクト
         // refreshLobby 実行後の最新ステータスを確認
         $entry->refresh();
+        $event->refresh();
         
+        // --- 🌟 通知処理 🌟 ---
+
+        // A. 【管理者へ】満員通知 (定員未満から満員になった瞬間のみ)
+        if ($oldCount < $event->max_entries && $event->entry_count >= $event->max_entries) {
+            $admin = $event->admin; // リレーションに合わせて調整
+            if ($admin) {
+                $admin->notify(new EventFullNotification($event));
+            }
+        }
+
+        // B. 【パートナーへ】招待通知 (パートナー指定がある場合)
+        if ($hasPartner) {
+            $partner = \App\Models\User::find($request->partner_id);
+            if ($partner) {
+                // パートナー向けの招待通知を飛ばす
+                $partner->notify(new TeamInvitationNotification($entry));
+            }
+        }
+
+        // ----------------------
+
+        // 8. メッセージ組み立て
         $message = $entry->status === 'waitlist' ? "キャンセル待ちに登録されました。" : "エントリーを受け付けました。";
         if ($event->max_team_size > 1 && $entry->status === 'pending') {
             $message .= "パートナーの承諾をお待ちください。";
         }
 
-        // 9. 念押しでもう一度確定
-    DB::commit();
+        DB::commit();
         return redirect()->route('user.events.show', $event->id)->with('message', $message);
     }
 
@@ -165,7 +192,6 @@ class UserEntryController extends Controller
     {
         $entry = UserEntry::findOrFail($entryId);
         
-        // 代表者チェック
         if ($entry->representative_user_id !== auth()->id()) {
             abort(403);
         }
@@ -174,36 +200,38 @@ class UserEntryController extends Controller
             'partner_id' => 'required|exists:users,id',
         ]);
 
-        // 重複招待チェック（既にメンバーにいないか）
-        if ($entry->members()->where('user_id', $request->partner_id)->exists()) {
-            return back()->with('error', 'そのユーザーは既にメンバーに含まれています。');
-        }
-
-        $partner = \App\Models\User::find($request->partner_id);
+        $partner = User::find($request->partner_id);
 
         DB::transaction(function () use ($entry, $partner, $event) {
-            // 既存の「未回答(pending)」メンバーがいれば削除（入れ替え対応）
+            // 既存の「未回答(pending)」メンバーがいれば削除
             $entry->members()->where('invite_status', 'pending')->delete();
 
             // 新しいメンバーを追加
             $entry->members()->create([
-                'user_id'       => $partner->id,
-                'invite_status' => 'pending',
-                'last_name'     => $partner->last_name,
-                'first_name'    => $partner->first_name,
+                'user_id'         => $partner->id,
+                'invite_status'   => 'pending',
+                'last_name'       => $partner->last_name,
+                'first_name'      => $partner->first_name,
+                'last_name_kana'  => $partner->last_name_kana,
+                'first_name_kana' => $partner->first_name_kana,
+                'gender'          => $partner->gender,
             ]);
 
-            // 招待中になったので、エントリー自体の期限などを更新
             $limit = now()->addHours(24);
-            $deadline = $event->entry_end_date;
+            $deadline = $event->entry_deadline;
             $pendingUntil = ($deadline && $limit->gt($deadline)) ? $deadline : $limit;
 
             $entry->update([
-                'status'        => 'pending', // 招待中ステータスへ
+                'status'        => 'pending',
                 'is_confirmed'  => false,
                 'pending_until' => $pendingUntil,
             ]);
         });
+
+        // 🌟 処理成功後に通知を「着火」
+        if ($partner) {
+            $partner->notify(new TeamInvitationNotification($entry));
+        }
 
         return back()->with('message', "{$partner->full_name} さんに招待を送りました。");
     }
@@ -302,24 +330,28 @@ class UserEntryController extends Controller
     public function respond(Request $request, Event $event, $entryId)
     {
         $entry = UserEntry::findOrFail($entryId);
+        $partner = auth()->user();
         $user = auth()->user();
         $answer = $request->input('answer');
 
         $member = $entry->members()
-        ->where('user_id', $user->id)
-        ->whereIn('invite_status', ['pending', 'approved']) // 受諾前、受諾後どちらも操作可能に
+        ->where('user_id', $partner->id) 
+        ->whereIn('invite_status', ['pending', 'approved'])
         ->first();
         if (!$member) return back()->with('error', '無効な招待です。');
 
         if ($answer === 'reject') {
             // ★ 辞退も「キャンセル」扱いとしてServiceへ
             $this->waitlistService->cancelAndPromote($entry, 'rejected');
+            // 代表者へ通知
+            $entry->user->notify(new InvitationRejectedNotification($entry, $partner));
+
             return redirect()->route('user.events.index')->with('message', '招待を辞退しました。');
         }
 
         $request->validate(['class' => 'required|string']);
 
-        DB::transaction(function () use ($entry, $member, $request) {
+        DB::transaction(function () use ($entry, $member, $partner, $request) {
             $member->update([
                 'invite_status' => 'approved',
                 'class' => $request->class,
@@ -358,6 +390,8 @@ class UserEntryController extends Controller
             $this->waitlistService->refreshLobby($entry->event_id);
         }
         });
+        // トランザクション成功後に代表者へ「承諾されたよ」と通知
+        $entry->user->notify(new InvitationApprovedNotification($entry, $partner));
 
         return redirect()->route('user.events.show', $entry->event_id)->with('message', '招待を承諾しました！');
     }

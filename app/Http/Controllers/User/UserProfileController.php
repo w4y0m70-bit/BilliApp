@@ -82,12 +82,14 @@ class UserProfileController extends Controller
             $user->save();
 
             // 3. 通知設定の更新
-            $notificationTypes = ['event_published', 'waitlist_updates'];
+            $notificationTypes = ['event_published', 'waitlist_updates', 'team_invitations'];
             $notificationVias = ['mail', 'line'];
 
             foreach ($notificationTypes as $type) {
                 foreach ($notificationVias as $via) {
+                    // Blade側で notifications[type][via] という名前で送られてくる想定
                     $isEnabled = isset($request->notifications[$type][$via]);
+
                     $user->notificationSettings()->updateOrCreate(
                         ['type' => $type, 'via' => $via],
                         ['enabled' => $isEnabled]

@@ -49,7 +49,7 @@ class EventDeadlineReachedNotification extends Notification
     {
         $event = $this->event;
         $count = $event->userEntries()->where('status', 'entry')->count();
-        
+        $unit = ($event->max_team_size == 1) ? '名' : 'チーム';
         // Adminモデルに合わせて宛名を決定
         // 組織名(name) -> 担当者名(manager_name) -> '管理者' の優先順位
         $adminName = $notifiable->manager ?? ($notifiable->manager_name ?? '管理者');
@@ -57,9 +57,9 @@ class EventDeadlineReachedNotification extends Notification
         return (new MailMessage)
             ->subject("【エントリー締切報告】{$event->title}")
             ->greeting("{$adminName} 様")
-            ->line("担当イベント「{$event->title}」のエントリー期限が終了しました。")
-            ->line("最終的な参加確定人数は {$count} 名です。")
-            ->action('管理画面で参加者リストを確認', url('/admin/events/' . $event->id));
+            ->line("公開されたイベント「{$event->title}」がエントリー期限により締め切られました。")
+            ->line("■参加数：{$count} {$unit}")
+            ->action('管理画面で参加者リストを確認', route('admin.events.participants.index', $event->id));
     }
 
     /**
@@ -67,21 +67,38 @@ class EventDeadlineReachedNotification extends Notification
      */
     protected function sendLineNotification($notifiable)
     {
-        // Adminモデルのリレーション名に合わせて socialAccounts() を使用
-        $lineAccount = $notifiable->socialAccounts; // hasOne想定なのでプロパティでアクセス
-            
-        $lineId = $lineAccount ? $lineAccount->provider_id : null;
+        // Adminモデルの hasOne リレーションから取得
+        $lineAccount = $notifiable->socialAccounts; 
 
-        if (!empty($lineId)) {
+        // デバッグログ：そもそもレコードが見つかっているか確認
+        if (!$lineAccount) {
+            \Log::warning("LINE通知失敗: Admin(ID:{$notifiable->id}) に紐づく AdminSocialAccount がありません。");
+            return;
+        }
+
+        // provider_id (LINEの内部ID) を取得
+        $lineId = $lineAccount->provider_id;
+
+        if ($lineId) {
             $event = $this->event;
             $count = $event->userEntries()->where('status', 'entry')->count();
+            $url = route('admin.events.participants.index', $event->id);
 
-            $message = "【募集締切のお知らせ】\n\n"
-                     . "■{$event->title}\n"
-                     . "■確定人数：{$count} 名\n\n"
-                     . "エントリー期限に達したため締め切りました。";
+            // 🌟 単位の判定ロジック
+            $unit = ($event->max_team_size == 1) ? '名' : 'チーム';
+
+            $message = "【エントリー締切のお知らせ】\n\n"
+                    . "下記イベントのエントリーが締め切られました。\n\n"
+                    . "■{$event->title}\n"
+                    . "■参加数：{$count} {$unit}\n\n"
+                    . "参加者リスト:\n" . $url;
+
+            // 送信直前ログ
+            \Log::info("LINE送信実行中... ID: " . $lineId);
 
             app(LineService::class)->push($lineId, $message);
+        } else {
+            \Log::warning("LINE通知失敗: provider_id が空です。Admin ID: " . $notifiable->id);
         }
     }
 }
