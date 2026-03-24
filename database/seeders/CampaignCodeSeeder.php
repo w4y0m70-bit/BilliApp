@@ -13,7 +13,7 @@ class CampaignCodeSeeder extends Seeder
     {
         CampaignCode::create([
             'code'  => 'GIFT10',
-            'plan_id' => 1, // プランID
+            'plan_id' => 2, // プランID
             'issue_count' => 10, // 発行数
             'usage_limit' => 1, // 利用上限数
             'used_count' => 0, // 現在の利用数

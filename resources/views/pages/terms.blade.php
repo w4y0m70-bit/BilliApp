@@ -40,7 +40,7 @@
                 <p class="text-sm text-blue-700 leading-relaxed">
                     「ここが使いにくい」「こんな機能がほしい」といったお声が、
                     開発の何よりの励みになります。不具合を見つけた際も、
-                    お気軽にLINEなどでお知らせください。
+                    お気軽にBillents公式LINEなどでお知らせください。
                 </p>
                 <a href="{{ config('services.line.url') }}" class="text-green-600 font-bold hover:underline">
                     → Billents（公式LINE）を友だち追加する
@@ -49,7 +49,7 @@
         </div>
 
         <div class="mt-12 pt-6 border-t text-center text-xs text-gray-400">
-            <p>2026年2月</p>
+            <p>2026年3月</p>
             <a href="{{ url('/') }}" class="inline-block mt-6 text-blue-500 hover:text-blue-700">トップページへ戻る</a>
         </div>
     </div>

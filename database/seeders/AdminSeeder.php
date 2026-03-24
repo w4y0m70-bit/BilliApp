@@ -26,6 +26,7 @@ class AdminSeeder extends Seeder
         Admin::create([
             'name'     => 'テスト店舗',
             'email'    => 'w4y0m70@gmail.com',
+            'email_verified_at' => '2026-01-01 12:00:00',
             'password' => Hash::make('00000000'),
             'admin_id' => '000',
             'role'     => 'admin',

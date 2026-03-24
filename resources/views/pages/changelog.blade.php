@@ -49,11 +49,6 @@
                     <span class="text-sm">2026.01.25</span>
                 </div>
                 <h3 class="font-bold text-gray-700 mb-2">ベータ版公開</h3>
-                <!-- <ul class="list-disc ml-5 space-y-1 text-sm leading-relaxed text-gray-600"> -->
-                    <!-- <li>緊急メンテナンス時に「目安時間」を表示できるようになりました</li>
-                    <li>ご利用者様向けに「ベータ版についてのお約束（規約）」を作成しました</li>
-                    <li>サーバーの耐久テストを実施し、多人数アクセスへの準備を整えました</li> -->
-                <!-- </ul> -->
             </div>
         </div>
 

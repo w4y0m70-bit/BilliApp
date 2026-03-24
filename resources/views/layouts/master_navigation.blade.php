@@ -9,14 +9,15 @@
         </a>
 
         <a href="{{ route('master.tickets.index') }}" 
-           class="text-sm font-medium leading-5 {{ request()->routeIs('master.tickets.*', 'master.site-message.*') ? 'text-blue-600 border-b-2 border-blue-400' : 'text-gray-500' }}">
+           class="text-sm font-medium leading-5 {{ request()->routeIs('master.tickets.*') ? 'text-blue-600 border-b-2 border-blue-400' : 'text-gray-500' }}">
             チケット発行
         </a>
 
         <div class="relative" x-data="{ open: false }" @click.away="open = false">
             <button @click="open = !open" 
                 class="inline-flex items-center text-sm font-medium leading-5 transition 
-                {{ request()->routeIs('master.admins.*', 'master.plans.*', 'master.activity_logs.*', 'master.users.*', 'master.events.*') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700' }}">                <span>システム管理</span>
+                {{ request()->routeIs('master.admins.*', 'master.plans.*', 'master.activity_logs.*', 'master.users.*', 'master.site-message.*', 'master.events.*') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700' }}">
+                <span>システム管理</span>
                 <svg class="ml-1 h-4 w-4 fill-current" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>

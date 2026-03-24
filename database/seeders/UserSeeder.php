@@ -16,7 +16,8 @@ class UserSeeder extends Seeder
             'last_name_kana'  => 'テスト',
             'first_name_kana' => 'ユーザー',
             'account_name' => 'テストアカウント',
-            'email'    => 'stade_roland_garros19761@ezweb.ne.jp',
+            'email'    => 'jiyuhonpo39@gmail.com',
+            'email_verified_at' => '2026-01-01 12:00:00',
             'password' => Hash::make('00000000'),
         ]);
     }
