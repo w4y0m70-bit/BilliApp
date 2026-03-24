@@ -1,91 +1,115 @@
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const eventForm = document.getElementById('event-form');
-    if (!eventForm) return;
+    document.addEventListener('DOMContentLoaded', function() {
+        const eventForm = document.getElementById('event-form');
+        if (!eventForm) return;
 
-    // 要素の取得
-    const eventInput = document.getElementById('event_date');
-    const deadlineInput = document.getElementById('entry_deadline');
-    const publishedInput = document.getElementById('published_at');
-    const maxParticipantsInput = document.getElementById('max_participants');
-    const ticketSelect = document.querySelector('select[name="ticket_id"]');
-
-    const pad = num => num.toString().padStart(2, '0');
-    const toDatetimeLocal = date => {
-        if (!date) return '';
-        return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 
-               'T' + pad(date.getHours()) + ':' + pad(date.getMinutes());
-    };
-
-    /**
-     * 1. 初期値のセット（新規作成 or 公開日時が空の複製時のみ）
-     */
-    if (publishedInput && !publishedInput.value) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(12, 0, 0, 0);
-        publishedInput.value = toDatetimeLocal(tomorrow);
-    }
-
-    /**
-     * 2. 開催日時変更時の「締め切り」自動計算
-     * readonlyでない場合のみ動作
-     */
-    if (eventInput && !eventInput.readOnly) {
-        eventInput.addEventListener('change', function() {
-            const eventDate = new Date(this.value);
-            if (!isNaN(eventDate)) {
-                let deadline = new Date(eventDate.getTime() - 24 * 60 * 60 * 1000);
-                const now = new Date();
-                if (deadline < now) deadline = now;
-                deadlineInput.value = toDatetimeLocal(deadline);
-            }
-        });
-    }
-
-    /**
-     * 3. 送信時バリデーション
-     */
-    eventForm.onsubmit = function(e) {
-        // A. チケット定員チェック (チーム数 × 1チームの人数 で計算)
+        // 要素の取得
+        const eventInput = document.getElementById('event_date');
+        const deadlineInput = document.getElementById('entry_deadline');
+        const publishedInput = document.getElementById('published_at');
+        const ticketSelect = document.querySelector('select[name="ticket_id"]');
+        const teamSizeSelect = document.getElementById('max_team_size'); // 修正：IDで取得
         const maxEntriesInput = document.getElementById('max_entries');
-        const teamSizeInput = document.querySelector('input[name="max_team_size"]:checked');
 
-        if (ticketSelect && maxEntriesInput && teamSizeInput) {
-            const selectedOption = ticketSelect.options[ticketSelect.selectedIndex];
-            
-            if (selectedOption && selectedOption.value !== "") {
-                const capacity = Number(selectedOption.getAttribute('data-capacity'));
-                const entries = Number(maxEntriesInput.value);
-                const teamSize = Number(teamSizeInput.value);
-                const totalParticipants = entries * teamSize;
+        const pad = num => num.toString().padStart(2, '0');
+        const toDatetimeLocal = date => {
+            if (!date) return '';
+            return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) +
+                'T' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+        };
 
-                if (!isNaN(capacity) && totalParticipants > capacity) {
-                    alert('【定員オーバー】\n' +
-                          '総人数 (' + totalParticipants + '名) が、選択したチケットのプラン上限 (' + capacity + '名) を超えています。\n' +
-                          'チーム数または1チームあたりの人数を調整してください。');
+        /**
+         * 1. 初期値のセット
+         */
+        if (publishedInput && !publishedInput.value) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(12, 0, 0, 0);
+            publishedInput.value = toDatetimeLocal(tomorrow);
+        }
+
+        /**
+         * 2. 開催日時変更時の「締め切り」自動計算
+         */
+        if (eventInput) {
+            eventInput.addEventListener('change', function() {
+                const eventDate = new Date(this.value);
+                if (!isNaN(eventDate)) {
+                    let deadline = new Date(eventDate.getTime() - 24 * 60 * 60 * 1000);
+                    const now = new Date();
+                    if (deadline < now) deadline = now;
+                    deadlineInput.value = toDatetimeLocal(deadline);
+                }
+            });
+        }
+
+        /**
+         * 3. 送信時バリデーション
+         */
+        eventForm.onsubmit = function(e) {
+            if (ticketSelect && maxEntriesInput && teamSizeSelect) {
+                const selectedOption = ticketSelect.options[ticketSelect.selectedIndex];
+
+                if (selectedOption && selectedOption.value !== "") {
+                    const capacity = Number(selectedOption.getAttribute('data-capacity'));
+                    const entries = Number(maxEntriesInput.value);
+                    const teamSize = Number(teamSizeSelect.value); // 修正：セレクトボックスから取得
+                    const totalParticipants = entries * teamSize;
+
+                    if (!isNaN(capacity) && totalParticipants > capacity) {
+                        alert('【定員オーバー】\n' +
+                            '総人数 (' + totalParticipants + '名) が、選択したチケットのプラン上限 (' + capacity +
+                            '名) を超えています。\n' +
+                            'チーム数または1チームあたりの人数を調整してください。');
+                        return false;
+                    }
+                }
+            }
+
+            if (eventInput && deadlineInput) {
+                const eventDate = new Date(eventInput.value);
+                const deadline = new Date(deadlineInput.value);
+                if (!isNaN(eventDate) && !isNaN(deadline) && deadline > eventDate) {
+                    alert('エントリー締め切りは開催日時より前にしてください');
                     return false;
                 }
             }
+            return true;
+        };
+
+        /**
+         * 4. 募集クラスの連動制御
+         */
+        const checkboxes = document.querySelectorAll('.class-checkbox');
+        const noneCheckbox = document.querySelector('.class-checkbox[data-is-none="true"]');
+
+        if (noneCheckbox) {
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    if (this.dataset.isNone === 'true') {
+                        if (this.checked) {
+                            checkboxes.forEach(cb => {
+                                if (cb !== noneCheckbox) cb.checked = false;
+                            });
+                        }
+                    } else {
+                        if (this.checked) {
+                            noneCheckbox.checked = false;
+                        }
+                    }
+                });
+            });
         }
+    }); // ここで最初の DOMContentLoaded がしっかり閉じています
 
-        // B. 日付整合性チェック (変更なし)
-        if (eventInput && deadlineInput) {
-            const eventDate = new Date(eventInput.value);
-            const deadline = new Date(deadlineInput.value);
-            if (!isNaN(eventDate) && !isNaN(deadline) && deadline > eventDate) {
-                alert('エントリー締め切りは開催日時より前にしてください');
-                return false;
-            }
-        }
+    /**
+     * 入力例ボタン用（グローバルスコープ）
+     */
+    function fillDefaultDescription() {
+        const textarea = document.getElementById('event-description');
+        if (!textarea) return;
 
-        return true;
-    };
-});
-
-function fillDefaultDescription() {
-    const textarea = document.getElementById('event-description');
-    const defaultText = `【種目】ナインボール（セットマッチ）
+        const defaultText = `【種目】ナインボール（セットマッチ）
 【試合形式】予選：ダブルイリミネーション／決勝（ベスト８）：シングルイリミネーション
 【ルール】ランダムラック／勝者ブレイク／スリーポイントルール採用／プッシュアウトあり／ダブルヒットなし
 【ショットクロック】採用：◯分・時間切れ＞1ショット40秒・エクステンション（1ラック1回40秒）
@@ -96,68 +120,21 @@ function fillDefaultDescription() {
 【お店より】和気あいあいと楽しく行うトーナメントです。奮ってご参加ください！
 エントリー入力画面から所属店舗の入力をお願いいたします`;
 
-    // テキストエリアに既に値があるか確認
-    if (textarea.value.trim() !== "") {
-        const result = confirm("既にテキストが入力されています。上書きしてもよろしいですか？");
-        if (!result) {
-            return; // キャンセルした場合は何もしない
+        if (textarea.value.trim() !== "") {
+            if (!confirm("既にテキストが入力されています。上書きしてもよろしいですか？")) {
+                return;
+            }
         }
+        textarea.value = defaultText;
     }
 
-    // テキストをセット
-    textarea.value = defaultText;
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    const checkboxes = document.querySelectorAll('.class-checkbox');
-    const noneCheckbox = document.querySelector('.class-checkbox[data-is-none="true"]');
-
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            if (this.dataset.isNone === 'true') {
-                // 「指定なし」がチェックされた場合、他の全てを外す
-                if (this.checked) {
-                    checkboxes.forEach(cb => {
-                        if (cb !== noneCheckbox) cb.checked = false;
-                    });
-                }
-            } else {
-                // 「指定なし」以外がチェックされた場合、「指定なし」を外す
-                if (this.checked) {
-                    noneCheckbox.checked = false;
-                }
-            }
+    /**
+     * 全選択・全解除用（グローバルスコープ）
+     */
+    function selectAllClasses(checked) {
+        const checkboxes = document.querySelectorAll('.class-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = checked;
         });
-    });
-});
-/**
- * クラスのチェックボックスを一括操作する
- * @param {boolean} checked - trueなら全選択、falseなら全解除
- */
-function selectAllClasses(checked) {
-    // class-checkboxというクラスを持つ全てのinput要素を取得
-    const checkboxes = document.querySelectorAll('.class-checkbox');
-    
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = checked;
-    });
-}
-// チケットの定員上限と募集人数の整合性をリアルタイムでチェック
-// document.addEventListener('change', function() {
-//     const ticketSelect = document.getElementById('ticket_id');
-//     const maxEntries = document.getElementById('max_entries');
-//     const teamSize = document.querySelector('input[name="max_team_size"]:checked');
-    
-//     if (ticketSelect && maxEntries && teamSize) {
-//         const capacity = ticketSelect.options[ticketSelect.selectedIndex].dataset.capacity;
-//         const total = maxEntries.value * teamSize.value;
-        
-//         if (capacity && total > capacity) {
-//             alert(`警告：総人数(${total}名)がチケットの上限(${capacity}名)を超えています。`);
-//             maxEntries.classList.add('border-red-500');
-//         } else {
-//             maxEntries.classList.remove('border-red-500');
-//         }
-//     }
-// });
+    }
 </script>

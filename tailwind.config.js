@@ -38,9 +38,9 @@ module.exports = {
 
                 // マスター専用カラー
                 master: {
-                    DEFAULT: '#CC0088',
-                    dark:   '#AA0055',
-                    light:  '#EE22AA',
+                    DEFAULT: '#444444',
+                    dark:   '#161616',
+                    light:  '#6b6b6b',
                 },
 
                 // チケット専用カラー

@@ -3,63 +3,63 @@
 @section('title', $isReplicate ? 'イベント複製' : 'イベント編集')
 
 @section('content')
-<h2 class="text-2xl font-bold mb-6">{{ $isReplicate ? 'イベント複製' : 'イベント編集' }}</h2>
-{{-- ★バリデーションエラーの表示エリア --}}
-@if ($errors->any())
-    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 shadow" role="alert">
-        <p class="font-bold">入力内容に不備があります：</p>
-        <ul class="list-disc list-inside text-sm">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
 
-{{-- 
-  1. action は常に confirm に飛ばす
-  2. メソッドは常に POST 
---}}
-<form id="event-form" action="{{ route('admin.events.confirm') }}" method="POST" class="bg-white p-6 rounded-lg shadow w-full max-w-lg">
-    @csrf
-    {{-- @method($formMethod) は不要なので消すかコメントアウト --}}
-
-    @if(isset($event->id) && !($isReplicate ?? false))
-        <input type="hidden" name="id" value="{{ $event->id }}">
-    @endif
-
-    {{-- 共通フィールド --}}
-    @include('admin.events.partials.form-fields')
-
-    <div class="mt-6 flex gap-4">
-        <button type="submit" class="bg-admin text-white px-6 py-2 rounded hover:bg-admin-dark">
-            確認画面へ進む
-        </button>
-        <a href="{{ route('admin.events.index') }}" class="bg-gray-400 text-white px-6 py-2 rounded">キャンセル</a>
-    </div>
-</form>
-
-<!-- 削除ボタン -->
-@php
-    $now = now();
-    // 公開日時が設定されており、かつ現在時刻がその公開日時を過ぎているか判定
-    $alreadyPublished = $event->published_at && $event->published_at <= $now;
-@endphp
-@if(isset($event->id) && !$isReplicate && !$alreadyPublished)
-    <div class="mt-4 p-4">
-        <!-- <h3 class="text-red-600 font-bold mb-2">このイベントを削除する</h3>
-        <p class="text-sm text-gray-600 mb-4">一度削除したイベントは元に戻せません。</p> -->
-        
-        <form action="{{ route('admin.events.destroy', $event->id) }}" method="POST" onsubmit="return confirm('本当に削除してもよろしいですか？');">
+    <x-form.section :title="$isReplicate ? 'イベント複製' : 'イベント編集'" type="admin" :errors="$errors" max-w-full>
+        {{-- メインフォーム --}}
+        <form id="event-form" action="{{ route('admin.events.confirm') }}" method="POST">
             @csrf
-            @method('DELETE')
-            <button type="submit" class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-700 transition">
-                イベントを完全に削除する
-            </button>
-            <p class="text-sm text-gray-600 py-2 mb-4">一度削除したイベントは元に戻せません。<br>（未公開イベントのチケットは返却されます）</p>
-        </form>
-    </div>
-@endif
 
-@include('admin.events.partials.form-scripts')
+            {{-- 編集・複製時のID引き継ぎ（新規時は無し） --}}
+            @if (isset($event->id) && !($isReplicate ?? false))
+                <input type="hidden" name="id" value="{{ $event->id }}">
+            @endif
+
+            {{-- 共通フィールドの読み込み --}}
+            @include('admin.events.partials.form-fields')
+
+            {{-- 下部アクションボタン --}}
+            <div class="mt-8 pt-6 border-t border-gray-100 flex gap-4">
+                <button type="submit" class="bg-admin text-white px-8 py-2.5 rounded shadow hover:bg-admin-dark transition">
+                    確認画面へ
+                </button>
+                <a href="{{ route('admin.events.index') }}"
+                    class="bg-gray-400 text-white px-8 py-2.5 rounded shadow hover:bg-gray-500 transition text-center">
+                    キャンセル
+                </a>
+            </div>
+        </form>
+
+        {{-- 削除エリア（未公開の場合のみ表示） --}}
+        @php
+            $now = now();
+            $alreadyPublished = $event->published_at && $event->published_at <= $now;
+        @endphp
+
+        @if (isset($event->id) && !$isReplicate && !$alreadyPublished)
+            <div class="mt-12 pt-8 border-t-2 border-red-50 relative">
+                <span class="absolute -top-3 left-4 bg-white px-2 text-xs font-bold text-red-500">DANGER ZONE</span>
+
+                <form action="{{ route('admin.events.destroy', $event->id) }}" method="POST"
+                    onsubmit="return confirm('本当に削除してもよろしいですか？\nこの操作は取り消せません。');">
+                    @csrf
+                    @method('DELETE')
+
+                    <div
+                        class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-red-50 p-4 rounded-lg border border-red-100">
+                        <div>
+                            <p class="text-sm font-bold text-red-700">イベントを完全に削除する</p>
+                            <p class="text-xs text-red-600 mt-1">一度削除したイベントは元に戻せません（未公開チケットは返却されます）</p>
+                        </div>
+                        <button type="submit"
+                            class="bg-red-500 text-white px-4 py-2 text-sm rounded hover:bg-red-700 transition shadow-sm whitespace-nowrap">
+                            完全に削除する
+                        </button>
+                    </div>
+                </form>
+            </div>
+        @endif
+
+    </x-form.section>
+
+    @include('admin.events.partials.form-scripts')
 @endsection

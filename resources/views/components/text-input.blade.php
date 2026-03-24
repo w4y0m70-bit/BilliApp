@@ -1,3 +1,16 @@
-@props(['disabled' => false])
+@props(['disabled' => false, 'colorType' => 'user'])
 
-<input @disabled($disabled) {{ $attributes->merge(['class' => 'border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm']) }}>
+@php
+// 注目！ ここで color-type (colorType) を見て色を決めています
+$focusColors = [
+    'user'   => 'focus:border-user focus:ring-user',
+    'admin'  => 'focus:border-admin focus:ring-admin',
+    'master' => 'focus:border-master focus:ring-master',
+];
+$selectedFocus = $focusColors[$colorType] ?? $focusColors['user'];
+@endphp
+
+<input {{ $disabled ? 'disabled' : '' }} 
+    {!! $attributes->merge([
+        'class' => 'w-full border border-gray-300 rounded-md shadow-sm p-2 transition duration-150 focus:outline-none focus:ring-2 ' . $selectedFocus
+    ]) !!}>

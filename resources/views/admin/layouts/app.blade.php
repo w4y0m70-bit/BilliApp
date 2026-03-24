@@ -28,21 +28,22 @@
             </h1>
         </div>
 
-        <nav class="bg-gray-800 text-white px-2 py-2 flex items-center gap-1 rounded shadow w-full md:w-auto overflow-x-auto whitespace-nowrap">
+        <nav
+            class="bg-gray-800 text-white px-2 py-2 flex items-center gap-1 rounded shadow w-full md:w-auto overflow-x-auto whitespace-nowrap">
             <a href="{{ route('admin.events.index') }}"
-               class="flex flex-col items-center min-w-[70px] hover:bg-gray-700 px-2 py-1 rounded transition flex-shrink-0">
+                class="flex flex-col items-center min-w-[70px] hover:bg-gray-700 px-2 py-1 rounded transition flex-shrink-0">
                 <span class="material-icons text-xl">event</span>
                 <span class="text-[10px] mt-0.5">イベント</span>
             </a>
 
             <a href="{{ route('admin.tickets.index') }}"
-               class="flex flex-col items-center min-w-[70px] hover:bg-gray-700 px-2 py-1 rounded transition flex-shrink-0">
+                class="flex flex-col items-center min-w-[70px] hover:bg-gray-700 px-2 py-1 rounded transition flex-shrink-0">
                 <span class="material-icons text-xl">confirmation_number</span>
                 <span class="text-[10px] mt-0.5">チケット</span>
             </a>
 
             <a href="{{ route('admin.account.show') }}"
-               class="flex flex-col items-center min-w-[70px] hover:bg-gray-700 px-2 py-1 rounded transition flex-shrink-0">
+                class="flex flex-col items-center min-w-[70px] hover:bg-gray-700 px-2 py-1 rounded transition flex-shrink-0">
                 <span class="material-icons text-xl">account_circle</span>
                 <span class="text-[10px] mt-0.5">アカウント</span>
             </a>
@@ -56,7 +57,7 @@
             <form method="POST" action="{{ route('admin.logout') }}" class="ml-auto flex-shrink-0">
                 @csrf
                 <button type="submit"
-                        class="flex flex-col items-center min-w-[70px] hover:bg-red-600 px-2 py-1 rounded transition">
+                    class="flex flex-col items-center min-w-[70px] hover:bg-red-600 px-2 py-1 rounded transition">
                     <span class="material-icons text-xl">logout</span>
                     <span class="text-[10px] mt-0.5">ログアウト</span>
                 </button>
@@ -64,7 +65,7 @@
         </nav>
     </header>
 
-    <main class="flex-1 overflow-y-auto container mx-auto py-6 px-4">
+    <main class="flex-1 overflow-y-auto w-full py-2">
         @yield('content')
     </main>
 
@@ -75,4 +76,5 @@
     @stack('scripts')
 
 </body>
+
 </html>
