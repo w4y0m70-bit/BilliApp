@@ -40,11 +40,11 @@
                         <button onclick="window.globalCancelEntry({{ $participant->event_id }}, {{ $participant->id }})" class="hover:text-red-400 transition-colors">
                             <span class="material-symbols-outlined text-base">delete</span>
                         </button>
-                        @if(!empty($participant->user_answer))
+                        <!-- @if(!empty($participant->user_answer))
                             <button @click.stop="openMessage = !openMessage" class="hover:text-indigo-400 transition-colors">
                                 <span class="material-symbols-outlined text-base">chat_bubble</span>
                             </button>
-                        @endif
+                        @endif -->
                     </div>
                 @endif
             </div>
@@ -65,12 +65,19 @@
                 @foreach($participant->members as $member)
                     <div class="flex items-center h-8 px-2 gap-1.5 hover:bg-gray-50/40 transition-colors">
                         
-                        {{-- ステータスアイコン（さらに小さく控えめに） --}}
-                        <div class="flex-shrink-0 flex items-center justify-center w-3.5">
-                            @if($member->invite_status === 'approved')
-                                <span class="material-symbols-outlined text-green-500 text-sm" title="承認済み">check_circle</span>
+                        {{-- ステータス & メッセージアイコン領域（幅を固定して位置を揃える） --}}
+                        <div class="flex-shrink-0 flex items-center justify-center w-4">
+                            @if($member->invite_status !== 'approved')
+                                {{-- 承認待ちのみ表示 --}}
+                                <span class="material-symbols-outlined text-amber-400 text-[16px] animate-pulse" title="承認待ち">pending</span>
+                            @elseif(!empty($participant->user_answer))
+                                {{-- 承認済み かつ メッセージがある場合のみチャットアイコンを表示 --}}
+                                <button @click.stop="openMessage = !openMessage" class="flex items-center justify-center text-indigo-500 hover:text-indigo-700 transition-colors" title="メッセージあり">
+                                    <span class="material-symbols-outlined text-[16px]">chat_bubble</span>
+                                </button>
                             @else
-                                <span class="material-symbols-outlined text-amber-400 text-sm animate-pulse" title="承認待ち">pending</span>
+                                {{-- メッセージなしの場合は空白（名前の位置を揃えるためのプレースホルダー） --}}
+                                <div class="w-4"></div>
                             @endif
                         </div>
 
@@ -89,7 +96,7 @@
                             @endif
                         </div>
 
-                        {{-- クラス（右端で縦を揃える） --}}
+                        {{-- クラス --}}
                         <div class="flex-shrink-0 w-8 flex justify-end">
                             <span class="text-[10px] font-black text-gray-500 bg-gray-100 px-1 py-0.5 rounded-sm min-w-[20px] text-center leading-none">
                                 @php
@@ -104,17 +111,44 @@
                 @endforeach
             </div>
 
-            {{-- 管理者メモ・オーバーレイ --}}
-            <div x-show="openMessage" x-cloak 
-                 class="absolute inset-0 z-20 bg-gray-900/95 backdrop-blur-sm text-white p-3 flex flex-col justify-center">
-                <div class="flex justify-between items-center mb-1 border-b border-gray-700 pb-1">
-                    <span class="text-[9px] font-bold tracking-widest text-gray-400 uppercase">Admin Memo</span>
-                    <button @click="openMessage = false" class="text-xs p-1 hover:bg-white/20 rounded">×</button>
+            {{-- 管理者メモ・ポップアップ（モーダル） --}}
+            <template x-teleport="body">
+                <div x-show="openMessage" 
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm"
+                    x-cloak>
+                    
+                    {{-- モーダル本体 --}}
+                    <div @click.away="openMessage = false" 
+                        class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-lg shadow-xl overflow-hidden flex flex-col items-stretch"> {{-- items-stretch を追加 --}}
+                        
+                        <div class="flex justify-between items-center px-4 py-3 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-700 w-full">
+                            <h4 class="text-sm font-bold text-gray-700 dark:text-gray-200">
+                                {{-- 代表者の名前を表示 --}}
+                                {{ $participant->members->first()->full_name ?? '参加者' }} からのメッセージ
+                            </h4>
+                            <button @click="openMessage = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl">×</button>
+                        </div>
+
+                        {{-- メッセージエリア：text-left を徹底 --}}
+                        <div class="p-5 w-full text-left"> {{-- text-left をここにも追加 --}}
+                            <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed w-full text-left">{{ trim($participant->user_answer) }}</p>
+                        </div>
+
+                        <div class="px-4 py-3 bg-gray-50 dark:bg-gray-700 text-right w-full">
+                            <button @click="openMessage = false" 
+                                    class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-bold rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition">
+                                閉じる
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="text-[11px] leading-snug overflow-y-auto max-h-full py-1">
-                    {{ $participant->user_answer }}
-                </div>
-            </div>
+            </template>
         </div>
     @endforeach
 </div>

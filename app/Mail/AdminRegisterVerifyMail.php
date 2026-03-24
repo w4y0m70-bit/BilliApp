@@ -22,7 +22,7 @@ class AdminRegisterVerifyMail extends Mailable implements ShouldQueue
 
     public function build()
     {
-        return $this->subject('【店舗管理者】新規登録のお手続き')
+        return $this->subject('【Billents】イベント管理者様　新規登録のお手続き')
                     ->view('emails.register_verify');
     }
 }
