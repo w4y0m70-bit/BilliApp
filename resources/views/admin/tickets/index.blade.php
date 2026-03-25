@@ -2,88 +2,96 @@
 @section('title', 'チケット')
 
 @section('content')
-<div class="px-4 py-2">
-    <div class="flex items-center space-x-2">
-        <h2 class="text-2xl font-bold mb-6 text-gray-800">チケット管理<x-help help-key="admin.tickets.index" /></h2>
-    </div>
-
-    {{-- 1. コード入力セクション（デザイン微調整） --}}
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
-        <div class="flex items-center">
-            <h3 class="text-base font-bold text-gray-500 mb-2 uppercase tracking-wider">
-                キャンペーンコード入力
-                <x-help help-key="admin.tickets.use_code" />
-            </h3>
+    <div class="px-4 py-4"> {{-- 余白を調整 --}}
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                チケット管理
+                <x-help help-key="admin.tickets.index" class="ml-2" />
+            </h2>
         </div>
-        
-        <form action="{{ route('admin.tickets.use_code') }}" method="POST" class="flex flex-col md:flex-row gap-3">
-            @csrf
-            <input type="text" name="code" 
-                class="form-control w-full md:w-64 border-gray-300 rounded-lg focus:ring-admin focus:border-admin" 
-                placeholder="コードを入力" required>
-            
-            <button type="submit" 
-                    class="bg-admin text-white px-6 py-2 rounded-lg hover:bg-admin-dark transition whitespace-nowrap font-bold">
-                チケットを受け取る
-            </button>
-        </form>
+
+        {{-- 1. コード入力セクション（イベントカードと同じ枠のデザイン） --}}
+        <div class="bg-white shadow rounded-lg border border-gray-100 p-5 mb-8">
+            <div class="flex items-center mb-4">
+                <span class="material-symbols-outlined text-admin mr-2">confirmation_number</span>
+                <h3 class="text-lg font-bold text-gray-700">キャンペーンコード入力</h3>
+                <x-help help-key="admin.tickets.use_code" class="ml-1" />
+            </div>
+
+            <form action="{{ route('admin.tickets.use_code') }}" method="POST" class="flex flex-col md:flex-row gap-3">
+                @csrf
+                <div class="relative flex-grow max-w-md">
+                    <input type="text" name="code"
+                        class="form-control w-full border-gray-300 rounded-lg focus:ring-admin focus:border-admin pl-4 py-2.5"
+                        placeholder="お手持ちのコードを入力" required>
+                </div>
+
+                <button type="submit"
+                    class="bg-admin text-white px-8 py-2.5 rounded-lg hover:bg-admin-dark transition whitespace-nowrap font-bold shadow-sm flex items-center justify-center">
+                    <span class="material-symbols-outlined mr-2 text-base text-white">add_circle</span>
+                    チケットを受け取る
+                </button>
+            </form>
+        </div>
+
+        {{-- 2. タブ切り替え（イベント一覧のデザイン構造を継承） --}}
+        <div class="max-w-full mx-auto mb-6">
+            <div class="flex border-b border-gray-200 space-x-8 overflow-x-auto px-1">
+
+                {{-- 利用可能 --}}
+                <a href="{{ route('admin.tickets.index', ['tab' => 'ready']) }}"
+                    class="py-4 px-1 border-b-2 font-bold text-sm flex items-center whitespace-nowrap transition-colors {{ $tab === 'ready' ? 'border-admin text-admin' : 'border-transparent text-gray-400 hover:text-gray-700' }}">
+                    利用可能
+                </a>
+
+                {{-- 使用中 --}}
+                <a href="{{ route('admin.tickets.index', ['tab' => 'active']) }}"
+                    class="py-4 px-1 border-b-2 font-bold text-sm flex items-center whitespace-nowrap transition-colors {{ $tab === 'active' ? 'border-admin text-admin' : 'border-transparent text-gray-400 hover:text-gray-700' }}">
+                    使用中
+                </a>
+
+                {{-- 使用済み履歴 --}}
+                <a href="{{ route('admin.tickets.index', ['tab' => 'used']) }}"
+                    class="py-4 px-1 border-b-2 font-bold text-sm flex items-center whitespace-nowrap transition-colors {{ $tab === 'used' ? 'border-admin text-admin' : 'border-transparent text-gray-400 hover:text-gray-700' }}">
+                    使用済み
+                </a>
+            </div>
+        </div>
+
+        {{-- 3. チケット一覧（グリッドをイベント一覧と調整） --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            @if ($tab === 'active')
+                @forelse($tickets as $ticket)
+                    <x-ticket :ticket="$ticket" tab="active" />
+                @empty
+                    <div
+                        class="col-span-full py-12 bg-white rounded-lg border border-dashed border-gray-300 text-center text-gray-500">
+                        使用中のチケットはありません。
+                    </div>
+                @endforelse
+            @else
+                @forelse($groupedTickets as $group)
+                    @php $first = $group->first(); @endphp
+                    <x-ticket :ticket="$first" :tab="$tab" :count="$group->count()" />
+                @empty
+                    <div
+                        class="col-span-full py-12 bg-white rounded-lg border border-dashed border-gray-300 text-center text-gray-500">
+                        チケットはありません。
+                    </div>
+                @endforelse
+            @endif
+        </div>
     </div>
 
-    {{-- 2. タブ切り替え（3タブ構成） --}}
-    <div class="flex border-b border-gray-200 mb-6">
-        <a href="{{ route('admin.tickets.index', ['tab' => 'ready']) }}" 
-           class="px-6 py-2 font-medium {{ $tab === 'ready' ? 'border-b-2 border-admin text-admin' : 'text-gray-500 hover:text-gray-700' }}">
-            利用可能
-        </a>
-        <a href="{{ route('admin.tickets.index', ['tab' => 'active']) }}" 
-           class="px-6 py-2 font-medium {{ $tab === 'active' ? 'border-b-2 border-admin text-admin' : 'text-gray-500 hover:text-gray-700' }}">
-            使用中
-        </a>
-        <a href="{{ route('admin.tickets.index', ['tab' => 'used']) }}" 
-           class="px-6 py-2 font-medium {{ $tab === 'used' ? 'border-b-2 border-admin text-admin' : 'text-gray-500 hover:text-gray-700' }}">
-            使用済み履歴
-        </a>
-    </div>
-
-    {{-- 3. チケット一覧 --}}
-    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        @if($tab === 'active')
-            @forelse($tickets as $ticket)
-                <x-ticket :ticket="$ticket" tab="active" />
-            @empty
-                <p class="text-gray-500 col-span-full py-10 text-center">使用中のチケットはありません。</p>
-            @endforelse
-
-        @else
-            @forelse($groupedTickets as $group)
-                @php $first = $group->first(); @endphp
-                <x-ticket 
-                    :ticket="$first" 
-                    :tab="$tab" 
-                    :count="$group->count()" 
-                />
-            @empty
-                <p class="text-gray-500 col-span-full py-10 text-center">チケットはありません。</p>
-            @endforelse
-        @endif
-    </div>
-</div>
-
-{{-- 成功時のダイアログ --}}
-@if (session('success_msg'))
-    <script>
-        window.onload = function() {
-            alert("{{ session('success_msg') }}");
-        };
-    </script>
-@endif
-
-{{-- エラー時のダイアログ --}}
-@if (session('error_msg'))
-    <script>
-        window.onload = function() {
-            alert("{{ session('error_msg') }}");
-        };
-    </script>
-@endif
+    {{-- アラート表示をトースト通知等に変えるのもありですが、一旦そのまま --}}
+    @if (session('success_msg'))
+        <script>
+            window.onload = () => alert("{{ session('success_msg') }}");
+        </script>
+    @endif
+    @if (session('error_msg'))
+        <script>
+            window.onload = () => alert("{{ session('error_msg') }}");
+        </script>
+    @endif
 @endsection
