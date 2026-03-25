@@ -45,6 +45,19 @@ enum PlayerClass: string
         };
     }
 
+    public function color(): string
+    {
+        return match($this) {
+            self::Pro      => 'bg-rose-800',
+            self::SA       => 'bg-amber-700',
+            self::A        => 'bg-amber-600',
+            self::SB       => 'bg-sky-600',
+            self::B        => 'bg-sky-500',
+            self::C        => 'bg-emerald-600',
+            self::Beginner => 'bg-emerald-500',
+        };
+    }
+
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

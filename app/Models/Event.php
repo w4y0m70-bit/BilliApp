@@ -99,6 +99,19 @@ class Event extends Model
         return $this->belongsTo(Ticket::class, 'ticket_id');
     }
 
+    // チーム表現
+    public static function getTeamTypeName(int $size): string
+    {
+        return match ($size) {
+            1 => 'シングルス',
+            2 => 'ダブルス',
+            3 => 'トリオス',
+            4 => 'カルテット',
+            5 => 'クインテット',
+            default => $size . '名１組',
+        };
+    }
+
     // ログ
     use LogsActivity;
 

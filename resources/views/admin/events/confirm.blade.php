@@ -1,121 +1,195 @@
 @extends('admin.layouts.app')
 
+@section('title', 'イベント作成内容の確認')
+
 @section('content')
-<div class="container mx-auto px-4 py-6">
-    <h1 class="text-2xl font-bold mb-6">イベント作成内容の確認</h1>
 
-    <div class="bg-white shadow rounded-lg overflow-hidden mb-6">
-        <div class="bg-gray-50 px-6 py-3 border-b">
-            <h2 class="text-lg font-semibold text-gray-700">入力内容</h2>
-        </div>
-        
-        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+    <x-form.section title="イベント作成内容の確認" type="admin" maxWidth="max-w-4xl">
+
+        {{-- 表示用レイアウト --}}
+        <div class="space-y-6">
+
             {{-- イベント名 --}}
-            <div class="col-span-1 md:col-span-2">
+            <div class="border-b pb-4">
                 <label class="block text-sm font-medium text-gray-500">イベント名</label>
-                <div class="mt-1 text-lg text-gray-900 border-b pb-1">{{ $data['title'] ?? '' }}</div>
+                <div class="mt-1 text-xl font-bold text-gray-900">{{ $data['title'] ?? '' }}</div>
             </div>
 
-            {{-- チケット情報 (目立つように表示) --}}
-            <div class="col-span-1 md:col-span-2 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                <label class="block text-sm font-medium text-blue-600">使用するチケット</label>
-                <div class="mt-1 text-lg font-bold text-blue-900">
-                    @if($selectedTicket)
-                        {{ $selectedTicket->plan->display_name }} 
-                        <span class="text-sm font-normal text-blue-700 ml-2">
-                            （定員上限： {{ $selectedTicket->plan->max_capacity }} 名 ／ 期限： {{ $selectedTicket->expired_at->format('Y/m/d') }}）
-                        </span>
-                    @else
-                        <span class="text-red-500">チケット情報が見つかりません</span>
-                    @endif
-                </div>
-            </div>
-
-            {{-- 開催日時 --}}
-            <div>
-                <label class="block text-sm font-medium text-gray-500">開催日時</label>
-                <div class="mt-1 text-gray-900">
-                    {{ !empty($data['event_date']) ? \Carbon\Carbon::parse($data['event_date'])->locale('ja')->isoFormat('YYYY/MM/DD（ddd）HH:mm') : '—' }}
-                </div>
-            </div>
-
-            {{-- エントリー締切 --}}
-            <div>
-                <label class="block text-sm font-medium text-gray-500">エントリー締切</label>
-                <div class="mt-1 text-gray-900">
-                    {{ !empty($data['entry_deadline']) ? \Carbon\Carbon::parse($data['entry_deadline'])->locale('ja')->isoFormat('YYYY/MM/DD（ddd）HH:mm') : '—' }}
-                </div>
-            </div>
-
-            {{-- 公開日時 --}}
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">公開日時</label>
-                <div class="mt-1 text-gray-900">
-                    @if(!empty($data['published_at']))
-                        {{-- 入力された日時を表示 --}}
-                        <span>{{ !empty($data['published_at']) ? \Carbon\Carbon::parse($data['published_at'])->locale('ja')->isoFormat('YYYY/MM/DD（ddd）HH:mm') : '—' }}</span>
-
-                        {{-- 現在時刻と比較して、過去（または現在）なら警告を出す --}}
-                        @if(strtotime($data['published_at']) <= time())
-                            <p class="text-red-500 text-xs mt-1 font-semibold">
-                                ※設定日時が過去のため、登録後すぐに公開されます。
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {{-- チケット情報 --}}
+                <div class="col-span-1 md:col-span-2 bg-orange-50 p-4 rounded-lg border border-orange-100">
+                    <label class="block text-sm font-medium text-admin">使用するチケット</label>
+                    <div class="mt-1">
+                        @if ($selectedTicket)
+                            <span class="text-lg font-bold text-gray-900">{{ $selectedTicket->plan->display_name }}</span>
+                            <span class="text-sm text-gray-600 ml-2">（定員上限：{{ $selectedTicket->plan->max_capacity }}
+                                名）</span>
+                            <p class="text-xs text-gray-500 mt-1">
+                                チケット使用期限：{{ $selectedTicket->expired_at->format('Y/m/d') }}
                             </p>
+                        @else
+                            <span class="text-red-500 font-bold">チケット情報が見つかりません</span>
                         @endif
-                    @else
-                        {{-- 未入力（空）の場合 --}}
-                        <span class="text-gray-500">即時公開（設定なし）</span>
-                        <p class="text-red-500 text-xs mt-1 font-semibold">
-                            ※即時公開されます。
-                        </p>
-                    @endif
+                    </div>
                 </div>
-                {{-- 実際にstoreに送るためのhiddenデータ --}}
-                <input type="hidden" name="published_at" value="{{ $data['published_at'] }}">
-            </div>
-            {{-- 募集枠数とチーム構成 --}}
-            <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg border">
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">募集枠数（チーム数）</label>
-                    <div class="mt-1 text-lg font-bold text-gray-900">{{ $data['max_entries'] ?? '' }} 枠</div>
+
+                {{-- 開催日時 --}}
+                <div class="bg-gray-50 p-3 rounded">
+                    <label class="block text-sm font-medium text-gray-500">開催日時</label>
+                    <div class="mt-1 text-gray-900 font-semibold">
+                        {{ !empty($data['event_date']) ? \Carbon\Carbon::parse($data['event_date'])->locale('ja')->isoFormat('YYYY/MM/DD（ddd）HH:mm') : '—' }}
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">1枠あたりの人数</label>
-                    <div class="mt-1 text-lg font-bold text-gray-900">{{ $data['max_team_size'] ?? 1 }} 名</div>
+
+                {{-- エントリー締切 --}}
+                <div class="bg-gray-50 p-3 rounded">
+                    <label class="block text-sm font-medium text-gray-500">エントリー締切</label>
+                    <div class="mt-1 text-gray-900 font-semibold">
+                        {{ !empty($data['entry_deadline']) ? \Carbon\Carbon::parse($data['entry_deadline'])->locale('ja')->isoFormat('YYYY/MM/DD（ddd）HH:mm') : '—' }}
+                    </div>
                 </div>
-                <div class="border-l pl-4">
-                    <label class="block text-sm font-medium text-blue-600">合計最大参加人数</label>
-                    <div class="mt-1 text-xl font-extrabold text-blue-900">
-                        {{ ($data['max_entries'] ?? 0) * ($data['max_team_size'] ?? 1) }} 名
+
+                {{-- 公開日時 --}}
+                <div class="bg-gray-50 p-3 rounded">
+                    <label class="block text-sm font-medium text-gray-500">公開日時</label>
+                    <div class="mt-1 text-gray-900">
+                        @if (!empty($data['published_at']))
+                            <span
+                                class="font-semibold">{{ \Carbon\Carbon::parse($data['published_at'])->locale('ja')->isoFormat('YYYY/MM/DD（ddd）HH:mm') }}</span>
+                            @if (strtotime($data['published_at']) <= time())
+                                <p class="text-red-500 text-[10px] mt-1">※登録後すぐに公開されます</p>
+                            @endif
+                        @else
+                            <span class="text-admin font-bold text-sm italic">即時公開</span>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- キャンセル待ち --}}
+                <div class="bg-gray-50 p-3 rounded">
+                    <label class="block text-sm font-medium text-gray-500">キャンセル待ち</label>
+                    <div class="mt-1 text-gray-900 font-semibold">
+                        {{ ($data['allow_waitlist'] ?? 0) == 1 ? '有（受け付ける）' : '無' }}
+                    </div>
+                </div>
+
+                {{-- 募集枠数と人数 --}}
+                <div class="col-span-1 md:col-span-2 grid grid-cols-3 gap-4 bg-gray-100 p-4 rounded-lg">
+                    <div>
+                        <label class="block text-[10px] font-medium text-gray-500 uppercase">募集枠数</label>
+                        <div class="text-lg font-bold text-gray-900">{{ $data['max_entries'] ?? '' }} 枠</div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-medium text-gray-500 uppercase">1枠の構成</label>
+                        <div class="text-lg font-bold text-gray-900">
+                            {{ \App\Models\Event::getTeamTypeName($data['max_team_size'] ?? 1) }}
+                        </div>
+                    </div>
+                    <div class="border-l border-gray-300 pl-4">
+                        <label class="block text-[10px] font-medium text-admin uppercase">合計最大人数</label>
+                        <div class="text-xl font-black text-admin">
+                            {{ ($data['max_entries'] ?? 0) * ($data['max_team_size'] ?? 1) }} 名
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 募集クラス --}}
+                <div class="col-span-1 md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-500 mb-2">対象クラス</label>
+                    <div class="flex flex-wrap gap-1">
+                        @if (!empty($data['classes']))
+                            @foreach ($data['classes'] as $classValue)
+                                @php
+                                    $classEnum = \App\Enums\PlayerClass::tryFrom($classValue);
+                                    $displayText = $classEnum ? $classEnum->shortLabel() : $classValue;
+                                    $bgColor = $classEnum ? $classEnum->color() : 'bg-gray-500';
+                                @endphp
+                                <x-event.class-tag size="md" :bgColor="$bgColor">
+                                    {{ $displayText }}
+                                </x-event.class-tag>
+                            @endforeach
+                        @endif
+                    </div>
+                </div>
+
+                {{-- 参加制限（グループ） ここに入る --}}
+
+                {{-- 伝達事項 --}}
+                <div class="col-span-1 md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">ユーザーへの追加質問・伝達事項</label>
+                    <div
+                        class="mt-1 text-gray-900 p-3 bg-gray-50 rounded border min-h-[45px] whitespace-pre-wrap text-sm italic">
+                        {{ $data['instruction_label'] ?: '（設定なし）' }}
+                    </div>
+                </div>
+
+                {{-- 説明文 --}}
+                <div class="col-span-1 md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">イベント内容・詳細</label>
+                    <div
+                        class="mt-1 text-gray-900 whitespace-pre-wrap border p-4 rounded bg-gray-50 text-sm leading-relaxed min-h-[100px]">
+                        {{ $data['description'] ?? '（未入力）' }}
                     </div>
                 </div>
             </div>
 
-            {{-- キャンセル待ち --}}
-            <div>
-                <label class="block text-sm font-medium text-gray-500">キャンセル待ち</label>
-                <div class="mt-1 text-gray-900">{{ ($data['allow_waitlist'] ?? false) == 1 ? '有' : '無' }}</div>
-            </div>
+            {{-- 送信・修正ボタン --}}
+            <div class="mt-10 pt-6 border-t border-gray-100 flex flex-col sm:flex-row gap-4">
+                @php
+                    $isReplicate = !empty($data['is_replicate']) && $data['is_replicate'] == 1;
+                    $isUpdate = !empty($data['id']) && !$isReplicate;
+                    $formAction = $isUpdate ? route('admin.events.update', $data['id']) : route('admin.events.store');
+                @endphp
 
-            {{-- 募集クラス --}}
-            <div>
-                <label class="block text-sm font-medium text-gray-500">募集クラス</label>
-                <div class="mt-1 flex flex-wrap gap-1">
-                    @if(!empty($data['classes']))
-                        @foreach($data['classes'] as $cls)
-                            <span class="bg-gray-200 text-gray-800 text-xs px-2 py-1 rounded">{{ $cls }}</span>
-                        @endforeach
-                    @else
-                        <span class="text-red-500">選択なし</span>
+                <form action="{{ $formAction }}" method="POST" class="w-full sm:w-auto">
+                    @csrf
+                    @if ($isUpdate)
+                        @method('PUT')
                     @endif
-                </div>
-            </div>
 
-            {{-- 参加制限（グループ） --}}
-            <div>
+                    {{-- 全データを hidden で保持 --}}
+                    <input type="hidden" name="id" value="{{ $data['id'] ?? '' }}">
+                    <input type="hidden" name="ticket_id" value="{{ $data['ticket_id'] ?? '' }}">
+                    <input type="hidden" name="title" value="{{ $data['title'] ?? '' }}">
+                    <input type="hidden" name="event_date" value="{{ $data['event_date'] ?? '' }}">
+                    <input type="hidden" name="entry_deadline" value="{{ $data['entry_deadline'] ?? '' }}">
+                    <input type="hidden" name="published_at" value="{{ $data['published_at'] ?? '' }}">
+                    <input type="hidden" name="max_entries" value="{{ $data['max_entries'] ?? '' }}">
+                    <input type="hidden" name="max_team_size" value="{{ $data['max_team_size'] ?? 1 }}">
+                    <input type="hidden" name="allow_waitlist" value="{{ $data['allow_waitlist'] ?? 0 }}">
+                    <input type="hidden" name="description" value="{{ $data['description'] ?? '' }}">
+                    <input type="hidden" name="instruction_label" value="{{ $data['instruction_label'] ?? '' }}">
+                    <input type="hidden" name="is_replicate" value="{{ $isReplicate ? 1 : 0 }}">
+
+                    @if (!empty($data['classes']))
+                        @foreach ($data['classes'] as $class)
+                            <input type="hidden" name="classes[]" value="{{ $class }}">
+                        @endforeach
+                    @endif
+
+                    <button type="submit"
+                        class="w-full sm:w-auto bg-admin text-white px-10 py-3 rounded-lg font-bold hover:bg-admin-dark shadow-lg transition transform active:scale-95">
+                        {{ $isUpdate ? 'この内容で更新を確定する' : 'この内容でイベントを登録する' }}
+                    </button>
+                </form>
+
+                <a href="javascript:void(0)" onclick="history.back()"
+                    class="w-full sm:w-auto bg-gray-400 text-white px-10 py-3 rounded-lg font-bold hover:bg-gray-500 transition text-center shadow-md flex items-center justify-center">
+                    戻って修正する
+                </a>
+            </div>
+        </div>
+
+    </x-form.section>
+
+@endsection
+
+{{-- 参加制限（グループ） グループ実装済＞未公開【消さないこと！】 --}}
+{{-- <div>
                 <label class="block text-sm font-medium text-gray-500">参加制限（グループ限定）</label>
                 <div class="mt-1 flex flex-wrap gap-1">
-                    @if(!empty($data['groups']))
-                        @foreach($data['groups'] as $groupId)
+                    @if (!empty($data['groups']))
+                        @foreach ($data['groups'] as $groupId)
                             @php
                                 // IDからグループ名を取得（コントローラで $allGroups などを渡しておくとスムーズです）
                                 $group = \App\Models\Group::find($groupId);
@@ -128,75 +202,4 @@
                         <span class="text-gray-500 italic">制限なし（全員に公開）</span>
                     @endif
                 </div>
-            </div>
-
-            {{-- 伝達事項 --}}
-            <div>
-                <label class="block text-sm font-medium text-gray-500">ユーザーへの追加質問</label>
-                <div class="mt-1 text-gray-900">{{ $data['instruction_label'] ?: '（設定なし）' }}</div>
-            </div>
-
-            {{-- 説明文 --}}
-            <div class="col-span-1 md:col-span-2">
-                <label class="block text-sm font-medium text-gray-500">イベント説明</label>
-                <div class="mt-1 text-gray-900 whitespace-pre-wrap border p-3 rounded bg-gray-50">{{ $data['description'] ?? '（なし）' }}</div>
-            </div>
-        </div>
-    </div>
-
-    {{-- アクションボタン --}}
-    <div class="flex items-center space-x-4">
-        @php
-            // ★修正ポイント：複製フラグがある場合は、IDがあっても Update ではなく Store（新規作成）へ
-            $isReplicate = !empty($data['is_replicate']) && $data['is_replicate'] == 1;
-            $isUpdate = !empty($data['id']) && !$isReplicate;
-            
-            $formAction = $isUpdate ? route('admin.events.update', $data['id']) : route('admin.events.store');
-        @endphp
-
-        <form action="{{ $formAction }}" method="POST">
-            @csrf
-            
-            @if($isUpdate)
-                @method('PUT')
-                <input type="hidden" name="id" value="{{ $data['id'] }}">
-            @endif
-
-            {{-- 複製フラグを hidden で引き継ぐ（Storeメソッドで必要になる場合があります） --}}
-            @if($isReplicate)
-                <input type="hidden" name="is_replicate" value="1">
-            @endif
-
-            {{-- すべてのデータを hidden で保持 --}}
-            <input type="hidden" name="ticket_id" value="{{ $data['ticket_id'] }}">
-            <input type="hidden" name="title" value="{{ $data['title'] }}">
-            <input type="hidden" name="event_date" value="{{ $data['event_date'] }}">
-            <input type="hidden" name="entry_deadline" value="{{ $data['entry_deadline'] }}">
-            <input type="hidden" name="published_at" value="{{ $data['published_at'] }}">
-            <input type="hidden" name="max_entries" value="{{ $data['max_entries'] }}">
-            <input type="hidden" name="max_team_size" value="{{ $data['max_team_size'] }}">
-            <input type="hidden" name="allow_waitlist" value="{{ $data['allow_waitlist'] ?? 0 }}">
-            <input type="hidden" name="description" value="{{ $data['description'] }}">
-            <input type="hidden" name="instruction_label" value="{{ $data['instruction_label'] }}">
-            @if(!empty($data['classes']))
-                @foreach($data['classes'] as $class)
-                    <input type="hidden" name="classes[]" value="{{ $class }}">
-                @endforeach
-            @endif
-
-            {{-- グループ制限情報を hidden で保持 --}}
-            @if(!empty($data['groups']))
-                @foreach($data['groups'] as $groupId)
-                    <input type="hidden" name="groups[]" value="{{ $groupId }}">
-                @endforeach
-            @endif
-            <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition">
-                {{ $isUpdate ? 'この内容で更新する' : 'この内容で登録する' }}
-            </button>
-        </form>
-
-        <button type="button" onclick="history.back()" class="bg-gray-300 text-gray-800 px-8 py-3 rounded-lg font-bold hover:bg-gray-400 transition">
-            修正する
-        </button>
-    </div>
-@endsection
+            </div> --}}
