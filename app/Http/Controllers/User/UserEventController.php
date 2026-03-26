@@ -18,39 +18,33 @@ class UserEventController extends Controller
         $now = now();
         $user = auth()->user();
 
-        // 1. フィルター用の住所リスト取得
+        // 1. フィルター用の住所リスト取得（既存ロジック）
         $availableLocations = Admin::whereIn('id', function($q) use ($now) {
-                // ★ ここはスコープを使わず、直接カラムを指定して書きます
                 $q->select('admin_id')
-                  ->from('events')
-                  ->whereNotNull('published_at')
-                  ->where('published_at', '<=', $now)
-                  ->where('event_date', '>=', $now);
+                ->from('events')
+                ->whereNotNull('published_at')
+                ->where('published_at', '<=', $now)
+                ->where('event_date', '>=', $now);
             })
             ->whereNotNull('prefecture')
             ->get(['prefecture', 'city']);
 
         $groupedLocations = [];
         foreach ($availableLocations as $loc) {
-            if (preg_match('/^.*?(市|区)/u', $loc->city, $matches)) {
-                $cityName = $matches[0];
-                $groupedLocations[$loc->prefecture][$cityName] = $cityName;
-            }
+            $cityName = preg_match('/^.*?(市|区)/u', $loc->city, $matches) ? $matches[0] : $loc->city;
+            $groupedLocations[$loc->prefecture][$cityName] = $cityName;
         }
 
         // 2. クエリのビルド開始
-        // ここは Event モデルから始まっているので scopePublished() が使えます
-        $query = Event::with('organizer')
+        $query = Event::with(['organizer', 'eventClasses', 'requiredGroups'])
             ->published() 
             ->where('event_date', '>=', $now);
 
-        // 3. 複数選択フィルタリング (都道府県 OR 市区)
+        // 3. エリアフィルタリング
         if ($request->filled('prefs') || $request->filled('cities')) {
             $query->whereHas('organizer', function($q) use ($request) {
                 $q->where(function($sub) use ($request) {
-                    if ($request->filled('prefs')) {
-                        $sub->orWhereIn('prefecture', $request->prefs);
-                    }
+                    if ($request->filled('prefs')) $sub->orWhereIn('prefecture', $request->prefs);
                     if ($request->filled('cities')) {
                         foreach ($request->cities as $city) {
                             $sub->orWhere('city', 'like', $city . '%');
@@ -60,26 +54,58 @@ class UserEventController extends Controller
             });
         }
 
-        // 5. 自分への招待（Pending）があるかチェック
-        $invitations = [];
-            if ($user) {
-                $invitations = UserEntry::whereHas('members', function($q) use ($user) {
-                        $q->where('user_id', $user->id)
-                        ->where('invite_status', 'pending'); // 招待中のステータス
-                    })
-                    ->with(['event', 'representative'])
-                    // ↓ここを修正：pending または waitlist のものを対象にする
-                    ->whereIn('status', ['pending', 'waitlist']) 
-                    ->where('pending_until', '>', $now)
-                    ->get();
+        // ★ 4. エントリー状態フィルタリング
+        if ($user && $request->filled('status_filter')) {
+            $status = $request->status_filter;
+            if ($status === 'entry_all') {
+                // エントリー中（確定・待機・招待中すべて）
+                $query->whereHas('userEntries', function($q) use ($user) {
+                    $q->where(function($sub) use ($user) {
+                        $sub->where('representative_user_id', $user->id)
+                            ->orWhereHas('members', fn($m) => $m->where('user_id', $user->id));
+                    })->whereIn('status', ['entry', 'waitlist', 'pending']);
+                });
+            } elseif ($status === 'not_entry') {
+                // 未エントリーのみ
+                $query->whereDoesntHave('userEntries', function($q) use ($user) {
+                    $q->where(function($sub) use ($user) {
+                        $sub->where('representative_user_id', $user->id)
+                            ->orWhereHas('members', fn($m) => $m->where('user_id', $user->id));
+                    })->whereIn('status', ['entry', 'waitlist', 'pending']);
+                });
             }
+        }
 
-        // 4. 最後に並び替えてデータを取得
-        $events = $query->orderBy('event_date', 'asc')->get();
+        // ★ 5. ソート
+        $sort = $request->get('sort', 'date_asc'); // デフォルトは開催日が近い順
+        switch ($sort) {
+            case 'deadline_asc':
+                $query->orderBy('entry_deadline', 'asc');
+                break;
+            case 'newest':
+                $query->orderBy('created_at', 'desc');
+                break;
+            case 'date_asc':
+            default:
+                $query->orderBy('event_date', 'asc');
+                break;
+        }
+
+        // 6. 招待の取得（既存ロジック）
+        $invitations = $user ? UserEntry::whereHas('members', function($q) use ($user) {
+                $q->where('user_id', $user->id)->where('invite_status', 'pending');
+            })
+            ->with(['event', 'representative'])
+            ->whereIn('status', ['pending', 'waitlist']) 
+            ->where('pending_until', '>', $now)
+            ->get() : collect();
+
+        $events = $query->get();
+
         return view('user.events.index', [
             'events' => $events,
             'groupedLocations' => $groupedLocations,
-            'invitations' => $invitations, // 追加
+            'invitations' => $invitations,
         ]);
     }
 

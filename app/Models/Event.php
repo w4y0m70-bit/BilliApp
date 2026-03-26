@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use App\Models\UserEntry;
+use App\Enums\TeamType;
+use App\Models\Admin;
+use App\Models\Ticket;
+use App\Models\EventClass;
+use App\Models\Group;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
@@ -100,16 +105,9 @@ class Event extends Model
     }
 
     // チーム表現
-    public static function getTeamTypeName(int $size): string
+    public function getTeamType(): TeamType
     {
-        return match ($size) {
-            1 => 'シングルス',
-            2 => 'ダブルス',
-            3 => 'トリオス',
-            4 => 'カルテット',
-            5 => 'クインテット',
-            default => $size . '名１組',
-        };
+        return TeamType::fromSize($this->max_team_size);
     }
 
     // ログ

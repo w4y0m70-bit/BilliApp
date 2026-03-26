@@ -143,7 +143,7 @@
                             </div>
                         </div>
                         <p><span class="font-bold w-20 inline-block">募集枠数：</span>{{ $event->max_entries }}
-                            {{ \App\Models\Event::getTeamTypeName($event->max_team_size) === 'シングルス' ? '名' : 'チーム' }}
+                            {{ $event->getTeamType()->label() === 'シングルス' ? '名' : 'チーム' }}
                         </p>
                     </div>
 

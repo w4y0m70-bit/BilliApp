@@ -1,5 +1,5 @@
 <div class="pt-4 border-t">
-    <label class="block font-bold mb-4 text-gray-700 text-sm">通知設定</label>
+    {{-- <label class="block font-bold mb-4 text-gray-700 text-sm">通知設定</label> --}}
     @php
         $notificationTypes = [
             'event_published' => '新規イベント公開',
@@ -10,11 +10,11 @@
     @endphp
 
     <div class="space-y-6"> {{-- 各通知タイプごとの塊 --}}
-        @foreach($notificationTypes as $type => $typeLabel)
+        @foreach ($notificationTypes as $type => $typeLabel)
             <div>
                 <p class="text-xs font-bold text-gray-500 mb-2">{{ $typeLabel }}</p>
                 <div class="flex flex-wrap gap-x-6 gap-y-2"> {{-- 横並び設定 --}}
-                    @foreach($notificationVias as $viaKey => $viaLabel)
+                    @foreach ($notificationVias as $viaKey => $viaLabel)
                         @php
                             // --- 1. 表示可能・操作可能かどうかの判定 (isDisabled) ---
                             $isDisabled = false;
@@ -51,13 +51,8 @@
                             }
                         @endphp
 
-                        <x-form.checkbox 
-                            :name="'notifications[' . $type . '][' . $viaKey . ']'"
-                            :label="$viaLabel"
-                            :checked="$isEnabled"
-                            :disabled="$isDisabled"
-                            :reason="$reason"
-                        />
+                        <x-form.checkbox :name="'notifications[' . $type . '][' . $viaKey . ']'" :label="$viaLabel" :checked="$isEnabled" :disabled="$isDisabled"
+                            :reason="$reason" />
                     @endforeach
                 </div>
             </div>

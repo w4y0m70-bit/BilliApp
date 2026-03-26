@@ -2,7 +2,7 @@
 @section('title', 'パスワード変更')
 
 @section('content')
-    <div class="max-w-xl mx-auto px-4 py-8">
+    <div class="max-w-xl mx-auto px-4 py-2">
         <div class="bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden">
             {{-- ヘッダー：共通デザイン --}}
             <div class="border-b border-gray-100 px-8 py-6 bg-gray-50/50">
@@ -12,7 +12,7 @@
                 </h2>
             </div>
 
-            <div class="p-8">
+            <div class="p-6">
                 {{-- エラー表示（共通スタイル） --}}
                 @if ($errors->any())
                     <div
@@ -26,7 +26,7 @@
                     </div>
                 @endif
 
-                <form action="{{ route('admin.account.password.update') }}" method="POST" class="space-y-8">
+                <form action="{{ route('admin.account.password.update') }}" method="POST" class="space-y-4">
                     @csrf
                     @method('PATCH')
 
