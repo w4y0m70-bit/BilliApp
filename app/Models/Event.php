@@ -105,9 +105,9 @@ class Event extends Model
     }
 
     // チーム表現
-    public function getTeamType(): TeamType
+    public static function getTeamType(?int $size = null): \App\Enums\TeamType
     {
-        return TeamType::fromSize($this->max_team_size);
+        return \App\Enums\TeamType::fromSize($size ?? 1);
     }
 
     // ログ

@@ -82,7 +82,10 @@
                     <div>
                         <label class="block text-[10px] font-medium text-gray-500 uppercase">1枠の構成</label>
                         <div class="text-lg font-bold text-gray-900">
-                            {{ \App\Models\Event::getTeamType($data['max_team_size'] ?? 1) }}
+                            @php
+                                $teamType = \App\Models\Event::getTeamType($data['max_team_size'] ?? 1);
+                            @endphp
+                            {{ $teamType->label() }}
                         </div>
                     </div>
                     <div class="border-l border-gray-300 pl-4">

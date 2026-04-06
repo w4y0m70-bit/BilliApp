@@ -37,7 +37,7 @@
 
         @if (isset($event->id) && !$isReplicate && !$alreadyPublished)
             <div class="mt-12 pt-8 border-t-2 border-red-50 relative">
-                <span class="absolute -top-3 left-4 bg-white px-2 text-xs font-bold text-red-500">DANGER ZONE</span>
+                {{-- <span class="absolute -top-3 left-4 bg-white px-2 text-xs font-bold text-red-500">DANGER ZONE</span> --}}
 
                 <form action="{{ route('admin.events.destroy', $event->id) }}" method="POST"
                     onsubmit="return confirm('本当に削除してもよろしいですか？\nこの操作は取り消せません。');">
