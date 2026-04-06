@@ -10,7 +10,7 @@
             </h2>
         </div>
 
-        {{-- 1. コード入力セクション（イベントカードと同じ枠のデザイン） --}}
+        {{-- 1. コード入力セクション --}}
         <div class="bg-white shadow rounded-lg border border-gray-100 p-5 mb-8">
             <div class="flex items-center mb-4">
                 <span class="material-symbols-outlined text-admin mr-2">confirmation_number</span>
@@ -58,25 +58,27 @@
             </div>
         </div>
 
-        {{-- 3. チケット一覧（グリッドをイベント一覧と調整） --}}
+        {{-- 3. チケット一覧 --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            @if ($tab === 'active')
-                @forelse($tickets as $ticket)
-                    <x-ticket :ticket="$ticket" tab="active" />
+            @if ($tab === 'ready')
+                {{-- 利用可能タブ：同じ種類のチケットをまとめて表示 --}}
+                @forelse($groupedTickets as $group)
+                    @php $first = $group->first(); @endphp
+                    <x-ticket :ticket="$first" tab="ready" :count="$group->count()" />
                 @empty
                     <div
                         class="col-span-full py-12 bg-white rounded-lg border border-dashed border-gray-300 text-center text-gray-500">
-                        使用中のチケットはありません。
+                        利用可能なチケットはありません。
                     </div>
                 @endforelse
             @else
-                @forelse($groupedTickets as $group)
-                    @php $first = $group->first(); @endphp
-                    <x-ticket :ticket="$first" :tab="$tab" :count="$group->count()" />
+                {{-- 使用中・使用済みタブ：イベントごとに異なるため、1件ずつ表示 --}}
+                @forelse($tickets as $ticket)
+                    <x-ticket :ticket="$ticket" :tab="$tab" />
                 @empty
                     <div
                         class="col-span-full py-12 bg-white rounded-lg border border-dashed border-gray-300 text-center text-gray-500">
-                        チケットはありません。
+                        {{ $tab === 'active' ? '使用中' : '使用済み' }}のチケットはありません。
                     </div>
                 @endforelse
             @endif

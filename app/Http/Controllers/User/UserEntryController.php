@@ -66,8 +66,17 @@ class UserEntryController extends Controller
             return back()->with('error', 'すでに有効なエントリーがあります。');
         }
 
+        // 同一日にユーザーが既にエントリーしている他のイベントを取得
+        $conflictingEntries = $user->userEntries()
+            ->whereHas('event', function($query) use ($event) {
+                $query->whereDate('event_date', $event->event_date->toDateString())
+                    ->where('id', '!=', $event->id); // 自分自身は除外
+            })
+            ->with('event')
+            ->get();
+            
         $event->load('eventClasses');
-        return view('user.events.create', compact('event', 'user'));
+        return view('user.events.create', compact('event', 'user', 'conflictingEntries'));
     }
 
     public function entry(Request $request, Event $event, EventEntryService $service)

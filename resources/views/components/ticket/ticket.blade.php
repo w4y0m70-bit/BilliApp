@@ -1,17 +1,13 @@
-@props([
-    'ticket', 
-    'tab' => 'ready', 
-    'count' => 1
-])
+@props(['ticket', 'tab' => 'ready', 'count' => 1])
 
 @php
     $conf = [
         'active' => ['label' => 'IN USE', 'bg' => 'bg-indigo-50', 'text' => 'text-indigo-600'],
-        'ready'  => ['label' => 'READY',  'bg' => 'bg-indigo-50', 'text' => 'text-indigo-600'],
-        'used'   => ['label' => 'USED',   'bg' => 'bg-gray-100', 'text' => 'text-gray-400'],
+        'ready' => ['label' => 'READY', 'bg' => 'bg-indigo-50', 'text' => 'text-indigo-600'],
+        'used' => ['label' => 'USED', 'bg' => 'bg-gray-100', 'text' => 'text-gray-400'],
     ][$tab];
 
-    $isUrgent = ($tab === 'ready' && $ticket->isUrgent());
+    $isUrgent = $tab === 'ready' && $ticket->isUrgent();
 
     // プラン名に基づいて「完全なクラス名」を生成
     $planName = $ticket->plan->display_name;
@@ -34,10 +30,11 @@
     }
 @endphp
 
-<div class="relative flex flex-col bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden {{ $tab === 'used' ? 'opacity-70' : '' }} transition-transform active:scale-95">
-    
+<div
+    class="relative flex flex-col bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden {{ $tab === 'used' ? 'opacity-70' : '' }} transition-transform active:scale-95">
+
     {{-- 枚数グループ --}}
-    @if($tab === 'ready' && $count > 1)
+    @if ($tab === 'ready' && $count > 1)
         <div class="absolute top-0 right-0 z-10">
             <div class="bg-gray-500 text-white text-[16px] font-normal px-2 py-0.5 rounded-bl-lg">
                 ×{{ $count }}
@@ -55,14 +52,15 @@
                     {{ $planName }}
                 </span>
                 {{-- 定員アイコン --}}
-                <span class="border-2 border-solid {{ $borderColor }} {{ $textColor }} text-m font-black px-1.5 py-0.5 rounded-md leading-none bg-transparent">
+                <span
+                    class="border-2 border-solid {{ $borderColor }} {{ $textColor }} text-m font-black px-1.5 py-0.5 rounded-md leading-none bg-transparent">
                     {{ $ticket->plan->max_capacity }}
                 </span>
             </div>
 
             {{-- イベント名 --}}
             <div class="text-sm font-bold text-gray-800 leading-tight line-clamp-2 min-h-[2.5em]">
-                @if($tab !== 'ready' && $ticket->event)
+                @if ($tab !== 'ready' && $ticket->event)
                     {{ $ticket->event->title }}
                 @else
                     <span class="text-gray-300 font-normal">（未使用）</span>
@@ -70,23 +68,36 @@
             </div>
         </div>
 
-        {{-- 下部：日付 --}}
-        <div class="mt-2 pt-2 border-t border-dotted border-gray-200">
-            <div class="text-[10px] {{ $isUrgent ? 'text-red-600 font-bold' : 'text-gray-400' }}">
-                {{ $tab === 'used' ? '開催日' : '有効期限' }}
+        {{-- 下部：日付 & ID --}}
+        <div class="mt-2 pt-2 border-t border-dotted border-gray-200 flex justify-between items-end">
+            {{-- 左側：日付 --}}
+            <div>
+                <div class="text-[10px] {{ $isUrgent ? 'text-red-600 font-bold' : 'text-gray-400' }}">
+                    {{ $tab === 'used' ? '開催日' : '有効期限' }}
+                </div>
+                <div class="text-lg font-bold {{ $isUrgent ? 'text-red-600' : 'text-gray-700' }}">
+                    @if ($isUrgent)
+                        <span class="animate-ping inline-block w-1 h-1 bg-red-600 rounded-full mr-1"></span>
+                    @endif
+                    {{ $tab === 'used' && $ticket->event ? $ticket->event->event_date->format('Y/m/d') : $ticket->expired_at->format('Y/m/d') }}
+                </div>
             </div>
-            <div class="text-lg font-bold {{ $isUrgent ? 'text-red-600' : 'text-gray-700' }}">
-                @if($isUrgent)<span class="animate-ping inline-block w-1 h-1 bg-red-600 rounded-full mr-1"></span>@endif
-                {{ ($tab === 'used' && $ticket->event) ? $ticket->event->event_date->format('Y/m/d') : $ticket->expired_at->format('Y/m/d') }}
+
+            {{-- 右側：Ticket ID --}}
+            <div class="text-right">
+                <div class="text-[10px] text-gray-400">
+                    Ticket ID：{{ sprintf('%06d', $ticket->id) }}
+                </div>
             </div>
         </div>
     </div>
 
     {{-- 下部：ボタンエリア --}}
-    <div class="{{ $conf['bg'] }} py-2 px-3 border-t border-dashed border-gray-300 flex flex-col items-center justify-center">
-        @if($tab === 'ready')
-            <a href="{{ route('admin.events.create', ['ticket_id' => $ticket->id]) }}" 
-               class="w-full text-center {{ $bgColor }} text-white text-xs py-1.5 rounded-lg font-black hover:opacity-90 shadow-sm transition-opacity">
+    <div
+        class="{{ $conf['bg'] }} py-2 px-3 border-t border-dashed border-gray-300 flex flex-col items-center justify-center">
+        @if ($tab === 'ready')
+            <a href="{{ route('admin.events.create', ['ticket_id' => $ticket->id]) }}"
+                class="w-full text-center {{ $bgColor }} text-white text-xs py-1.5 rounded-lg font-black hover:opacity-90 shadow-sm transition-opacity">
                 使う
             </a>
         @else

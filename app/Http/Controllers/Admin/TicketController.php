@@ -20,11 +20,9 @@ class TicketController extends Controller
         $adminId = auth('admin')->id();
         $now = now();
 
-        // 全タブ共通の基本クエリ
         $query = Ticket::where('admin_id', $adminId)->with(['plan', 'event']);
 
         if ($tab === 'active') {
-            // 【使用中】イベント紐付けあり ＆ 開催日が未来
             $tickets = $query->whereHas('event', function($q) use ($now) {
                 $q->where('events.event_date', '>', $now); 
             })->get()->sortBy('expired_at');
@@ -32,25 +30,27 @@ class TicketController extends Controller
             return view('admin.tickets.index', compact('tickets', 'tab'));
 
         } elseif ($tab === 'used') {
-            // 【使用済み】イベント紐付けあり ＆ 開催日が過去
+            // 【使用済み】
             $tickets = $query->whereHas('event', function($sq) use ($now) {
                 $sq->where('events.event_date', '<=', $now);
-            })->get()->sortByDesc('updated_at'); // ひとまず更新順で確実に動かす
+            })->get()->sortByDesc(fn($t) => $t->event?->event_date); // 開催日の新しい順
 
+            // ★ groupedTicketsだけでなく、ticketsも渡す
             $groupedTickets = $tickets->groupBy(fn($t) => $t->plan_id . '-' . $t->expired_at->format('Y-m-d'));
-            return view('admin.tickets.index', compact('groupedTickets', 'tab'));
+            return view('admin.tickets.index', compact('tickets', 'groupedTickets', 'tab'));
 
         } else {
-            // 【利用可能】紐付けなし ＆ 未使用 ＆ 期限内
+            // 【利用可能】
             $tickets = $query->whereNull('event_id')
                             ->whereNull('used_at')
                             ->where('expired_at', '>=', $now)
                             ->get()
                             ->sortBy('expired_at');
 
+            // ★ groupedTicketsだけでなく、ticketsも渡す
             $groupedTickets = $tickets->groupBy(fn($t) => $t->plan_id . '-' . $t->expired_at->format('Y-m-d'));
             
-            return view('admin.tickets.index', compact('groupedTickets', 'tab'));
+            return view('admin.tickets.index', compact('tickets', 'groupedTickets', 'tab'));
         }
     }
 

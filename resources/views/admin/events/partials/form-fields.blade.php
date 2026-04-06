@@ -242,7 +242,12 @@
                 @foreach ($availableTickets as $ticket)
                     <option value="{{ $ticket->id }}" data-capacity="{{ $ticket->plan->max_capacity }}"
                         @if (old('ticket_id', $event->ticket_id ?? '') == $ticket->id) selected @endif>
-                        {{ $ticket->plan->display_name }} (上限{{ $ticket->plan->max_capacity }}名)
+
+                        {{-- 表示テキストの構成 --}}
+                        {{ $ticket->plan->display_name }}
+                        (上限{{ $ticket->plan->max_capacity }}名)
+                        【有効期限: {{ $ticket->expired_at->format('Y/m/d') }}】
+
                     </option>
                 @endforeach
             </select>

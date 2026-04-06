@@ -105,6 +105,14 @@ return [
                 TEXT
             ],
 
+            'organizer' => [
+                'title' => '主催者情報',
+                'body' => <<<TEXT
+                主催者の住所・電話番号・MAPなどを確認できます。
+                ここから直接電話をかけることもできます。
+                TEXT
+            ],
+
             'class' => [
                 'title'=>   '募集クラス',
                 'body'=>    <<<TEXT

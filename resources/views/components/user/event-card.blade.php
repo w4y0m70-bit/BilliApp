@@ -52,16 +52,31 @@
         {{-- 主催者パネル --}}
         <div x-show="showOrganizer" @click.away="showOrganizer = false" x-transition x-cloak
             class="absolute top-full left-2 z-30 p-2 bg-white rounded-lg border border-gray-200 text-[10px] shadow-xl w-48">
-            <p class="text-gray-400 mb-1 border-b pb-1 font-bold text-[9px]">主催者情報</p>
+            {{-- <p class="text-gray-400 mb-1 border-b pb-1 font-bold text-[9px]">主催者情報</p> --}}
+
+            {{-- 住所 --}}
             <p class="text-gray-700 leading-tight mb-2">
                 {{ $event->organizer->prefecture }}{{ $event->organizer->city }}{{ $event->organizer->address_line }}
             </p>
+
+            {{-- ★ 電話番号を追加 --}}
+            @if ($event->organizer->phone)
+                <div class="mb-2 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[10px] text-gray-400">call</span>
+                    <a href="tel:{{ $event->organizer->phone }}" class="text-[16px] text-blue-600 hover:underline">
+                        {{ $event->organizer->phone }}
+                    </a>
+                </div>
+            @endif
+
+            {{-- Googleマップボタン --}}
             <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($event->organizer->prefecture . $event->organizer->city . $event->organizer->address_line) }}"
                 target="_blank"
                 class="text-blue-600 font-bold flex items-center justify-center bg-blue-50 py-1 rounded hover:bg-blue-100 transition">
                 <span class="material-symbols-outlined text-xs mr-1">map</span>Googleマップ
             </a>
         </div>
+        <x-help help-key="user.events.organizer" class="ml-2" />
     </div>
 
     {{-- 2. コンテンツエリア --}}
