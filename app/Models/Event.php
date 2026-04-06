@@ -167,6 +167,16 @@ class Event extends Model
     }
 
     /**
+     * イベントが終了しているかどうかを判定する
+     * 開催日が現在よりも前の場合は true を返します
+     */
+    public function isPast(): bool
+    {
+        // event_date が Carbon インスタンスであることを前提としています
+        return $this->event_date->isPast();
+    }
+
+    /**
      * 特定の通知が送信済みかチェックする
      */
     public function hasBeenNotified(string $type, $adminId): bool

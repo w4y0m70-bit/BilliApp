@@ -60,12 +60,19 @@ class AdminEventController extends Controller
     // 確認ページ
     public function confirm(Request $request)
     {
+        // 180日後の日付文字列を作成
+        $maxDate = now()->addDays(180)->toDateTimeString();
         // 1. バリデーション
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'id'                => 'nullable|exists:events,id',
             'title'             => 'required|string|max:100',
             'ticket_id'         => 'required|exists:tickets,id',
-            'event_date'        => 'required|date|after_or_equal:now', 
+            'event_date' => [
+                                'required',
+                                'date',
+                                'after_or_equal:now',      // 現在時刻より後
+                                "before_or_equal:{$maxDate}" // ★180日以内
+                            ],
             'entry_deadline'    => 'required|date|before:event_date',
             'published_at'      => 'nullable|date',
             'max_entries'       => 'required|integer|min:1',
@@ -76,6 +83,10 @@ class AdminEventController extends Controller
             'instruction_label' => 'nullable|string|max:100',
             'groups'            => 'nullable|array',
             'groups.*'          => 'exists:groups,id',
+            
+        ], [
+        // 必要に応じてカスタムメッセージを追加
+        'event_date.before_or_equal' => '開催日は180日以内の日付を指定してください。',
         ]);
 
         if ($validator->fails()) {
@@ -287,6 +298,7 @@ class AdminEventController extends Controller
         
         // 2. 複製時のデフォルト値をセット
         $replicatedEvent->published_at = null; 
+        $replicatedEvent->ticket_id = null;
         $replicatedEvent->event_date = now()->addDays(7)->setTime(12, 0); // 1週間後などに仮設定
         $replicatedEvent->entry_deadline = now()->addDays(6)->setTime(12, 0); // 1週間前
 
@@ -335,6 +347,8 @@ class AdminEventController extends Controller
     // 更新処理
     public function update(Request $request, Event $event)
     {
+        // 180日後の日付文字列を作成
+        $maxDate = now()->addDays(180)->toDateTimeString();
         $now = now();
         $isPast = $event->event_date < $now;
         $isPublished = $event->published_at && $event->published_at <= $now;
@@ -349,6 +363,16 @@ class AdminEventController extends Controller
                 'classes' => 'required|array|min:1',
                 'groups'            => 'nullable|array',
                 'groups.*'          => 'exists:groups,id',
+                'event_date' => [
+                                    'required',
+                                    'date',
+                                    'after_or_equal:now',      // 現在時刻より後
+                                    "before_or_equal:{$maxDate}" // ★180日以内
+                                ],
+                                'entry_deadline' => 'required|date|before:event_date',
+            ], [
+                // 必要に応じてカスタムメッセージを追加
+                'event_date.before_or_equal' => '開催日は180日以内の日付を指定してください。',
             ]);
 
             DB::transaction(function () use ($data, $event) {

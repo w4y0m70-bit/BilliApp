@@ -21,13 +21,24 @@
     </x-textarea-input>
 </x-form.group>
 
-{{-- 開催日時 --}}
+{{-- 開催日時 現在より180日以内 --}}
 <x-form.group label="開催日時" help-key="admin.events.event_date" :is-limited-field="true" type="admin">
+    @php
+        // 現在から180日後の日付を取得
+        $maxDate = now()->addDays(180)->format('Y-m-d\TH:i');
+        // 最小値（今日）も設定しておくとより親切です
+        $minDate = now()->format('Y-m-d\TH:i');
+    @endphp
+
     <x-text-input id="event_date" type="datetime-local" name="event_date" color-type="admin" :value="old('event_date', $event->event_date?->format('Y-m-d\TH:i') ?? '')"
-        :disabled="$isLimited && !$isReplicate" class="{{ $isLimited && !$isReplicate ? 'bg-gray-100 text-gray-500' : '' }}" />
-    @if ($isLimited && !$isReplicate)
-        <x-slot:hint><span class="text-red-500 font-bold">※公開中のため変更できません</span></x-slot:hint>
-    @endif
+        {{-- max と min を追加 --}} max="{{ $maxDate }}" min="{{ $minDate }}" :disabled="$isLimited && !$isReplicate"
+        class="{{ $isLimited && !$isReplicate ? 'bg-gray-100 text-gray-500' : '' }}" />
+
+    <x-slot:hint>
+        @if ($isLimited && !$isReplicate)
+            <span class="text-red-500 font-bold">※公開中のため変更できません</span>
+        @endif
+    </x-slot:hint>
 </x-form.group>
 
 {{-- エントリー締め切り --}}
